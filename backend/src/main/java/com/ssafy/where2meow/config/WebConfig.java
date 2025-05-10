@@ -9,15 +9,14 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-@MapperScan("com.ssafy.where2meow.**.repository")
 public class WebConfig implements WebMvcConfigurer {
 
-  @Bean
-  ServletListenerRegistrationBean<ServletContextListener> initListener() {
-    return null;
-  }
-
-  @Override
-  public void addInterceptors(InterceptorRegistry registry) {
-  }
+//  @Bean
+//  ServletListenerRegistrationBean<ServletContextListener> initListener() {
+//    return null;
+//  }
+//
+//  @Override
+//  public void addInterceptors(InterceptorRegistry registry) {
+//  }
 }
