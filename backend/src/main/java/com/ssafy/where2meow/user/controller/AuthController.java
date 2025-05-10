@@ -3,7 +3,9 @@ package com.ssafy.where2meow.user.controller;
 import com.ssafy.where2meow.user.dto.LoginRequest;
 import com.ssafy.where2meow.user.dto.LoginResponse;
 import com.ssafy.where2meow.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,17 +25,22 @@ public class AuthController {
      * @return JWT 토큰 및 사용자 정보
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest loginRequest) {
         return ResponseEntity.ok(userService.login(loginRequest));
     }
 
     /**
      * 로그아웃 처리
-     * @return 성공 응답
+     * @return 성공 응답 또는 오류 응답
      */
     @PostMapping("/logout")
     public ResponseEntity<Void> logout() {
-        userService.logout();
-        return ResponseEntity.ok().build();
+        try {
+            userService.logout();
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            // 인증 토큰이 없거나 유효하지 않은 경우 403 Forbidden 반환
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 }

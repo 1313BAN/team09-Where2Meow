@@ -1,5 +1,6 @@
-package com.ssafy.where2meow.user.security;
+package com.ssafy.where2meow.user.token;
 
+import com.ssafy.where2meow.user.token.TokenBlacklist;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -15,55 +16,71 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret:defaultsecretkeythatneedstobechangedinproduction}")
+    @Value("${jwt.secret}")
     private String secretKey;
 
     private Key key;
 
-    @Value("${jwt.token-validity-in-seconds:86400}")
+    @Value("${jwt.token-validity-in-seconds}")
     private long tokenValidityInSeconds; // 기본값 24시간
 
     private final UserDetailsService userDetailsService;
+    private final TokenBlacklist tokenBlacklist;
 
-    public JwtTokenProvider(UserDetailsService userDetailsService) {
+    public JwtTokenProvider(UserDetailsService userDetailsService, TokenBlacklist tokenBlacklist) {
         this.userDetailsService = userDetailsService;
+        this.tokenBlacklist = tokenBlacklist;
     }
 
     @PostConstruct
     protected void init() {
-        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        byte[] keyBytes = Base64.getEncoder().encode(secretKey.getBytes());
+        this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
     // JWT 토큰 생성
     public String createToken(String email, String role) {
-        Claims claims = Jwts.claims().setSubject(email);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", email);
         claims.put("role", role);
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + tokenValidityInSeconds * 1000);
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(validity)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .claims(claims)
+                .issuedAt(now)
+                .expiration(validity)
+                .signWith(key)
                 .compact();
     }
 
     // 토큰에서 사용자 이름 추출
     public String getUsername(String token) {
-        return Jwts.parserBuilder()
+        return Jwts.parser()
                 .setSigningKey(key)
                 .build()
-                .parseClaimsJws(token)
-                .getBody()
+                .parseSignedClaims(token)
+                .getPayload()
                 .getSubject();
+    }
+
+    // 토큰 만료 시간 조회
+    public long getExpirationTime(String token) {
+        Date expiration = Jwts.parser()
+                .setSigningKey(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration();
+        return expiration.getTime();
     }
 
     // Request의 Header에서 token 가져오기
@@ -75,11 +92,23 @@ public class JwtTokenProvider {
         return null;
     }
 
+    // 토큰 블랙리스트에 추가 (로그아웃)
+    public void blacklistToken(String token) {
+        long expirationTime = getExpirationTime(token);
+        tokenBlacklist.addToBlacklist(token, expirationTime);
+    }
+
     // 토큰 유효성 검사
     public boolean validateToken(String token) {
         try {
-            Jws<Claims> claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return !claims.getBody().getExpiration().before(new Date());
+            // 블랙리스트에 있는 토큰인지 확인
+            if (tokenBlacklist.isBlacklisted(token)) {
+                log.warn("Blacklisted token: {}", token);
+                return false;
+            }
+
+            Jws<Claims> claims = Jwts.parser().setSigningKey(key).build().parseSignedClaims(token);
+            return !claims.getPayload().getExpiration().before(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
             return false;

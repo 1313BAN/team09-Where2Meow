@@ -6,8 +6,10 @@ import com.ssafy.where2meow.user.dto.LoginResponse;
 import com.ssafy.where2meow.user.entity.Role;
 import com.ssafy.where2meow.user.entity.User;
 import com.ssafy.where2meow.user.repository.UserRepository;
-import com.ssafy.where2meow.user.security.JwtTokenProvider;
+import com.ssafy.where2meow.user.token.JwtTokenProvider;
+import com.ssafy.where2meow.user.token.TokenBlacklist;
 import com.ssafy.where2meow.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -50,6 +53,12 @@ public class AuthTest {
     @Mock
     private AuthenticationManager authenticationManager;
 
+    @Mock
+    private TokenBlacklist tokenBlacklist;
+
+    @Mock
+    private HttpServletRequest request;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -61,6 +70,7 @@ public class AuthTest {
     private User testUser;
     private LoginRequest loginRequest;
     private Authentication authentication;
+    private final String testToken = "test.jwt.token";
 
     @BeforeEach
     void setUp() {
@@ -92,12 +102,18 @@ public class AuthTest {
         // 모의 객체 설정 (lenient 모드 적용)
         lenient().when(userRepository.findByEmailAndIsActiveTrue(testUser.getEmail())).thenReturn(Optional.of(testUser));
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
-        lenient().when(jwtTokenProvider.createToken(anyString(), anyString())).thenReturn("test.jwt.token");
+        lenient().when(jwtTokenProvider.createToken(anyString(), anyString())).thenReturn(testToken);
+        
+        // 로그아웃 관련 모의 설정
+        lenient().when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn(testToken);
+        lenient().when(jwtTokenProvider.validateToken(testToken)).thenReturn(true);
+        lenient().doNothing().when(jwtTokenProvider).blacklistToken(testToken);
 
         // userService에 모의 객체 주입
         ReflectionTestUtils.setField(userService, "authenticationManager", authenticationManager);
         ReflectionTestUtils.setField(userService, "jwtTokenProvider", jwtTokenProvider);
         ReflectionTestUtils.setField(userService, "userRepository", userRepository);
+        ReflectionTestUtils.setField(userService, "request", request);
     }
 
     @Test
@@ -196,8 +212,8 @@ public class AuthTest {
     }
 
     @Test
-    @DisplayName("로그아웃 테스트")
-    void logoutTest() {
+    @DisplayName("로그아웃 성공 테스트")
+    void logoutSuccessTest() {
         // Given
         SecurityContextHolder.getContext().setAuthentication(authentication);
         
@@ -205,8 +221,56 @@ public class AuthTest {
         ResponseEntity<Void> response = authController.logout();
         
         // Then
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+        
+        // 토큰 추출 메서드가 호출되었는지 확인
+        verify(jwtTokenProvider).resolveToken(any(HttpServletRequest.class));
+        
+        // 토큰 유효성 검증 메서드가 호출되었는지 확인
+        verify(jwtTokenProvider).validateToken(testToken);
+        
+        // 토큰 블랙리스트 추가 메서드가 호출되었는지 확인
+        verify(jwtTokenProvider).blacklistToken(testToken);
+    }
+    
+    @Test
+    @DisplayName("로그아웃 실패 테스트 - 토큰 없음")
+    void logoutFailWithNoTokenTest() {
+        // Given
+        lenient().when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn(null);
+        
+        // When
+        ResponseEntity<Void> response = authController.logout();
+        
+        // Then
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+    
+    @Test
+    @DisplayName("로그아웃 실패 테스트 - 유효하지 않은 토큰")
+    void logoutFailWithInvalidTokenTest() {
+        // Given
+        lenient().when(jwtTokenProvider.validateToken(testToken)).thenReturn(false);
+        
+        // When
+        ResponseEntity<Void> response = authController.logout();
+        
+        // Then
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+    
+    @Test
+    @DisplayName("이미 로그아웃된 토큰으로 재로그아웃 시도")
+    void logoutWithAlreadyBlacklistedTokenTest() {
+        // Given
+        lenient().when(jwtTokenProvider.validateToken(testToken)).thenReturn(false);
+        
+        // When
+        ResponseEntity<Void> response = authController.logout();
+        
+        // Then
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
     
     @Test
