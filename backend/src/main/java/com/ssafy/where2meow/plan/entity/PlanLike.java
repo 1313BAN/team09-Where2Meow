@@ -19,10 +19,10 @@ public class PlanLike {
     @Column(name = "plan_like_id")
     private int planLikeId;
 
-    @Column(name = "plan_id")
+    @Column(name = "plan_id", nullable = false)
     private int planId;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private int userId;
 
     @Column(name = "liked_at")

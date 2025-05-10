@@ -19,10 +19,10 @@ public class PlanBookmark {
     @Column(name = "plan_bookmark_id")
     private int planBookmarkId;
 
-    @Column(name = "plan_id")
+    @Column(name = "plan_id", nullable = false)
     private int planId;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private int userId;
 
     @Column(name = "bookmarked_at")

@@ -20,7 +20,7 @@ public class Plan {
     @Column(name = "plan_id")
     private int planId;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private int userId;
 
     @Column(name = "title", nullable = false)

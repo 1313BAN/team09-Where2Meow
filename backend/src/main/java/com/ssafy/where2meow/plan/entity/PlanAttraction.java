@@ -19,10 +19,10 @@ public class PlanAttraction {
     @Column(name = "plan_attraction_id")
     private int planAttractionId;
 
-    @Column(name = "plan_id")
+    @Column(name = "plan_id", nullable = false)
     private int planId;
 
-    @Column(name = "attraction_id")
+    @Column(name = "attraction_id", nullable = false)
     private int attractionId;
 
     @Column(name = "content")
