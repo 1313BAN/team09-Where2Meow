@@ -1,6 +1,6 @@
-package com.ssafy.where2meow.Review.repository;
+package com.ssafy.where2meow.review.repository;
 
-import com.ssafy.where2meow.Review.entity.Review;
+import com.ssafy.where2meow.review.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

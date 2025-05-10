@@ -15,10 +15,11 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(of = "attractionId")
 public class Attraction {
   @Id
   @Column(name = "attraction_id", nullable = false)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer attractionId;
 
   @Column(name = "content_id")

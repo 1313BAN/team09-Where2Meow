@@ -1,4 +1,4 @@
-package com.ssafy.where2meow.Review.entity;
+package com.ssafy.where2meow.review.entity;
 
 import com.ssafy.where2meow.user.entity.User;
 import jakarta.persistence.*;

@@ -1,9 +1,12 @@
-package com.ssafy.where2meow.Review.entity;
+package com.ssafy.where2meow.review.entity;
 
 import com.ssafy.where2meow.attraction.entity.Attraction;
 import com.ssafy.where2meow.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,10 +30,12 @@ public class Review {
   @Column(name = "score", nullable = false)
   private Integer score;
 
-  @Column(name = "created_at")
+  @Column(name = "created_at", updatable = false)
+  @CreationTimestamp
   private LocalDateTime createdAt;
 
   @Column(name = "updated_at")
+  @UpdateTimestamp
   private LocalDateTime updatedAt;
 
   @ManyToOne(fetch = FetchType.LAZY)

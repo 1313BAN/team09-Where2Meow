@@ -1,17 +1,21 @@
 package com.ssafy.where2meow.attraction.service;
 
-import com.ssafy.where2meow.Review.repository.ReviewRepository;
 import com.ssafy.where2meow.attraction.dto.AttractionDetailResponse;
 import com.ssafy.where2meow.attraction.dto.AttractionListResponse;
 import com.ssafy.where2meow.attraction.entity.Attraction;
 import com.ssafy.where2meow.attraction.repository.AttractionRepository;
+import com.ssafy.where2meow.attraction.repository.specification.AttractionSpecification;
+import com.ssafy.where2meow.review.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,50 +24,48 @@ public class AttractionService {
     private final AttractionRepository attractionRepository;
     private final ReviewRepository reviewRepository;
 
+    /**
+     * 조건별 여행지 검색 - 페이징 적용
+     * 
+     * @param countryId 국가 ID
+     * @param stateId 시도 ID
+     * @param cityId 시군구 ID
+     * @param categoryId 카테고리 ID
+     * @param searchKeyword 검색어
+     * @param pageable 페이징 정보
+     * @return 검색 조건에 맞는 여행지 Page 객체
+     */
     @Transactional(readOnly = true)
-    public List<AttractionListResponse> getAttractionList(Integer countryId, Integer stateId, Integer cityId, Integer categoryId) {
+    public Page<AttractionListResponse> getAttractionList(
+            Integer countryId, Integer stateId, Integer cityId, Integer categoryId, 
+            String searchKeyword, Pageable pageable) {
+        
         // 국가는 반드시 있어야 함
         if (countryId == null) {
             throw new IllegalArgumentException("Country ID is required");
         }
         
-        // 매개변수 조합에 따라 적절한 검색 메소드 호출
-        List<Attraction> attractions;
-        if (stateId != null && cityId != null && categoryId != null) {
-            // 국가, 시도, 시군구, 카테고리 모두 지정
-            attractions = attractionRepository.findByCountryIdAndStateIdAndCityIdAndCategoryId(countryId, stateId, cityId, categoryId);
-        } else if (stateId != null && cityId != null) {
-            // 국가, 시도, 시군구만 지정
-            attractions = attractionRepository.findByCountryIdAndStateIdAndCityId(countryId, stateId, cityId);
-        } else if (stateId != null && categoryId != null) {
-            // 국가, 시도, 카테고리만 지정
-            attractions = attractionRepository.findByCountryIdAndStateIdAndCategoryId(countryId, stateId, categoryId);
-        } else if (cityId != null && categoryId != null) {
-            // 국가, 시군구, 카테고리만 지정
-            attractions = attractionRepository.findByCountryIdAndCityIdAndCategoryId(countryId, cityId, categoryId);
-        } else if (stateId != null) {
-            // 국가, 시도만 지정
-            attractions = attractionRepository.findByCountryIdAndStateId(countryId, stateId);
-        } else if (cityId != null) {
-            // 국가, 시군구만 지정
-            attractions = attractionRepository.findByCountryIdAndCityId(countryId, cityId);
-        } else if (categoryId != null) {
-            // 국가, 카테고리만 지정
-            attractions = attractionRepository.findByCountryIdAndCategoryId(countryId, categoryId);
-        } else {
-            // 국가만 지정
-            attractions = attractionRepository.findByCountryId(countryId);
+        // 동적 쿼리 조건 생성
+        Specification<Attraction> spec = Specification.where(AttractionSpecification.withCountryId(countryId))
+                .and(AttractionSpecification.withStateId(stateId))
+                .and(AttractionSpecification.withCityId(cityId))
+                .and(AttractionSpecification.withCategoryId(categoryId));
+        
+        // 검색어가 있는 경우 이름 검색 조건 추가
+        if (searchKeyword != null && !searchKeyword.isEmpty()) {
+            spec = spec.and(AttractionSpecification.withNameContains(searchKeyword));
         }
         
-        // Attraction 엔티티를 AttractionListResponse DTO로 변환
-        List<AttractionListResponse> result = new ArrayList<>();
+        // 페이징된 데이터 조회
+        Page<Attraction> attractions = attractionRepository.findAll(spec, pageable);
         
-        for (Attraction attraction : attractions) {
+        // DTO로 변환하여 반환
+        return attractions.map(attraction -> {
             // 리뷰 정보 조회
             Long reviewCount = reviewRepository.countByAttractionId(attraction.getAttractionId());
             Double reviewAvgScore = reviewRepository.getAverageScoreByAttractionId(attraction.getAttractionId());
             
-            result.add(AttractionListResponse.builder()
+            return AttractionListResponse.builder()
                     .attractionId(attraction.getAttractionId())
                     .attractionName(attraction.getAttractionName())
                     .image(attraction.getFirstImage1())
@@ -71,12 +73,51 @@ public class AttractionService {
                     .reviewAvgScore(reviewAvgScore)
                     .stateName(attraction.getState().getStateName())
                     .cityName(attraction.getCity().getCityName())
-                    .build());
-        }
-        
-        return result;
+                    .build();
+        });
     }
 
+    /**
+     * 레거시 호환성을 위한 메서드 - 페이징되지 않은 리스트 반환
+     * 
+     * @param countryId 국가 ID
+     * @param stateId 시도 ID
+     * @param cityId 시군구 ID
+     * @param categoryId 카테고리 ID
+     * @return 검색 조건에 맞는 여행지 목록
+     */
+    @Transactional(readOnly = true)
+    public List<AttractionListResponse> getAttractionList(Integer countryId, Integer stateId, Integer cityId, Integer categoryId) {
+        // 검색어 없이 페이징 없이 호출하는 경우 (기존 인터페이스 유지)
+        Specification<Attraction> spec = Specification.where(AttractionSpecification.withCountryId(countryId))
+                .and(AttractionSpecification.withStateId(stateId))
+                .and(AttractionSpecification.withCityId(cityId))
+                .and(AttractionSpecification.withCategoryId(categoryId));
+        
+        List<Attraction> attractions = attractionRepository.findAll(spec);
+        
+        return attractions.stream().map(attraction -> {
+            Long reviewCount = reviewRepository.countByAttractionId(attraction.getAttractionId());
+            Double reviewAvgScore = reviewRepository.getAverageScoreByAttractionId(attraction.getAttractionId());
+            
+            return AttractionListResponse.builder()
+                    .attractionId(attraction.getAttractionId())
+                    .attractionName(attraction.getAttractionName())
+                    .image(attraction.getFirstImage1())
+                    .reviewCount(reviewCount)
+                    .reviewAvgScore(reviewAvgScore)
+                    .stateName(attraction.getState().getStateName())
+                    .cityName(attraction.getCity().getCityName())
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 여행지 상세정보 조회
+     * 
+     * @param attractionId 여행지 ID
+     * @return 여행지 상세 정보
+     */
     @Transactional(readOnly = true)
     public AttractionDetailResponse getAttractionDetail(Integer attractionId) {
         Attraction attraction = attractionRepository.findByIdWithDetails(attractionId)
@@ -102,6 +143,4 @@ public class AttractionService {
                 .cityName(attraction.getCity().getCityName())
                 .build();
     }
-    
-
 }
