@@ -19,8 +19,9 @@ public class PlanAttraction {
     @Column(name = "plan_attraction_id")
     private int planAttractionId;
 
-    @Column(name = "plan_id", nullable = false)
-    private int planId;
+    @ManyToOne
+    @JoinColumn(name = "plan_id", nullable = false)
+    private Plan plan;
 
     @Column(name = "attraction_id", nullable = false)
     private int attractionId;

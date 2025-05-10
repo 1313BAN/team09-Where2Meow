@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.*;
+import java.util.List;
 
 @Getter
 @Setter
@@ -47,5 +48,8 @@ public class Plan {
 
     @Column(name = "is_public", columnDefinition = "boolean default false")
     private boolean isPublic;
+
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<PlanAttraction> planAttractions;
 
 }
