@@ -22,8 +22,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -76,7 +80,7 @@ public class AuthTest {
     void setUp() {
         // AuthController 초기화 (UserService를 주입)
         authController = new AuthController(userService);
-        
+
         // 테스트 사용자 생성
         testUser = new User();
         testUser.setUserId(1);
@@ -94,7 +98,7 @@ public class AuthTest {
 
         // 인증 객체 생성
         authentication = new UsernamePasswordAuthenticationToken(
-                "test@example.com", 
+                "test@example.com",
                 "password123",
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
         );
@@ -103,7 +107,7 @@ public class AuthTest {
         lenient().when(userRepository.findByEmailAndIsActiveTrue(testUser.getEmail())).thenReturn(Optional.of(testUser));
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         lenient().when(jwtTokenProvider.createToken(anyString(), anyString())).thenReturn(testToken);
-        
+
         // 로그아웃 관련 모의 설정
         lenient().when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn(testToken);
         lenient().when(jwtTokenProvider.validateToken(testToken)).thenReturn(true);
@@ -121,24 +125,24 @@ public class AuthTest {
     void loginSuccess() {
         // When
         ResponseEntity<LoginResponse> response = authController.login(loginRequest);
-        
+
         // Then
         assertEquals(200, response.getStatusCodeValue());
         assertNotNull(response.getBody());
-        
+
         LoginResponse loginResponse = response.getBody();
         assertEquals("test.jwt.token", loginResponse.getToken());
         assertEquals(testUser.getUuid().toString(), loginResponse.getUuid());
         assertEquals(testUser.getName(), loginResponse.getName());
         assertEquals(testUser.getEmail(), loginResponse.getEmail());
         assertEquals(testUser.getRole().name(), loginResponse.getRole());
-        
+
         // userRepository.findByEmailAndIsActiveTrue 메서드가 호출되었는지 확인
         verify(userRepository, times(1)).findByEmailAndIsActiveTrue(loginRequest.getEmail());
-        
+
         // jwtTokenProvider.createToken 메서드가 호출되었는지 확인
         verify(jwtTokenProvider, times(1)).createToken(eq(testUser.getEmail()), eq(testUser.getRole().name()));
-        
+
         // authenticationManager.authenticate 메서드가 호출되었는지 확인
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
@@ -150,17 +154,17 @@ public class AuthTest {
         LoginRequest invalidRequest = new LoginRequest();
         invalidRequest.setEmail("nonexistent@example.com");
         invalidRequest.setPassword("password123");
-        
+
         lenient().when(userRepository.findByEmailAndIsActiveTrue(invalidRequest.getEmail())).thenReturn(Optional.empty());
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("Bad credentials"));
-        
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
         // When & Then
         Exception exception = assertThrows(RuntimeException.class, () -> {
             userService.login(invalidRequest);
         });
-        
-        assertTrue(exception.getMessage().contains("로그인에 실패하였습니다"));
+
+        assertTrue(exception.getMessage().contains("이메일 또는 비밀번호가 일치하지 않습니다"));
     }
 
     @Test
@@ -178,18 +182,18 @@ public class AuthTest {
         LoginRequest inactiveRequest = new LoginRequest();
         inactiveRequest.setEmail("inactive@example.com");
         inactiveRequest.setPassword("password123");
-        
+
         lenient().when(userRepository.findByEmail(inactiveRequest.getEmail())).thenReturn(Optional.of(inactiveUser));
         lenient().when(userRepository.findByEmailAndIsActiveTrue(inactiveRequest.getEmail())).thenReturn(Optional.empty());
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("User is inactive"));
-        
+                .thenThrow(new DisabledException("User account is disabled"));
+
         // When & Then
         Exception exception = assertThrows(RuntimeException.class, () -> {
             userService.login(inactiveRequest);
         });
-        
-        assertTrue(exception.getMessage().contains("로그인에 실패하였습니다"));
+
+        assertTrue(exception.getMessage().contains("계정이 비활성화되어 있습니다"));
     }
 
     @Test
@@ -199,16 +203,16 @@ public class AuthTest {
         LoginRequest invalidPasswordRequest = new LoginRequest();
         invalidPasswordRequest.setEmail("test@example.com");
         invalidPasswordRequest.setPassword("wrongpassword");
-        
+
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("Bad credentials"));
-        
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
         // When & Then
         Exception exception = assertThrows(RuntimeException.class, () -> {
             userService.login(invalidPasswordRequest);
         });
-        
-        assertTrue(exception.getMessage().contains("로그인에 실패하였습니다"));
+
+        assertTrue(exception.getMessage().contains("이메일 또는 비밀번호가 일치하지 않습니다"));
     }
 
     @Test
@@ -271,6 +275,63 @@ public class AuthTest {
         
         // Then
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+    
+    @Test
+    @DisplayName("계정이 잠긴 사용자 로그인 실패 테스트")
+    void loginFailWithLockedAccount() {
+        // Given
+        LoginRequest lockedRequest = new LoginRequest();
+        lockedRequest.setEmail("locked@example.com");
+        lockedRequest.setPassword("password123");
+        
+        lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new LockedException("User account is locked"));
+        
+        // When & Then
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            userService.login(lockedRequest);
+        });
+        
+        assertTrue(exception.getMessage().contains("계정이 잠겨 있습니다"));
+    }
+    
+    @Test
+    @DisplayName("기타 인증 예외 로그인 실패 테스트")
+    void loginFailWithOtherAuthenticationException() {
+        // Given
+        LoginRequest request = new LoginRequest();
+        request.setEmail("other@example.com");
+        request.setPassword("password123");
+        
+        lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new AuthenticationException("Other authentication error") {});
+        
+        // When & Then
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            userService.login(request);
+        });
+        
+        assertTrue(exception.getMessage().contains("인증에 실패했습니다"));
+    }
+    
+    @Test
+    @DisplayName("기타 예외 로그인 실패 테스트")
+    void loginFailWithOtherException() {
+        // Given
+        LoginRequest request = new LoginRequest();
+        request.setEmail("exception@example.com");
+        request.setPassword("password123");
+        
+        lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new NullPointerException("Some other error"));
+        
+        // When & Then
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            userService.login(request);
+        });
+        
+        assertTrue(exception.getMessage().contains("로그인 처리 중 오류가 발생했습니다"));
     }
     
     @Test
