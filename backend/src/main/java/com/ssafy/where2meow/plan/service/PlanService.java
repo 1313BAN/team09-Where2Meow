@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.plan.service;
 
+import com.ssafy.where2meow.plan.dto.PlanDetailResponse;
 import com.ssafy.where2meow.plan.dto.PlanReqeust;
 import com.ssafy.where2meow.plan.dto.PlanResponse;
 import com.ssafy.where2meow.plan.entity.Plan;
@@ -47,6 +48,39 @@ public class PlanService {
         }
 
         return plans.stream().map(plan -> convertToDto(plan, userId)).toList();
+    }
+
+    // 사용자의 여행 계획 목록 조회
+    public List<PlanResponse> getUserPlans(int userId) {
+        List<Plan> plans = planRepository.findByUserId(userId);
+        return plans.stream().map(plan -> convertToDto(plan, userId)).toList();
+    }
+
+    // 특정 여행 계획 상세 조회
+    public PlanDetailResponse getPlanDetail(int planId, Integer userId) {
+        // planId로 Plan과 관련 PlanAttraction들을 함께 조회
+        Plan plan = planRepository.findByIdWithAttractions(planId);
+        if (plan == null) {
+            throw new RuntimeException("Plan not found with id: " + planId);
+        }
+
+        // 조회수 증가
+        plan.setViewCount(plan.getViewCount() + 1);
+        planRepository.save(plan);
+
+        // 관련 정보 조회
+        int likeCount = planLikeRepository.countByPlanId(planId);
+
+        boolean isLiked = false;
+        boolean isBookmarked = false;
+
+        if (userId != null) {
+            isLiked = planLikeRepository.existsByPlanIdAndUserId(planId, userId);
+            isBookmarked = planBookmarkRepository.existsByPlanIdAndUserId(planId, userId);
+        }
+
+        // PlanDetailResponse 생성 및 반환
+        return PlanDetailResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
     }
 
     // 여행 계획 생성

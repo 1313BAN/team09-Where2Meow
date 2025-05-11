@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.plan.controller;
 
+import com.ssafy.where2meow.plan.dto.PlanDetailResponse;
 import com.ssafy.where2meow.plan.dto.PlanReqeust;
 import com.ssafy.where2meow.plan.dto.PlanResponse;
 import com.ssafy.where2meow.plan.service.PlanLikeService;
@@ -22,6 +23,20 @@ public class PlanController {
     public ResponseEntity<List<PlanResponse>> getAllPlans(@RequestParam(required = false) Integer userId) {
         List<PlanResponse> plans = planService.getAllPlans(userId);
         return ResponseEntity.ok(plans);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PlanResponse>> getUserPlans(@PathVariable int userId) {
+        List<PlanResponse> plans = planService.getUserPlans(userId);
+        return ResponseEntity.ok(plans);
+    }
+
+    @GetMapping("/{planId}")
+    public ResponseEntity<PlanDetailResponse> getPlanDetail(
+            @PathVariable int planId,
+            @RequestParam(required = false) Integer userId) {
+        PlanDetailResponse planDetail = planService.getPlanDetail(planId, userId);
+        return ResponseEntity.ok(planDetail);
     }
 
     @PostMapping
