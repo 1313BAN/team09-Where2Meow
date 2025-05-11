@@ -63,7 +63,7 @@ public class PlanService {
         // planId로 Plan과 관련 PlanAttraction들을 함께 조회
         Plan plan = planRepository.findByIdWithAttractions(planId);
         if (plan == null) {
-            throw new RuntimeException("Plan not found with id: " + planId);
+            throw new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다.");
         }
 
         // 조회수 증가
@@ -71,14 +71,14 @@ public class PlanService {
         planRepository.save(plan);
 
         // 관련 정보 조회
-        int likeCount = planLikeRepository.countByPlanId(planId);
+        int likeCount = planLikeRepository.countByPlan_PlanId(planId);
 
         boolean isLiked = false;
         boolean isBookmarked = false;
 
         if (userId != null) {
-            isLiked = planLikeRepository.existsByPlanIdAndUserId(planId, userId);
-            isBookmarked = planBookmarkRepository.existsByPlanIdAndUserId(planId, userId);
+            isLiked = planLikeRepository.existsByPlan_PlanIdAndUserId(planId, userId);
+            isBookmarked = planBookmarkRepository.existsByPlan_PlanIdAndUserId(planId, userId);
         }
 
         // PlanDetailResponse 생성 및 반환
@@ -179,14 +179,14 @@ public class PlanService {
 
     // Entity -> DTO 변환
     private PlanResponse convertToDto(Plan plan, Integer userId) {
-        int likeCount = planLikeRepository.countByPlanId(plan.getPlanId());
+        int likeCount = planLikeRepository.countByPlan_PlanId(plan.getPlanId());
 
         boolean isLiked = false;
         boolean isBookmarked = false;
 
         if (userId != null) {
-            isLiked = planLikeRepository.existsByPlanIdAndUserId(plan.getPlanId(), userId);
-            isBookmarked = planBookmarkRepository.existsByPlanIdAndUserId(plan.getPlanId(), userId);
+            isLiked = planLikeRepository.existsByPlan_PlanIdAndUserId(plan.getPlanId(), userId);
+            isBookmarked = planBookmarkRepository.existsByPlan_PlanIdAndUserId(plan.getPlanId(), userId);
         }
 
         return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);

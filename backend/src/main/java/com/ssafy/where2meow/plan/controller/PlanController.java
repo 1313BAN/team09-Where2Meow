@@ -70,29 +70,29 @@ public class PlanController {
 
     // 여행 계획 좋아요 추가
     @PostMapping("/{planId}/like")
-    public ResponseEntity<Void> addLike(@PathVariable int planId, @RequestParam int userId) {
-        planLikeService.addLike(planId, userId);
+    public ResponseEntity<Void> createLike(@PathVariable int planId, @RequestParam int userId) {
+        planLikeService.createLike(planId, userId);
         return ResponseEntity.noContent().build();
     }
 
     // 여행 계획 좋아요 삭제
     @DeleteMapping("/{planId}/like")
     public ResponseEntity<Void> deleteLike(@PathVariable int planId, @RequestParam int userId) {
-        planLikeService.removeLike(planId, userId);
+        planLikeService.deleteLike(planId, userId);
         return ResponseEntity.noContent().build();
     }
 
     // 여행 계획 북마크 추가
-    @PostMapping("/{planId}/like")
-    public ResponseEntity<Void> addBookmark(@PathVariable int planId, @RequestParam int userId) {
-        planBookmarkService.addLike(planId, userId);
+    @PostMapping("/{planId}/bookmark")
+    public ResponseEntity<Void> createBookmark(@PathVariable int planId, @RequestParam int userId) {
+        planBookmarkService.createLike(planId, userId);
         return ResponseEntity.noContent().build();
     }
 
     // 여행 계획 북마크 삭제
     @DeleteMapping("/{planId}/bookmark")
     public ResponseEntity<Void> deleteBookmark(@PathVariable int planId, @RequestParam int userId) {
-        planBookmarkService.removeBookmark(planId, userId);
+        planBookmarkService.deleteBookmark(planId, userId);
         return ResponseEntity.noContent().build();
     }
 

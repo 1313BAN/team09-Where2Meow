@@ -20,8 +20,9 @@ public class PlanLike {
     @Column(name = "plan_like_id")
     private int planLikeId;
 
-    @Column(name = "plan_id", nullable = false)
-    private int planId;
+    @ManyToOne
+    @JoinColumn(name = "plan_id", nullable = false)
+    private Plan plan;
 
     @Column(name = "user_id", nullable = false)
     private int userId;

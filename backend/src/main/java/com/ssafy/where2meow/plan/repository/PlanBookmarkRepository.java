@@ -8,12 +8,12 @@ import org.springframework.stereotype.Repository;
 public interface PlanBookmarkRepository extends JpaRepository<PlanBookmark, Integer> {
 
     // 사용자가 여행 계획에 북마크를 눌렀는지 확인
-    boolean existsByPlanIdAndUserId(int planId, int userId);
+    boolean existsByPlan_PlanIdAndUserId(int planId, int userId);
 
     // 사용자가 누른 특정 여행 계획 북마크 삭제
-    void deletePlanBookmarkByPlanIdAndUserId(int planId, int userId);
+    void deleteByPlan_PlanIdAndUserId(int planId, int userId);
 
     // 특정 여행 계획의 북마크 수 카운트
-    int countByPlanId(int planId);
+    int countByPlan_PlanId(int planId);
 
 }
