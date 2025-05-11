@@ -68,10 +68,24 @@ public class PlanController {
         return ResponseEntity.noContent().build();
     }
 
+    // 여행 계획 좋아요 추가
+    @PostMapping("/{planId}/like")
+    public ResponseEntity<Void> addLike(@PathVariable int planId, @RequestParam int userId) {
+        planLikeService.addLike(planId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
     // 여행 계획 좋아요 삭제
     @DeleteMapping("/{planId}/like")
     public ResponseEntity<Void> deleteLike(@PathVariable int planId, @RequestParam int userId) {
         planLikeService.removeLike(planId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 여행 계획 북마크 추가
+    @PostMapping("/{planId}/like")
+    public ResponseEntity<Void> addBookmark(@PathVariable int planId, @RequestParam int userId) {
+        planBookmarkService.addLike(planId, userId);
         return ResponseEntity.noContent().build();
     }
 

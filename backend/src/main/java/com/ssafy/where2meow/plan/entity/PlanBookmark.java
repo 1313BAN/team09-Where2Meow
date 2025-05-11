@@ -2,6 +2,7 @@ package com.ssafy.where2meow.plan.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +26,7 @@ public class PlanBookmark {
     @Column(name = "user_id", nullable = false)
     private int userId;
 
+    @CreationTimestamp
     @Column(name = "bookmarked_at")
     private LocalDateTime bookmarkedAt;
 
