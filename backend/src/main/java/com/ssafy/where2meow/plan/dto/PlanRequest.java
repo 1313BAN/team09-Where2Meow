@@ -1,7 +1,6 @@
 package com.ssafy.where2meow.plan.dto;
 
 import lombok.*;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.util.List;
