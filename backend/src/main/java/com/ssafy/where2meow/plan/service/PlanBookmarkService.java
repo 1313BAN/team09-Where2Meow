@@ -16,14 +16,14 @@ public class PlanBookmarkService {
     private final PlanBookmarkRepository planBookmarkRepository;
 
     // 사용자가 여행 계획에 북마크를 눌렀는지 확인
-    public boolean hasUserBookmared(int planId, int userId) {
+    public boolean hasUserBookmarked(int planId, int userId) {
         return planBookmarkRepository.existsByPlan_PlanIdAndUserId(planId, userId);
     }
 
     // 여행 계획 북마크 추가
     @Transactional
-    public void createLike(int planId, int userId) {
-        if (!hasUserBookmared(planId, userId)) {
+    public void createBookmark(int planId, int userId) {
+        if (!hasUserBookmarked(planId, userId)) {
             Plan plan = planRepository.findById(planId)
                     .orElseThrow(() -> new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다."));
             PlanBookmark planBookmark = new PlanBookmark();

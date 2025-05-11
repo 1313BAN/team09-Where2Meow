@@ -1,7 +1,7 @@
 package com.ssafy.where2meow.plan.controller;
 
 import com.ssafy.where2meow.plan.dto.PlanDetailResponse;
-import com.ssafy.where2meow.plan.dto.PlanReqeust;
+import com.ssafy.where2meow.plan.dto.PlanRequest;
 import com.ssafy.where2meow.plan.dto.PlanResponse;
 import com.ssafy.where2meow.plan.service.PlanBookmarkService;
 import com.ssafy.where2meow.plan.service.PlanLikeService;
@@ -46,7 +46,7 @@ public class PlanController {
 
     // 여행 계획 추가
     @PostMapping
-    public ResponseEntity<PlanResponse> createPlan(@RequestBody PlanReqeust planRequest, @RequestParam int userId) {
+    public ResponseEntity<PlanResponse> createPlan(@RequestBody PlanRequest planRequest, @RequestParam int userId) {
         PlanResponse createdPlan = planService.createPlan(planRequest, userId);
         return ResponseEntity.ok(createdPlan);
     }
@@ -56,7 +56,7 @@ public class PlanController {
     public ResponseEntity<PlanResponse> updatePlan(
             @PathVariable int planId,
             @RequestParam int userId,
-            @RequestBody PlanReqeust planRequest) {
+            @RequestBody PlanRequest planRequest) {
         PlanResponse updatedPlan = planService.updatePlan(planId, planRequest, userId);
         return ResponseEntity.ok(updatedPlan);
     }
@@ -85,7 +85,7 @@ public class PlanController {
     // 여행 계획 북마크 추가
     @PostMapping("/{planId}/bookmark")
     public ResponseEntity<Void> createBookmark(@PathVariable int planId, @RequestParam int userId) {
-        planBookmarkService.createLike(planId, userId);
+        planBookmarkService.createBookmark(planId, userId);
         return ResponseEntity.noContent().build();
     }
 

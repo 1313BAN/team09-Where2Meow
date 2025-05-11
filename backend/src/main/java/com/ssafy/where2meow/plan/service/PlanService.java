@@ -1,7 +1,7 @@
 package com.ssafy.where2meow.plan.service;
 
 import com.ssafy.where2meow.plan.dto.PlanDetailResponse;
-import com.ssafy.where2meow.plan.dto.PlanReqeust;
+import com.ssafy.where2meow.plan.dto.PlanRequest;
 import com.ssafy.where2meow.plan.dto.PlanResponse;
 import com.ssafy.where2meow.plan.entity.Plan;
 import com.ssafy.where2meow.plan.entity.PlanAttraction;
@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,14 +38,9 @@ public class PlanService {
 
         if (userId != null) {
             // 사용자 ID가 제공된 경우
-            plans = planRepository.findByUserId(userId);
-            List<Plan> publicPlans = planRepository.findByIsPublicTrue();
-
-            for(Plan plan : publicPlans) {
-                if (!plans.contains(plan)) {
-                    plans.add(plan);
-                }
-            }
+            Set<Plan> planSet = new HashSet<>(planRepository.findByUserId(userId));
+            planSet.addAll(planRepository.findByIsPublicTrue());
+            plans = new ArrayList<>(planSet);
         } else {
             // 사용자 ID가 제공되지 않은 경우
             plans = planRepository.findByIsPublicTrue();
@@ -87,17 +85,17 @@ public class PlanService {
 
     // 여행 계획 생성
     @Transactional
-    public PlanResponse createPlan(PlanReqeust planRequest, Integer userId) {
+    public PlanResponse createPlan(PlanRequest planRequest, Integer userId) {
         Plan plan = new Plan();
         plan.setUserId(userId);
         plan.setTitle(planRequest.getTitle());
         plan.setContent(planRequest.getContent());
 
         if (planRequest.getStartDate() != null) {
-            plan.setStartDate(LocalDate.parse(planRequest.getStartDate()));
+            plan.setStartDate(planRequest.getStartDate());
         }
         if (planRequest.getEndDate() != null) {
-            plan.setEndDate(LocalDate.parse(planRequest.getEndDate()));
+            plan.setEndDate(planRequest.getEndDate());
         }
         
         plan.setPublic(planRequest.isPublic());
@@ -126,7 +124,7 @@ public class PlanService {
 
     // 여행 계획 수정
     @Transactional
-    public PlanResponse updatePlan(int planId, PlanReqeust planRequest, int userId) {
+    public PlanResponse updatePlan(int planId, PlanRequest planRequest, int userId) {
         // plan이 존재하는지 확인
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다."));
@@ -136,10 +134,10 @@ public class PlanService {
         plan.setContent(planRequest.getContent());
         
         if (planRequest.getStartDate() != null) {
-            plan.setStartDate(LocalDate.parse(planRequest.getStartDate()));
+            plan.setStartDate(planRequest.getStartDate());
         }
         if (planRequest.getEndDate() != null) {
-            plan.setEndDate(LocalDate.parse(planRequest.getEndDate()));
+            plan.setEndDate(planRequest.getEndDate());
         }
         
         plan.setPublic(planRequest.isPublic());

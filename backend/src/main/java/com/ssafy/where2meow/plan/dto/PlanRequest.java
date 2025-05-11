@@ -1,6 +1,7 @@
 package com.ssafy.where2meow.plan.dto;
 
 import lombok.*;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -9,11 +10,11 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PlanReqeust {
+public class PlanRequest {
     private String title;
     private String content;
-    private String startDate;
-    private String endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private boolean isPublic;
 
     private List<PlanAttractionRequest> attractions;
