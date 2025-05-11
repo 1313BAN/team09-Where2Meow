@@ -9,6 +9,7 @@ import com.ssafy.where2meow.plan.repository.PlanAttractionRepository;
 import com.ssafy.where2meow.plan.repository.PlanBookmarkRepository;
 import com.ssafy.where2meow.plan.repository.PlanLikeRepository;
 import com.ssafy.where2meow.plan.repository.PlanRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -57,6 +58,7 @@ public class PlanService {
     }
 
     // 특정 여행 계획 상세 조회
+    @Transactional
     public PlanDetailResponse getPlanDetail(int planId, Integer userId) {
         // planId로 Plan과 관련 PlanAttraction들을 함께 조회
         Plan plan = planRepository.findByIdWithAttractions(planId);
@@ -84,6 +86,7 @@ public class PlanService {
     }
 
     // 여행 계획 생성
+    @Transactional
     public PlanResponse createPlan(PlanReqeust planRequest, Integer userId) {
         Plan plan = new Plan();
         plan.setUserId(userId);
@@ -121,6 +124,59 @@ public class PlanService {
         return convertToDto(savedPlan, userId);
     }
 
+    // 여행 계획 수정
+    @Transactional
+    public PlanResponse updatePlan(int planId, PlanReqeust planRequest, int userId) {
+        // plan이 존재하는지 확인
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다."));
+        
+        // plan 기본 정보 업데이트
+        plan.setTitle(planRequest.getTitle());
+        plan.setContent(planRequest.getContent());
+        
+        if (planRequest.getStartDate() != null) {
+            plan.setStartDate(LocalDate.parse(planRequest.getStartDate()));
+        }
+        if (planRequest.getEndDate() != null) {
+            plan.setEndDate(LocalDate.parse(planRequest.getEndDate()));
+        }
+        
+        plan.setPublic(planRequest.isPublic());
+        plan.setUpdatedAt(LocalDateTime.now());
+
+        Plan savedPlan = planRepository.save(plan);
+        
+        // 기존 관광지 정보 삭제
+        planAttractionRepository.deleteByPlanId(planId);
+        
+        // 새로운 관광지 정보 추가
+        if (planRequest.getAttractions() != null && !planRequest.getAttractions().isEmpty()) {
+            List<PlanAttraction> newAttractions = planRequest.getAttractions().stream()
+                .map(attractionRequest -> {
+                    PlanAttraction attraction = new PlanAttraction();
+                    attraction.setPlan(savedPlan);
+                    attraction.setAttractionId(attractionRequest.getAttractionId());
+                    attraction.setContent(attractionRequest.getContent());
+                    attraction.setDate(attractionRequest.getDate());
+                    attraction.setAttractionOrder(attractionRequest.getAttractionOrder());
+                    return attraction;
+                })
+                .collect(Collectors.toList());
+            
+            planAttractionRepository.saveAll(newAttractions);
+        }
+        
+        // 업데이트된 Plan 정보 반환
+        return convertToDto(savedPlan, userId);
+    }
+
+    // 여행 계획 삭제
+    @Transactional
+    public void deletePlan(int planId) {
+        planRepository.deleteByPlanId(planId);
+    }
+
     // Entity -> DTO 변환
     private PlanResponse convertToDto(Plan plan, Integer userId) {
         int likeCount = planLikeRepository.countByPlanId(plan.getPlanId());
@@ -135,5 +191,4 @@ public class PlanService {
 
         return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
     }
-
 }

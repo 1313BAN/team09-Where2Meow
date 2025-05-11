@@ -18,4 +18,7 @@ public interface PlanRepository extends JpaRepository<Plan, Integer> {
     @Query("SELECT p FROM Plan p LEFT JOIN FETCH p.planAttractions WHERE p.planId = :planId")
     Plan findByIdWithAttractions(int planId);
 
+    // 특정 여행 계획 삭제
+    void deleteByPlanId(int planId);
+
 }

@@ -10,7 +10,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PlanReqeust {
-    private int userId;
     private String title;
     private String content;
     private String startDate;
