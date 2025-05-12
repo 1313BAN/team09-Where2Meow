@@ -38,14 +38,9 @@ public class Review {
   @UpdateTimestamp
   private LocalDateTime updatedAt;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "attraction_id", nullable = false)
-  private Attraction attraction;
+  @Column(name = "attraction_id", nullable = false)
+  private Integer attractionId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
-
-  @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<ReviewLike> reviewLikes;
+  @Column(name = "user_id", nullable = false)
+  private Integer userId;
 }

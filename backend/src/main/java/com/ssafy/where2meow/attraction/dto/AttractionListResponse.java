@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AttractionListResponse {
-    private Integer attractionId;
-    private String attractionName;
-    private String image;
-    private Long reviewCount;
-    private Double reviewAvgScore;
-    private String stateName;
-    private String cityName;
+  private Integer attractionId;
+  private String attractionName;
+  private String image;
+  private Long reviewCount;
+  private Double reviewAvgScore;
+  private String stateName;
+  private String cityName;
 }

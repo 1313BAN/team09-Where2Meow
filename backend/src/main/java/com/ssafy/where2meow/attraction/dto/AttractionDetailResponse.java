@@ -1,11 +1,13 @@
 package com.ssafy.where2meow.attraction.dto;
 
+import com.ssafy.where2meow.review.entity.Review;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -29,4 +31,6 @@ public class AttractionDetailResponse {
     private String countryName;
     private String stateName;
     private String cityName;
+    private List<Review> reviews;
+    private Double reviewAvgScore;
 }
