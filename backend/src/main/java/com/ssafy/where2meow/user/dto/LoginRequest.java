@@ -22,4 +22,10 @@ public class LoginRequest {
   @NotBlank(message = "비밀번호는 필수 입력값입니다.")
   @Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하여야 합니다.")
   private String password;
+  
+  // 아이디 저장 여부 (서버에서 쿠키 생성/삭제 처리)
+  private boolean rememberEmail;
+  
+  // 자동 로그인 여부 (Spring Security의 remember-me와 매핑)
+  private boolean rememberMe;
 }

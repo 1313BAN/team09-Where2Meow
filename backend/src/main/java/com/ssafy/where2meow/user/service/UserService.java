@@ -7,6 +7,7 @@ import com.ssafy.where2meow.user.repository.UserRepository;
 import com.ssafy.where2meow.user.token.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -18,9 +19,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.NoSuchElementException;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class UserService {
 
   private final AuthenticationManager authenticationManager;
@@ -75,6 +79,39 @@ public class UserService {
       throw new RuntimeException("로그인 처리 중 오류가 발생했습니다.", e);
     }
   }
+  
+  /**
+   * 토큰을 사용하여 자동 로그인 처리
+   *
+   * @param token 자동 로그인용 토큰
+   * @return 로그인 응답 (토큰, 사용자 정보)
+   * @throws RuntimeException 토큰 검증 실패 시 발생
+   */
+  public LoginResponse loginWithToken(String token) {
+    // 토큰 유효성 검사
+    if (!jwtTokenProvider.validateToken(token)) {
+      throw new RuntimeException("유효하지 않은 또는 만료된 토큰입니다.");
+    }
+    
+    // 토큰에서 사용자 이메일 가져오기
+    String email = jwtTokenProvider.getUsername(token);
+    
+    // 사용자 정보 조회
+    User user = userRepository.findByEmailAndIsActiveTrue(email)
+        .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
+    
+    // 인증 객체 생성 및 설정
+    Authentication authentication = jwtTokenProvider.getAuthentication(token);
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    
+    return LoginResponse.builder()
+        .token(token) // 기존 토큰 재사용
+        .uuid(user.getUuid().toString())
+        .name(user.getName())
+        .email(user.getEmail())
+        .role(user.getRole().name())
+        .build();
+  }
 
   /**
    * 로그아웃 처리
@@ -87,14 +124,16 @@ public class UserService {
     String token = jwtTokenProvider.resolveToken(request);
     
     if (token == null) {
+      log.info("[UserService] 토큰이 null임");
       throw new RuntimeException("인증 토큰이 없습니다.");
     }
     
     // 토큰 유효성 검사
     if (!jwtTokenProvider.validateToken(token)) {
+      log.info("[UserService] 토큰 검증 실패");
       throw new RuntimeException("유효하지 않은 토큰입니다.");
     }
-    
+
     // 토큰을 블랙리스트에 추가
     jwtTokenProvider.blacklistToken(token);
     

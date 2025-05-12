@@ -1,10 +1,12 @@
 package com.ssafy.where2meow.config;
 
+import com.ssafy.where2meow.user.controller.LoginCookie;
+import com.ssafy.where2meow.user.security.CustomUserDetailsService;
 import com.ssafy.where2meow.user.token.JwtAuthenticationFilter;
-import com.ssafy.where2meow.user.token.JwtTokenProvider;
 import de.mkammerer.argon2.Argon2;
 import de.mkammerer.argon2.Argon2Factory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,15 +17,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  private final JwtTokenProvider jwtTokenProvider;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final CustomUserDetailsService userDetailsService;
   
   @Value("${argon2.type:ARGON2id}")
   private String argon2Type;
@@ -43,6 +44,9 @@ public class SecurityConfig {
   @Value("${argon2.parallelism:1}")
   private int argon2Parallelism;
 
+  @Value("${security.remember-me.key}")
+  private String rememberMeKey;
+
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
@@ -55,11 +59,24 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/logout").authenticated()
             .anyRequest().permitAll()
         )
+        // Remember-Me 기능 활성화
+        .rememberMe(rememberMe -> rememberMe
+            .key(rememberMeKey) // 안전한 키를 사용하세요
+            .rememberMeParameter("remember-me") // 클라이언트에서 보낼 파라미터 이름
+            .tokenValiditySeconds(60 * 60 * 24 * 7) // 7일 동안 유효
+            .userDetailsService(userDetailsService)
+        )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
-
+  
+  // 쿠키 유틸리티 빈
+  @Bean
+  public LoginCookie cookieUtil() {
+    return new LoginCookie();
+  }
+  
   @Bean
   public PasswordEncoder passwordEncoder() {
     // Argon2 인코더 구현

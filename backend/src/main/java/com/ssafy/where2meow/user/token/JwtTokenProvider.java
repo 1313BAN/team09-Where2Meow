@@ -94,8 +94,13 @@ public class JwtTokenProvider {
 
     // 토큰 블랙리스트에 추가 (로그아웃)
     public void blacklistToken(String token) {
-        long expirationTime = getExpirationTime(token);
-        tokenBlacklist.addToBlacklist(token, expirationTime);
+        try {
+            long expirationTime = getExpirationTime(token);
+            tokenBlacklist.addToBlacklist(token, expirationTime);
+        } catch (Exception e) {
+            log.error("[JWT 블랙리스트] 토큰 추가 실패: {}", e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     // 토큰 유효성 검사
@@ -103,12 +108,13 @@ public class JwtTokenProvider {
         try {
             // 블랙리스트에 있는 토큰인지 확인
             if (tokenBlacklist.isBlacklisted(token)) {
-                log.warn("Blacklisted token: {}", token);
+                log.warn("Blacklisted token: {}...", token.substring(0, Math.min(10, token.length())));
                 return false;
             }
 
             Jws<Claims> claims = Jwts.parser().setSigningKey(key).build().parseSignedClaims(token);
-            return !claims.getPayload().getExpiration().before(new Date());
+            boolean isValid = !claims.getPayload().getExpiration().before(new Date());
+            return isValid;
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
             return false;
