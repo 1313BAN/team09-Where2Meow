@@ -61,6 +61,7 @@ public class PlanService {
 
         // 조회수 증가
         planRepository.increaseViewCount(planId);
+        plan.setViewCount(plan.getViewCount() + 1);
 
         // 관련 관광지 정보 조회
         List<PlanAttraction> planAttractions = planAttractionRepository.findByPlanId(planId);
