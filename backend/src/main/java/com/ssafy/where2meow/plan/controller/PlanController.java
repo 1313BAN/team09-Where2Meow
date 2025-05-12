@@ -6,12 +6,17 @@ import com.ssafy.where2meow.plan.dto.PlanResponse;
 import com.ssafy.where2meow.plan.service.PlanBookmarkService;
 import com.ssafy.where2meow.plan.service.PlanLikeService;
 import com.ssafy.where2meow.plan.service.PlanService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/plan")
@@ -23,11 +28,33 @@ public class PlanController {
     private final PlanLikeService planLikeService;
     private final PlanBookmarkService planBookmarkService;
 
-    // 여행 계획 리스트 조회
     @GetMapping
-    public ResponseEntity<List<PlanResponse>> getAllPlans(@RequestParam(required = false) Integer userId) {
-        List<PlanResponse> plans = planService.getAllPlans(userId);
-        return ResponseEntity.ok(plans);
+    @Operation(
+            summary = "여행 계획 리스트 조회",
+            description = "여행 계획 리스트를 조회합니다. (로그인되어 있다면 본인이 생성한 private 여행 계획도 포함)"
+    )
+    @ApiResponse(responseCode = "200", description = "여행 계획 리스트 조회 성공")
+    public ResponseEntity<List<PlanResponse>> getAllPlans() {
+        // 인증 정보 추출
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        
+        // 비로그인 사용자 처리
+        if (auth == null || "anonymousUser".equals(auth.getPrincipal().toString())) {
+            return ResponseEntity.ok(planService.getAllPlans(null));
+        }
+        
+        try {
+            // UUID 추출 및 변환
+            String uuidString = auth.getName();
+            UUID uuid = UUID.fromString(uuidString);
+            
+            // 서비스 레이어에 UUID 전달하여 처리
+            List<PlanResponse> plans = planService.getAllPlansByUuid(uuid);
+            return ResponseEntity.ok(plans);
+        } catch (IllegalArgumentException e) {
+            // UUID 변환 오류 시 비로그인 사용자로 처리
+            return ResponseEntity.ok(planService.getAllPlans(null));
+        }
     }
 
     // 여행 계획 리스트 조회(사용자)

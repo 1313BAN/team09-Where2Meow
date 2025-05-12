@@ -13,12 +13,14 @@ import com.ssafy.where2meow.plan.repository.PlanAttractionRepository;
 import com.ssafy.where2meow.plan.repository.PlanBookmarkRepository;
 import com.ssafy.where2meow.plan.repository.PlanLikeRepository;
 import com.ssafy.where2meow.plan.repository.PlanRepository;
+import com.ssafy.where2meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import com.ssafy.where2meow.user.entity.User;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +31,7 @@ public class PlanService {
     private final PlanLikeRepository planLikeRepository;
     private final PlanBookmarkRepository planBookmarkRepository;
     private final PlanAttractionRepository planAttractionRepository;
+    private final UserRepository userRepository;
 
     // 모든 여행 계획 목록 조회
     // 사용자 ID가 제공된 경우 : 본인 여행 계획 전부 + 다른 사용자의 공개 여행 계획 조회
@@ -47,6 +50,22 @@ public class PlanService {
         }
 
         return convertToDtoList(plans, userId);
+    }
+
+    // UUID로 여행 계획 목록 조회
+    public List<PlanResponse> getAllPlansByUuid(UUID uuid) {
+        Integer userId = null;
+        
+        if (uuid != null) {
+            // UserRepository를 사용해 UUID로 사용자 조회
+            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
+            if (user != null) {
+                userId = user.getUserId();
+            }
+        }
+        
+        // 기존 getAllPlans 메서드 재사용
+        return getAllPlans(userId);
     }
 
     // 사용자의 여행 계획 목록 조회
