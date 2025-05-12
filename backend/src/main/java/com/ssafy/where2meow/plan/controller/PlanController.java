@@ -43,9 +43,17 @@ public class PlanController {
     }
 
     // 여행 계획 리스트 조회(사용자)
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<PlanResponse>> getUserPlans(@PathVariable int userId) {
-        List<PlanResponse> plans = planService.getUserPlans(userId);
+    @GetMapping("/user")
+    @Operation(
+            summary = "여행 계획 리스트 조회 (사용자)",
+            description = "사용자가 생성한 여행 계획 리스트를 조회합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "여행 계획 리스트 조회 성공")
+    public ResponseEntity<List<PlanResponse>> getUserPlans() {
+        // 인증 정보 추출
+        UUID uuid = getCurrentUserUuid();
+
+        List<PlanResponse> plans = planService.getUserPlansByUuid(uuid);
         return ResponseEntity.ok(plans);
     }
 
@@ -55,6 +63,7 @@ public class PlanController {
             description = "여행 계획의 상세 정보를 조회합니다."
     )
     @ApiResponse(responseCode = "200", description = "여행 계획 상세 조회 성공")
+    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     public ResponseEntity<PlanDetailResponse> getPlanDetail(@PathVariable int planId) {
         // 인증 정보 추출
         UUID uuid = getCurrentUserUuid();

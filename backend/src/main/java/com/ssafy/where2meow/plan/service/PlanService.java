@@ -72,6 +72,20 @@ public class PlanService {
         return convertToDtoList(plans, userId);
     }
 
+    // uuid를 기반으로 사용자의 여행 계획 목록 조회
+    public List<PlanResponse> getUserPlansByUuid(UUID uuid) {
+        Integer userId = null;
+
+        if (uuid != null) {
+            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
+            if (user != null) {
+                userId = user.getUserId();
+            }
+        }
+
+        return getUserPlans(userId);
+    }
+
     // 특정 여행 계획 상세 조회
     @Transactional
     public PlanDetailResponse getPlanDetail(int planId, Integer userId) {
@@ -268,4 +282,5 @@ public class PlanService {
             return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
         }).toList();
     }
+
 }
