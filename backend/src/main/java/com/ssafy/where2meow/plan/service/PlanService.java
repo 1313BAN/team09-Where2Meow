@@ -52,19 +52,17 @@ public class PlanService {
         return convertToDtoList(plans, userId);
     }
 
-    // UUID로 여행 계획 목록 조회
+    // uuid를 기반으로 여행 계획 목록 조회
     public List<PlanResponse> getAllPlansByUuid(UUID uuid) {
         Integer userId = null;
         
         if (uuid != null) {
-            // UserRepository를 사용해 UUID로 사용자 조회
             User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
             if (user != null) {
                 userId = user.getUserId();
             }
         }
-        
-        // 기존 getAllPlans 메서드 재사용
+
         return getAllPlans(userId);
     }
 
@@ -100,6 +98,21 @@ public class PlanService {
 
         // PlanDetailResponse 생성 및 반환
         return PlanDetailResponse.fromPlan(plan, planAttractions, likeCount, isLiked, isBookmarked);
+    }
+
+    // uuid를 기반으로 특정 여행 계획 상세 조회
+    @Transactional
+    public PlanDetailResponse getPlanDetailByUuid(int planId, UUID uuid) {
+        Integer userId = null;
+
+        if (uuid != null) {
+            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
+            if (user != null) {
+                userId = user.getUserId();
+            }
+        }
+
+        return getPlanDetail(planId, userId);
     }
 
     // 여행 계획 생성

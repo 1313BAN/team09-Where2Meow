@@ -36,25 +36,10 @@ public class PlanController {
     @ApiResponse(responseCode = "200", description = "여행 계획 리스트 조회 성공")
     public ResponseEntity<List<PlanResponse>> getAllPlans() {
         // 인증 정보 추출
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
-        // 비로그인 사용자 처리
-        if (auth == null || "anonymousUser".equals(auth.getPrincipal().toString())) {
-            return ResponseEntity.ok(planService.getAllPlans(null));
-        }
-        
-        try {
-            // UUID 추출 및 변환
-            String uuidString = auth.getName();
-            UUID uuid = UUID.fromString(uuidString);
-            
-            // 서비스 레이어에 UUID 전달하여 처리
-            List<PlanResponse> plans = planService.getAllPlansByUuid(uuid);
-            return ResponseEntity.ok(plans);
-        } catch (IllegalArgumentException e) {
-            // UUID 변환 오류 시 비로그인 사용자로 처리
-            return ResponseEntity.ok(planService.getAllPlans(null));
-        }
+        UUID uuid = getCurrentUserUuid();
+
+        List<PlanResponse> plans = planService.getAllPlansByUuid(uuid);
+        return ResponseEntity.ok(plans);
     }
 
     // 여행 계획 리스트 조회(사용자)
@@ -64,12 +49,17 @@ public class PlanController {
         return ResponseEntity.ok(plans);
     }
 
-    // 여행 계획 상세 조회
     @GetMapping("/{planId}")
-    public ResponseEntity<PlanDetailResponse> getPlanDetail(
-            @PathVariable int planId,
-            @RequestParam(required = false) Integer userId) {
-        PlanDetailResponse planDetail = planService.getPlanDetail(planId, userId);
+    @Operation(
+            summary = "여행 계획 상세 조회",
+            description = "여행 계획의 상세 정보를 조회합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "여행 계획 상세 조회 성공")
+    public ResponseEntity<PlanDetailResponse> getPlanDetail(@PathVariable int planId) {
+        // 인증 정보 추출
+        UUID uuid = getCurrentUserUuid();
+
+        PlanDetailResponse planDetail = planService.getPlanDetailByUuid(planId, uuid);
         return ResponseEntity.ok(planDetail);
     }
 
@@ -123,6 +113,20 @@ public class PlanController {
     public ResponseEntity<Void> deleteBookmark(@PathVariable int planId, @RequestParam int userId) {
         planBookmarkService.deleteBookmark(planId, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    // 인증 정보에서 UUID 추출
+    private UUID getCurrentUserUuid() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && !auth.getPrincipal().equals("anonymousUser")) {
+            try {
+                String uuidString = auth.getName();
+                return UUID.fromString(uuidString);
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+        return null;
     }
 
 }
