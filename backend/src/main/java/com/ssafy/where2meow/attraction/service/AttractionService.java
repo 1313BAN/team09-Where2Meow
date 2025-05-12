@@ -1,13 +1,22 @@
 package com.ssafy.where2meow.attraction.service;
 
+import com.ssafy.where2meow.address.entity.City;
+import com.ssafy.where2meow.address.entity.Country;
+import com.ssafy.where2meow.address.entity.State;
+import com.ssafy.where2meow.address.repository.CityRepository;
+import com.ssafy.where2meow.address.repository.CountryRepository;
+import com.ssafy.where2meow.address.repository.StateRepository;
 import com.ssafy.where2meow.attraction.dto.AttractionDetailResponse;
 import com.ssafy.where2meow.attraction.dto.AttractionListResponse;
 import com.ssafy.where2meow.attraction.entity.Attraction;
+import com.ssafy.where2meow.attraction.entity.AttractionCategory;
+import com.ssafy.where2meow.attraction.repository.AttractionCategoryRepository;
 import com.ssafy.where2meow.attraction.repository.AttractionRepository;
 import com.ssafy.where2meow.attraction.repository.specification.AttractionSpecification;
 import com.ssafy.where2meow.review.repository.ReviewRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -17,12 +26,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AttractionService {
 
     private final AttractionRepository attractionRepository;
     private final ReviewRepository reviewRepository;
+    private final CountryRepository countryRepository;
+    private final StateRepository stateRepository;
+    private final CityRepository cityRepository;
+    private final AttractionCategoryRepository attractionCategoryRepository;
 
     /**
      * 조건별 여행지 검색 - 페이징 적용
@@ -47,9 +61,9 @@ public class AttractionService {
         
         // 동적 쿼리 조건 생성
         Specification<Attraction> spec = Specification.where(AttractionSpecification.withCountryId(countryId))
-                .and(AttractionSpecification.withStateId(stateId))
-                .and(AttractionSpecification.withCityId(cityId))
-                .and(AttractionSpecification.withCategoryId(categoryId));
+                .and(AttractionSpecification.withStateCode(stateId))
+                .and(AttractionSpecification.withCityCode(cityId))
+                .and(AttractionSpecification.withCategoryCode(categoryId));
         
         // 검색어가 있는 경우 이름 검색 조건 추가
         if (searchKeyword != null && !searchKeyword.isEmpty()) {
@@ -64,6 +78,13 @@ public class AttractionService {
             // 리뷰 정보 조회
             Long reviewCount = reviewRepository.countByAttractionId(attraction.getAttractionId());
             Double reviewAvgScore = reviewRepository.getAverageScoreByAttractionId(attraction.getAttractionId());
+
+            log.debug("attraction: {}", attraction);
+
+            State state = stateRepository.findByStateCode(attraction.getStateCode()).orElseThrow(EntityNotFoundException::new);
+            log.debug("state: {}", state);
+            City city = cityRepository.findByCityCodeAndStateCode(attraction.getStateCode(), attraction.getCityCode()).orElseThrow(EntityNotFoundException::new);
+            log.debug("city: {}", city);
             
             return AttractionListResponse.builder()
                     .attractionId(attraction.getAttractionId())
@@ -71,45 +92,10 @@ public class AttractionService {
                     .image(attraction.getFirstImage1())
                     .reviewCount(reviewCount)
                     .reviewAvgScore(reviewAvgScore)
-                    .stateName(attraction.getState().getStateName())
-                    .cityName(attraction.getCity().getCityName())
+                    .stateName(state.getStateName())
+                    .cityName(city.getCityName())
                     .build();
         });
-    }
-
-    /**
-     * 레거시 호환성을 위한 메서드 - 페이징되지 않은 리스트 반환
-     * 
-     * @param countryId 국가 ID
-     * @param stateId 시도 ID
-     * @param cityId 시군구 ID
-     * @param categoryId 카테고리 ID
-     * @return 검색 조건에 맞는 여행지 목록
-     */
-    @Transactional(readOnly = true)
-    public List<AttractionListResponse> getAttractionList(Integer countryId, Integer stateId, Integer cityId, Integer categoryId) {
-        // 검색어 없이 페이징 없이 호출하는 경우 (기존 인터페이스 유지)
-        Specification<Attraction> spec = Specification.where(AttractionSpecification.withCountryId(countryId))
-                .and(AttractionSpecification.withStateId(stateId))
-                .and(AttractionSpecification.withCityId(cityId))
-                .and(AttractionSpecification.withCategoryId(categoryId));
-        
-        List<Attraction> attractions = attractionRepository.findAll(spec);
-        
-        return attractions.stream().map(attraction -> {
-            Long reviewCount = reviewRepository.countByAttractionId(attraction.getAttractionId());
-            Double reviewAvgScore = reviewRepository.getAverageScoreByAttractionId(attraction.getAttractionId());
-            
-            return AttractionListResponse.builder()
-                    .attractionId(attraction.getAttractionId())
-                    .attractionName(attraction.getAttractionName())
-                    .image(attraction.getFirstImage1())
-                    .reviewCount(reviewCount)
-                    .reviewAvgScore(reviewAvgScore)
-                    .stateName(attraction.getState().getStateName())
-                    .cityName(attraction.getCity().getCityName())
-                    .build();
-        }).collect(Collectors.toList());
     }
 
     /**
@@ -120,8 +106,17 @@ public class AttractionService {
      */
     @Transactional(readOnly = true)
     public AttractionDetailResponse getAttractionDetail(Integer attractionId) {
-        Attraction attraction = attractionRepository.findByIdWithDetails(attractionId)
+        Attraction attraction = attractionRepository.findById(attractionId)
                 .orElseThrow(() -> new EntityNotFoundException("Attraction not found with id: " + attractionId));
+
+        AttractionCategory attractionCategory = attractionCategoryRepository.findById(attraction.getAttractionCategoryId())
+                .orElseThrow(EntityNotFoundException::new);
+        Country country = countryRepository.findById(attraction.getCountryId())
+                .orElseThrow(EntityNotFoundException::new);
+        State state = stateRepository.findById(attraction.getStateCode())
+                .orElseThrow(EntityNotFoundException::new);
+        City city = cityRepository.findById(attraction.getCityCode())
+                .orElseThrow(EntityNotFoundException::new);
         
         return AttractionDetailResponse.builder()
                 .attractionId(attraction.getAttractionId())
@@ -137,10 +132,10 @@ public class AttractionService {
                 .addr2(attraction.getAddr2())
                 .homepage(attraction.getHomepage())
                 .overview(attraction.getOverview())
-                .categoryName(attraction.getAttractionCategory().getAttractionCategoryName())
-                .countryName(attraction.getCountry().getCountryName())
-                .stateName(attraction.getState().getStateName())
-                .cityName(attraction.getCity().getCityName())
+                .categoryName(attractionCategory.getAttractionCategoryName())
+                .countryName(country.getCountryName())
+                .stateName(state.getStateName())
+                .cityName(city.getCityName())
                 .build();
     }
 }

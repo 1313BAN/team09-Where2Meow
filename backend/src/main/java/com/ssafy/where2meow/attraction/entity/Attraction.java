@@ -58,20 +58,15 @@ public class Attraction {
   @Column(name = "overview", length = 10000)
   private String overview;
 
-  // 관계 매핑
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "attraction_category_id", nullable = false)
-  private AttractionCategory attractionCategory;
+  @Column(name = "attraction_category_id")
+  private Integer attractionCategoryId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "country_id", nullable = false)
-  private Country country;
+  @Column(name = "country_id")
+  private Integer countryId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "state_id", nullable = false)
-  private State state;
+  @Column(name = "state_code")
+  private Integer stateCode;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "city_id", nullable = false)
-  private City city;
+  @Column(name = "city_code")
+  private Integer cityCode;
 }

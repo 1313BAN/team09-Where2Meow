@@ -22,7 +22,6 @@ public class State {
   @Column(name = "state_name", length = 20)
   private String stateName;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "country_id", nullable = false)
-  private Country country;
+  @Column(name = "country_id", nullable = false)
+  private Integer countryId;
 }

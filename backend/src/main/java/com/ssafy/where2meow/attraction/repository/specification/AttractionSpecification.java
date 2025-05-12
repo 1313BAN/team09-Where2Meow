@@ -9,50 +9,50 @@ import org.springframework.data.jpa.domain.Specification;
 public class AttractionSpecification {
 
     /**
-     * 국가 ID 기준 검색 조건
+     * country ID 기준 검색 조건
      */
     public static Specification<Attraction> withCountryId(Integer countryId) {
         return (root, query, cb) -> {
             if (countryId == null) {
                 return cb.conjunction();
             }
-            return cb.equal(root.get("country").get("countryId"), countryId);
+            return cb.equal(root.get("countryId"), countryId);
         };
     }
     
     /**
-     * 시도 ID 기준 검색 조건
+     * state code 기준 검색 조건
      */
-    public static Specification<Attraction> withStateId(Integer stateId) {
+    public static Specification<Attraction> withStateCode(Integer stateCode) {
         return (root, query, cb) -> {
-            if (stateId == null) {
+            if (stateCode == null) {
                 return cb.conjunction();
             }
-            return cb.equal(root.get("state").get("stateId"), stateId);
+            return cb.equal(root.get("stateCode"), stateCode);
         };
     }
     
     /**
-     * 시군구 ID 기준 검색 조건
+     * city code 기준 검색 조건
      */
-    public static Specification<Attraction> withCityId(Integer cityId) {
+    public static Specification<Attraction> withCityCode(Integer cityCode) {
         return (root, query, cb) -> {
-            if (cityId == null) {
+            if (cityCode == null) {
                 return cb.conjunction();
             }
-            return cb.equal(root.get("city").get("cityId"), cityId);
+            return cb.equal(root.get("cityCode"), cityCode);
         };
     }
     
     /**
      * 카테고리 ID 기준 검색 조건
      */
-    public static Specification<Attraction> withCategoryId(Integer categoryId) {
+    public static Specification<Attraction> withCategoryCode(Integer categoryCode) {
         return (root, query, cb) -> {
-            if (categoryId == null) {
+            if (categoryCode == null) {
                 return cb.conjunction();
             }
-            return cb.equal(root.get("attractionCategory").get("attractionCategoryId"), categoryId);
+            return cb.equal(root.get("attractionCategoryId"), categoryCode);
         };
     }
     

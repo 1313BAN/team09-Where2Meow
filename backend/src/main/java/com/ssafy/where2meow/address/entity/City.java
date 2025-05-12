@@ -22,7 +22,6 @@ public class City {
   @Column(name = "city_name", length = 20)
   private String cityName;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "state_id", nullable = false)
-  private State state;
+  @Column(name = "state_code", nullable = false)
+  private Integer stateCode;
 }
