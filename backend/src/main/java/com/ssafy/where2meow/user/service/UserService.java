@@ -4,11 +4,16 @@ import com.ssafy.where2meow.user.dto.LoginRequest;
 import com.ssafy.where2meow.user.dto.LoginResponse;
 import com.ssafy.where2meow.user.entity.User;
 import com.ssafy.where2meow.user.repository.UserRepository;
-import com.ssafy.where2meow.user.security.JwtTokenProvider;
+import com.ssafy.where2meow.user.token.JwtTokenProvider;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +26,14 @@ public class UserService {
   private final AuthenticationManager authenticationManager;
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
+  private final HttpServletRequest request;
 
   /**
    * 로그인 처리
    *
    * @param loginRequest 로그인 요청 정보 (이메일, 비밀번호)
    * @return 로그인 응답 (토큰, 사용자 정보)
-   * @throws AuthenticationException 인증 실패 시 발생
+   * @throws RuntimeException 인증 실패 시 발생
    */
   public LoginResponse login(LoginRequest loginRequest) {
     try {
@@ -57,17 +63,42 @@ public class UserService {
           .role(user.getRole().name())
           .build();
 
+    } catch (BadCredentialsException e) {
+      throw new RuntimeException("이메일 또는 비밀번호가 일치하지 않습니다.", e);
+    } catch (LockedException e) { // 실제로 발생은 안함
+      throw new RuntimeException("계정이 잠겨 있습니다.", e);
+    } catch (DisabledException e) { // findByEmailAndIsActiveTrue로 조회하기 때문에 발생은 안함
+      throw new RuntimeException("계정이 비활성화되어 있습니다.", e);
+    } catch (AuthenticationException e) {
+      throw new RuntimeException("인증에 실패했습니다: " + e.getMessage(), e);
     } catch (Exception e) {
-      throw new RuntimeException("로그인에 실패하였습니다: " + e.getMessage());
+      throw new RuntimeException("로그인 처리 중 오류가 발생했습니다.", e);
     }
   }
 
   /**
    * 로그아웃 처리
-   * JWT는 서버 측에서 관리되지 않으므로 클라이언트에서 토큰을 제거하는 것으로 충분
-   * 추가적인 보안 조치가 필요하면 토큰 블랙리스트 관리 등을 구현할 수 있음
+   * 현재 사용 중인 토큰을 블랙리스트에 추가하여 무효화
+   * 
+   * @throws RuntimeException 토큰이 없거나 검증에 실패한 경우 발생
    */
   public void logout() {
+    // 요청 헤더에서 토큰 추출
+    String token = jwtTokenProvider.resolveToken(request);
+    
+    if (token == null) {
+      throw new RuntimeException("인증 토큰이 없습니다.");
+    }
+    
+    // 토큰 유효성 검사
+    if (!jwtTokenProvider.validateToken(token)) {
+      throw new RuntimeException("유효하지 않은 토큰입니다.");
+    }
+    
+    // 토큰을 블랙리스트에 추가
+    jwtTokenProvider.blacklistToken(token);
+    
+    // 현재 인증 컨텍스트 초기화
     SecurityContextHolder.clearContext();
   }
 }

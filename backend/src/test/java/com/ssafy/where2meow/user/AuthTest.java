@@ -6,8 +6,10 @@ import com.ssafy.where2meow.user.dto.LoginResponse;
 import com.ssafy.where2meow.user.entity.Role;
 import com.ssafy.where2meow.user.entity.User;
 import com.ssafy.where2meow.user.repository.UserRepository;
-import com.ssafy.where2meow.user.security.JwtTokenProvider;
+import com.ssafy.where2meow.user.token.JwtTokenProvider;
+import com.ssafy.where2meow.user.token.TokenBlacklist;
 import com.ssafy.where2meow.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,10 +19,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -50,6 +57,12 @@ public class AuthTest {
     @Mock
     private AuthenticationManager authenticationManager;
 
+    @Mock
+    private TokenBlacklist tokenBlacklist;
+
+    @Mock
+    private HttpServletRequest request;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -61,12 +74,13 @@ public class AuthTest {
     private User testUser;
     private LoginRequest loginRequest;
     private Authentication authentication;
+    private final String testToken = "test.jwt.token";
 
     @BeforeEach
     void setUp() {
         // AuthController 초기화 (UserService를 주입)
         authController = new AuthController(userService);
-        
+
         // 테스트 사용자 생성
         testUser = new User();
         testUser.setUserId(1);
@@ -84,7 +98,7 @@ public class AuthTest {
 
         // 인증 객체 생성
         authentication = new UsernamePasswordAuthenticationToken(
-                "test@example.com", 
+                "test@example.com",
                 "password123",
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
         );
@@ -92,12 +106,18 @@ public class AuthTest {
         // 모의 객체 설정 (lenient 모드 적용)
         lenient().when(userRepository.findByEmailAndIsActiveTrue(testUser.getEmail())).thenReturn(Optional.of(testUser));
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
-        lenient().when(jwtTokenProvider.createToken(anyString(), anyString())).thenReturn("test.jwt.token");
+        lenient().when(jwtTokenProvider.createToken(anyString(), anyString())).thenReturn(testToken);
+
+        // 로그아웃 관련 모의 설정
+        lenient().when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn(testToken);
+        lenient().when(jwtTokenProvider.validateToken(testToken)).thenReturn(true);
+        lenient().doNothing().when(jwtTokenProvider).blacklistToken(testToken);
 
         // userService에 모의 객체 주입
         ReflectionTestUtils.setField(userService, "authenticationManager", authenticationManager);
         ReflectionTestUtils.setField(userService, "jwtTokenProvider", jwtTokenProvider);
         ReflectionTestUtils.setField(userService, "userRepository", userRepository);
+        ReflectionTestUtils.setField(userService, "request", request);
     }
 
     @Test
@@ -105,24 +125,24 @@ public class AuthTest {
     void loginSuccess() {
         // When
         ResponseEntity<LoginResponse> response = authController.login(loginRequest);
-        
+
         // Then
         assertEquals(200, response.getStatusCodeValue());
         assertNotNull(response.getBody());
-        
+
         LoginResponse loginResponse = response.getBody();
         assertEquals("test.jwt.token", loginResponse.getToken());
         assertEquals(testUser.getUuid().toString(), loginResponse.getUuid());
         assertEquals(testUser.getName(), loginResponse.getName());
         assertEquals(testUser.getEmail(), loginResponse.getEmail());
         assertEquals(testUser.getRole().name(), loginResponse.getRole());
-        
+
         // userRepository.findByEmailAndIsActiveTrue 메서드가 호출되었는지 확인
         verify(userRepository, times(1)).findByEmailAndIsActiveTrue(loginRequest.getEmail());
-        
+
         // jwtTokenProvider.createToken 메서드가 호출되었는지 확인
         verify(jwtTokenProvider, times(1)).createToken(eq(testUser.getEmail()), eq(testUser.getRole().name()));
-        
+
         // authenticationManager.authenticate 메서드가 호출되었는지 확인
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
@@ -134,17 +154,17 @@ public class AuthTest {
         LoginRequest invalidRequest = new LoginRequest();
         invalidRequest.setEmail("nonexistent@example.com");
         invalidRequest.setPassword("password123");
-        
+
         lenient().when(userRepository.findByEmailAndIsActiveTrue(invalidRequest.getEmail())).thenReturn(Optional.empty());
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("Bad credentials"));
-        
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
         // When & Then
         Exception exception = assertThrows(RuntimeException.class, () -> {
             userService.login(invalidRequest);
         });
-        
-        assertTrue(exception.getMessage().contains("로그인에 실패하였습니다"));
+
+        assertTrue(exception.getMessage().contains("이메일 또는 비밀번호가 일치하지 않습니다"));
     }
 
     @Test
@@ -162,18 +182,18 @@ public class AuthTest {
         LoginRequest inactiveRequest = new LoginRequest();
         inactiveRequest.setEmail("inactive@example.com");
         inactiveRequest.setPassword("password123");
-        
+
         lenient().when(userRepository.findByEmail(inactiveRequest.getEmail())).thenReturn(Optional.of(inactiveUser));
         lenient().when(userRepository.findByEmailAndIsActiveTrue(inactiveRequest.getEmail())).thenReturn(Optional.empty());
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("User is inactive"));
-        
+                .thenThrow(new DisabledException("User account is disabled"));
+
         // When & Then
         Exception exception = assertThrows(RuntimeException.class, () -> {
             userService.login(inactiveRequest);
         });
-        
-        assertTrue(exception.getMessage().contains("로그인에 실패하였습니다"));
+
+        assertTrue(exception.getMessage().contains("계정이 비활성화되어 있습니다"));
     }
 
     @Test
@@ -183,21 +203,21 @@ public class AuthTest {
         LoginRequest invalidPasswordRequest = new LoginRequest();
         invalidPasswordRequest.setEmail("test@example.com");
         invalidPasswordRequest.setPassword("wrongpassword");
-        
+
         lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new RuntimeException("Bad credentials"));
-        
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
         // When & Then
         Exception exception = assertThrows(RuntimeException.class, () -> {
             userService.login(invalidPasswordRequest);
         });
-        
-        assertTrue(exception.getMessage().contains("로그인에 실패하였습니다"));
+
+        assertTrue(exception.getMessage().contains("이메일 또는 비밀번호가 일치하지 않습니다"));
     }
 
     @Test
-    @DisplayName("로그아웃 테스트")
-    void logoutTest() {
+    @DisplayName("로그아웃 성공 테스트")
+    void logoutSuccessTest() {
         // Given
         SecurityContextHolder.getContext().setAuthentication(authentication);
         
@@ -205,8 +225,113 @@ public class AuthTest {
         ResponseEntity<Void> response = authController.logout();
         
         // Then
-        assertEquals(200, response.getStatusCodeValue());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+        
+        // 토큰 추출 메서드가 호출되었는지 확인
+        verify(jwtTokenProvider).resolveToken(any(HttpServletRequest.class));
+        
+        // 토큰 유효성 검증 메서드가 호출되었는지 확인
+        verify(jwtTokenProvider).validateToken(testToken);
+        
+        // 토큰 블랙리스트 추가 메서드가 호출되었는지 확인
+        verify(jwtTokenProvider).blacklistToken(testToken);
+    }
+    
+    @Test
+    @DisplayName("로그아웃 실패 테스트 - 토큰 없음")
+    void logoutFailWithNoTokenTest() {
+        // Given
+        lenient().when(jwtTokenProvider.resolveToken(any(HttpServletRequest.class))).thenReturn(null);
+        
+        // When
+        ResponseEntity<Void> response = authController.logout();
+        
+        // Then
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+    
+    @Test
+    @DisplayName("로그아웃 실패 테스트 - 유효하지 않은 토큰")
+    void logoutFailWithInvalidTokenTest() {
+        // Given
+        lenient().when(jwtTokenProvider.validateToken(testToken)).thenReturn(false);
+        
+        // When
+        ResponseEntity<Void> response = authController.logout();
+        
+        // Then
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+    
+    @Test
+    @DisplayName("이미 로그아웃된 토큰으로 재로그아웃 시도")
+    void logoutWithAlreadyBlacklistedTokenTest() {
+        // Given
+        lenient().when(jwtTokenProvider.validateToken(testToken)).thenReturn(false);
+        
+        // When
+        ResponseEntity<Void> response = authController.logout();
+        
+        // Then
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+    
+    @Test
+    @DisplayName("계정이 잠긴 사용자 로그인 실패 테스트")
+    void loginFailWithLockedAccount() {
+        // Given
+        LoginRequest lockedRequest = new LoginRequest();
+        lockedRequest.setEmail("locked@example.com");
+        lockedRequest.setPassword("password123");
+        
+        lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new LockedException("User account is locked"));
+        
+        // When & Then
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            userService.login(lockedRequest);
+        });
+        
+        assertTrue(exception.getMessage().contains("계정이 잠겨 있습니다"));
+    }
+    
+    @Test
+    @DisplayName("기타 인증 예외 로그인 실패 테스트")
+    void loginFailWithOtherAuthenticationException() {
+        // Given
+        LoginRequest request = new LoginRequest();
+        request.setEmail("other@example.com");
+        request.setPassword("password123");
+        
+        lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new AuthenticationException("Other authentication error") {});
+        
+        // When & Then
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            userService.login(request);
+        });
+        
+        assertTrue(exception.getMessage().contains("인증에 실패했습니다"));
+    }
+    
+    @Test
+    @DisplayName("기타 예외 로그인 실패 테스트")
+    void loginFailWithOtherException() {
+        // Given
+        LoginRequest request = new LoginRequest();
+        request.setEmail("exception@example.com");
+        request.setPassword("password123");
+        
+        lenient().when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new NullPointerException("Some other error"));
+        
+        // When & Then
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            userService.login(request);
+        });
+        
+        assertTrue(exception.getMessage().contains("로그인 처리 중 오류가 발생했습니다"));
     }
     
     @Test

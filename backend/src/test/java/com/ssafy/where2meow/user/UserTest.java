@@ -26,14 +26,12 @@ public class UserTest {
   @Test
   //@Transactional // 실제 데이터를 유지하려면 이 어노테이션을 제거하세요
   public void insertDummyUsers() {
-    // 기존 사용자 삭제
-    userRepository.deleteAll();
 
     User admin = new User();
     admin.setName("admin");
     admin.setNickname("admin nickname");
     admin.setEmail("admin@admin.com");
-    admin.setPassword(passwordEncoder.encode("admin"));
+    admin.setPassword(passwordEncoder.encode("123123123"));
     admin.setPhone("010-0000-0000");
     admin.setRole(Role.ADMIN);
     admin.setIsActive(true);
@@ -42,7 +40,7 @@ public class UserTest {
     user.setName("user");
     user.setNickname("nickname");
     user.setEmail("user@user.com");
-    user.setPassword(passwordEncoder.encode("user"));
+    user.setPassword(passwordEncoder.encode("123123123"));
     user.setPhone("010-0000-0000");
     user.setRole(Role.USER);
     user.setIsActive(true);
