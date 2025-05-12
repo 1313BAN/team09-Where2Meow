@@ -1,6 +1,6 @@
 package com.ssafy.where2meow.attraction.dto;
 
-import com.ssafy.where2meow.review.entity.Review;
+import com.ssafy.where2meow.review.dto.ReviewPageDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +31,6 @@ public class AttractionDetailResponse {
     private String countryName;
     private String stateName;
     private String cityName;
-    private List<Review> reviews;
+    private ReviewPageDto reviews;
     private Double reviewAvgScore;
 }
