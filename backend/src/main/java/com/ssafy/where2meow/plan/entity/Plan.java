@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.*;
-import java.util.List;
 
 @Getter
 @Setter

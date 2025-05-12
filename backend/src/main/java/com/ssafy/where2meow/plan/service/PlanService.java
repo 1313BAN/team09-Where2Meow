@@ -5,6 +5,8 @@ import com.ssafy.where2meow.plan.dto.PlanRequest;
 import com.ssafy.where2meow.plan.dto.PlanResponse;
 import com.ssafy.where2meow.plan.entity.Plan;
 import com.ssafy.where2meow.plan.entity.PlanAttraction;
+import com.ssafy.where2meow.plan.entity.PlanBookmark;
+import com.ssafy.where2meow.plan.entity.PlanLike;
 import com.ssafy.where2meow.plan.repository.PlanAttractionRepository;
 import com.ssafy.where2meow.plan.repository.PlanBookmarkRepository;
 import com.ssafy.where2meow.plan.repository.PlanLikeRepository;
@@ -14,10 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,13 +44,13 @@ public class PlanService {
             plans = planRepository.findByIsPublicTrue();
         }
 
-        return plans.stream().map(plan -> convertToDto(plan, userId)).toList();
+        return convertToDtoList(plans, userId);
     }
 
     // 사용자의 여행 계획 목록 조회
     public List<PlanResponse> getUserPlans(int userId) {
         List<Plan> plans = planRepository.findByUserId(userId);
-        return plans.stream().map(plan -> convertToDto(plan, userId)).toList();
+        return convertToDtoList(plans, userId);
     }
 
     // 특정 여행 계획 상세 조회
@@ -112,7 +111,7 @@ public class PlanService {
                     attraction.setAttractionOrder(attractionRequest.getAttractionOrder());
                     return attraction;
                 })
-                .collect(Collectors.toList());
+                .toList();
             
             planAttractionRepository.saveAll(attractions);
         }
@@ -158,7 +157,7 @@ public class PlanService {
                     attraction.setAttractionOrder(attractionRequest.getAttractionOrder());
                     return attraction;
                 })
-                .collect(Collectors.toList());
+                .toList();
             
             planAttractionRepository.saveAll(newAttractions);
         }
@@ -189,5 +188,44 @@ public class PlanService {
         }
 
         return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
+    }
+
+    private List<PlanResponse> convertToDtoList(List<Plan> plans, Integer userId) {
+        if(plans == null || plans.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // planId 리스트 생성
+        List<Integer> planIds = plans.stream()
+                .map(Plan::getPlanId)
+                .toList();
+
+        // 좋아요 수 조회
+        Map<Integer, Integer> likeCounts = planLikeRepository.countByPlanIdIn(planIds);
+
+        // 사용자별 좋아요/북마크 상태 set 초기화
+        Set<Integer> likedPlanIds;
+        Set<Integer> bookmarkedPlanIds;
+
+        if(userId != null) {
+            likedPlanIds = planLikeRepository.findByPlanIdInAndUserId(planIds, userId).stream().
+                    map(PlanLike::getPlanId)
+                    .collect(Collectors.toSet());
+            bookmarkedPlanIds = planBookmarkRepository.findByPlanIdInAndUserId(planIds, userId).stream().
+                    map(PlanBookmark::getPlanId)
+                    .collect(Collectors.toSet());
+        } else {
+            likedPlanIds = new HashSet<>();
+            bookmarkedPlanIds = new HashSet<>();
+        }
+
+        return plans.stream().map(plan -> {
+            int planId = plan.getPlanId();
+            int likeCount = likeCounts.getOrDefault(planId, 0);
+            boolean isLiked = likedPlanIds.contains(planId);
+            boolean isBookmarked = bookmarkedPlanIds.contains(planId);
+
+            return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
+        }).toList();
     }
 }
