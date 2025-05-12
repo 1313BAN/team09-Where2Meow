@@ -2,6 +2,7 @@ package com.ssafy.where2meow.plan.repository;
 
 import com.ssafy.where2meow.plan.entity.Plan;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public interface PlanRepository extends JpaRepository<Plan, Integer> {
     Plan findByIdWithAttractions(int planId);
 
     // 특정 여행 계획 삭제
+    @Modifying
     void deleteByPlanId(int planId);
 
 }

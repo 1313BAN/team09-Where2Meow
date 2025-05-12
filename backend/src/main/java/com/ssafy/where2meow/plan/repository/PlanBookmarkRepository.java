@@ -2,6 +2,7 @@ package com.ssafy.where2meow.plan.repository;
 
 import com.ssafy.where2meow.plan.entity.PlanBookmark;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -11,6 +12,7 @@ public interface PlanBookmarkRepository extends JpaRepository<PlanBookmark, Inte
     boolean existsByPlan_PlanIdAndUserId(int planId, int userId);
 
     // 사용자가 누른 특정 여행 계획 북마크 삭제
+    @Modifying
     void deleteByPlan_PlanIdAndUserId(int planId, int userId);
 
     // 특정 여행 계획의 북마크 수 카운트
