@@ -17,8 +17,8 @@ public class PlanBookmark {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "plan_bookmark_id")
-    private int planBookmarkId;
+    @Column(name = "bookmark_id")
+    private int bookmarkId;
 
     @Column(name = "plan_id", nullable = false)
     private int planId;

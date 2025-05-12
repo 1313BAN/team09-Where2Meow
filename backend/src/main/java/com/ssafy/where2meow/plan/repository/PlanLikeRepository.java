@@ -23,7 +23,7 @@ public interface PlanLikeRepository extends JpaRepository<PlanLike, Integer> {
     int countByPlanId(int planId);
 
     // 여러 여행 계획에 대한 좋아요 수 한 번에 조회
-    @Query("SELECT pl.planId, COUNT(*) FROM PlanLike pl WHERE pl.planId IN :planIds GROUP BY pl.planId")
+    @Query("SELECT pl.planId, COUNT(pl) FROM PlanLike pl WHERE pl.planId IN :planIds GROUP BY pl.planId")
     Map<Integer, Integer> countByPlanIdIn(List<Integer> planIds);
 
     // 특정 사용자의 여러 Plan에 대한 좋아요 여부 조회

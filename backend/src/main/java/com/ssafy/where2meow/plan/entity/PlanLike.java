@@ -17,8 +17,8 @@ public class PlanLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "plan_like_id")
-    private int planLikeId;
+    @Column(name = "like_id")
+    private int likeId;
 
     @Column(name = "plan_id", nullable = false)
     private int planId;
