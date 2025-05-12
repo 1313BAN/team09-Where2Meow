@@ -1,5 +1,7 @@
 package com.ssafy.where2meow.plan.service;
 
+import com.ssafy.where2meow.exception.EntityNotFoundException;
+import com.ssafy.where2meow.exception.ForbiddenAccessException;
 import com.ssafy.where2meow.plan.dto.PlanDetailResponse;
 import com.ssafy.where2meow.plan.dto.PlanRequest;
 import com.ssafy.where2meow.plan.dto.PlanResponse;
@@ -57,7 +59,7 @@ public class PlanService {
     @Transactional
     public PlanDetailResponse getPlanDetail(int planId, Integer userId) {
         // planId로 Plan과 관련 PlanAttraction들을 함께 조회
-        Plan plan = planRepository.findById(planId).orElseThrow(() -> new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다."));
+        Plan plan = planRepository.findById(planId).orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
 
         // 조회수 증가
         planRepository.increaseViewCount(planId);
@@ -125,7 +127,12 @@ public class PlanService {
     public PlanResponse updatePlan(int planId, PlanRequest planRequest, int userId) {
         // plan이 존재하는지 확인
         Plan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
+
+        // plan이 작성자가 맞는지 확인
+        if (plan.getUserId() != userId) {
+            throw new ForbiddenAccessException("이 여행 계획을 수정할 권한이 없습니다.");
+        }
         
         // plan 기본 정보 업데이트
         plan.setTitle(planRequest.getTitle());

@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.plan.service;
 
+import com.ssafy.where2meow.exception.EntityNotFoundException;
 import com.ssafy.where2meow.plan.entity.Plan;
 import com.ssafy.where2meow.plan.entity.PlanBookmark;
 import com.ssafy.where2meow.plan.repository.PlanBookmarkRepository;
@@ -25,7 +26,7 @@ public class PlanBookmarkService {
     public void createBookmark(int planId, int userId) {
         if (!hasUserBookmarked(planId, userId)) {
             Plan plan = planRepository.findById(planId)
-                    .orElseThrow(() -> new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
             PlanBookmark planBookmark = new PlanBookmark();
             planBookmark.setPlanId(planId);
             planBookmark.setUserId(userId);

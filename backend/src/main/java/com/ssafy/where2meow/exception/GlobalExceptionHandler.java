@@ -26,6 +26,27 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(ForbiddenAccessException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthorizedAccessException(ForbiddenAccessException e) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleEntityNotFoundException(EntityNotFoundException e) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("message", "존재하지 않는 " + e.getEntityName() + "입니다.");
+
+        if (e.getEntityName() != null) {
+            errorResponse.put("entityName", e.getEntityName());
+            errorResponse.put("fieldName", e.getFieldName());
+            errorResponse.put("fieldValue", e.getFieldValue());
+        }
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGlobalException(Exception e) {
         Map<String, String> errorResponse = new HashMap<>();
