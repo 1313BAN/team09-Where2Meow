@@ -20,9 +20,8 @@ public class PlanBookmark {
     @Column(name = "plan_bookmark_id")
     private int planBookmarkId;
 
-    @ManyToOne
-    @JoinColumn(name = "plan_id", nullable = false)
-    private Plan plan;
+    @Column(name = "plan_id", nullable = false)
+    private int planId;
 
     @Column(name = "user_id", nullable = false)
     private int userId;

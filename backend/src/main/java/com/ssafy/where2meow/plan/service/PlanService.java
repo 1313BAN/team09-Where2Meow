@@ -58,28 +58,27 @@ public class PlanService {
     @Transactional
     public PlanDetailResponse getPlanDetail(int planId, Integer userId) {
         // planId로 Plan과 관련 PlanAttraction들을 함께 조회
-        Plan plan = planRepository.findByIdWithAttractions(planId);
-        if (plan == null) {
-            throw new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다.");
-        }
+        Plan plan = planRepository.findById(planId).orElseThrow(() -> new RuntimeException(planId + "에 해당하는 여행 계획이 없습니다."));
 
         // 조회수 증가
-        plan.setViewCount(plan.getViewCount() + 1);
-        planRepository.save(plan);
+        planRepository.increaseViewCount(planId);
+
+        // 관련 관광지 정보 조회
+        List<PlanAttraction> planAttractions = planAttractionRepository.findByPlanId(planId);
 
         // 관련 정보 조회
-        int likeCount = planLikeRepository.countByPlan_PlanId(planId);
+        int likeCount = planLikeRepository.countByPlanId(planId);
 
         boolean isLiked = false;
         boolean isBookmarked = false;
 
         if (userId != null) {
-            isLiked = planLikeRepository.existsByPlan_PlanIdAndUserId(planId, userId);
-            isBookmarked = planBookmarkRepository.existsByPlan_PlanIdAndUserId(planId, userId);
+            isLiked = planLikeRepository.existsByPlanIdAndUserId(planId, userId);
+            isBookmarked = planBookmarkRepository.existsByPlanIdAndUserId(planId, userId);
         }
 
         // PlanDetailResponse 생성 및 반환
-        return PlanDetailResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
+        return PlanDetailResponse.fromPlan(plan, planAttractions, likeCount, isLiked, isBookmarked);
     }
 
     // 여행 계획 생성
@@ -106,7 +105,7 @@ public class PlanService {
             List<PlanAttraction> attractions = planRequest.getAttractions().stream()
                 .map(attractionRequest -> {
                     PlanAttraction attraction = new PlanAttraction();
-                    attraction.setPlan(savedPlan);
+                    attraction.setPlanId(savedPlan.getPlanId());
                     attraction.setAttractionId(attractionRequest.getAttractionId());
                     attraction.setContent(attractionRequest.getContent());
                     attraction.setDate(attractionRequest.getDate());
@@ -152,7 +151,7 @@ public class PlanService {
             List<PlanAttraction> newAttractions = planRequest.getAttractions().stream()
                 .map(attractionRequest -> {
                     PlanAttraction attraction = new PlanAttraction();
-                    attraction.setPlan(savedPlan);
+                    attraction.setPlanId(savedPlan.getPlanId());
                     attraction.setAttractionId(attractionRequest.getAttractionId());
                     attraction.setContent(attractionRequest.getContent());
                     attraction.setDate(attractionRequest.getDate());
@@ -171,19 +170,22 @@ public class PlanService {
     // 여행 계획 삭제
     @Transactional
     public void deletePlan(int planId) {
+        planLikeRepository.deleteByPlanId(planId);
+        planBookmarkRepository.deleteByPlanId(planId);
+        planAttractionRepository.deleteByPlanId(planId);
         planRepository.deleteByPlanId(planId);
     }
 
     // Entity -> DTO 변환
     private PlanResponse convertToDto(Plan plan, Integer userId) {
-        int likeCount = planLikeRepository.countByPlan_PlanId(plan.getPlanId());
+        int likeCount = planLikeRepository.countByPlanId(plan.getPlanId());
 
         boolean isLiked = false;
         boolean isBookmarked = false;
 
         if (userId != null) {
-            isLiked = planLikeRepository.existsByPlan_PlanIdAndUserId(plan.getPlanId(), userId);
-            isBookmarked = planBookmarkRepository.existsByPlan_PlanIdAndUserId(plan.getPlanId(), userId);
+            isLiked = planLikeRepository.existsByPlanIdAndUserId(plan.getPlanId(), userId);
+            isBookmarked = planBookmarkRepository.existsByPlanIdAndUserId(plan.getPlanId(), userId);
         }
 
         return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);

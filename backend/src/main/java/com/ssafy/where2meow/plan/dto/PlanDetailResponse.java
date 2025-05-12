@@ -1,6 +1,7 @@
 package com.ssafy.where2meow.plan.dto;
 
 import com.ssafy.where2meow.plan.entity.Plan;
+import com.ssafy.where2meow.plan.entity.PlanAttraction;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -44,11 +45,11 @@ public class PlanDetailResponse {
         private int attractionOrder;
     }
 
-    public static PlanDetailResponse fromPlan(Plan plan, int likeCount, boolean isLiked, boolean isBookmarked) {
+    public static PlanDetailResponse fromPlan(Plan plan, List<PlanAttraction> planAttractions, int likeCount, boolean isLiked, boolean isBookmarked) {
         List<PlanAttractionResponse> attractionResponses = new ArrayList<>();
         
-        if (plan.getPlanAttractions() != null) {
-            attractionResponses = plan.getPlanAttractions().stream()
+        if (planAttractions != null && !planAttractions.isEmpty()) {
+            attractionResponses = planAttractions.stream()
                 .map(planAttraction -> new PlanAttractionResponse(
                     planAttraction.getPlanAttractionId(),
                     planAttraction.getAttractionId(),

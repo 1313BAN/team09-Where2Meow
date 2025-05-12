@@ -16,11 +16,16 @@ public interface PlanRepository extends JpaRepository<Plan, Integer> {
     List<Plan> findByIsPublicTrue();
     
     // planId로 Plan 상세 정보 조회 (Plan 및 PlanAttraction 함께 조회)
-    @Query("SELECT p FROM Plan p LEFT JOIN FETCH p.planAttractions WHERE p.planId = :planId")
-    Plan findByIdWithAttractions(int planId);
+//    @Query("SELECT p FROM Plan p LEFT JOIN FETCH p.planAttractions WHERE p.planId = :planId")
+//    Plan findByIdWithAttractions(int planId);
 
     // 특정 여행 계획 삭제
     @Modifying
     void deleteByPlanId(int planId);
+
+    // 조회수 증가
+    @Modifying
+    @Query("UPDATE Plan p SET p.viewCount = p.viewCount + 1 WHERE p.planId = :planId")
+    void increaseViewCount(int planId);
 
 }
