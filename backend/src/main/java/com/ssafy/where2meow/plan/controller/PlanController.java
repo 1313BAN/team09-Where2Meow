@@ -6,6 +6,7 @@ import com.ssafy.where2meow.plan.dto.PlanResponse;
 import com.ssafy.where2meow.plan.service.PlanBookmarkService;
 import com.ssafy.where2meow.plan.service.PlanLikeService;
 import com.ssafy.where2meow.plan.service.PlanService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/plan")
 @RequiredArgsConstructor
+@Tag(name = "Plan", description = "여행 계획 관리 API")
 public class PlanController {
 
     private final PlanService planService;

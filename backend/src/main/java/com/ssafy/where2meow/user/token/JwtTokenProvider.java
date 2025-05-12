@@ -1,6 +1,5 @@
 package com.ssafy.where2meow.user.token;
 
-import com.ssafy.where2meow.user.token.TokenBlacklist;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -13,11 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -46,9 +43,9 @@ public class JwtTokenProvider {
     }
 
     // JWT 토큰 생성
-    public String createToken(String email, String role) {
+    public String createToken(UUID uuid, String role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("sub", email);
+        claims.put("uuid", uuid.toString());
         claims.put("role", role);
 
         Date now = new Date();
@@ -62,22 +59,24 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // 토큰에서 사용자 이름 추출
-    public String getUsername(String token) {
-        return Jwts.parser()
-                .setSigningKey(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+    // 토큰에서 UUID 추출
+    public String getUserUuid(String token) {
+        JwtParser parser = Jwts.parser()
+                .verifyWith((SecretKey) key)
+                .build();
+
+        Claims claims = parser.parseSignedClaims(token).getPayload();
+        return claims.get("uuid", String.class);
     }
+
 
     // 토큰 만료 시간 조회
     public long getExpirationTime(String token) {
-        Date expiration = Jwts.parser()
-                .setSigningKey(key)
-                .build()
-                .parseSignedClaims(token)
+        JwtParser parser = Jwts.parser()
+                .verifyWith((SecretKey) key)
+                .build();
+
+        Date expiration = parser.parseSignedClaims(token)
                 .getPayload()
                 .getExpiration();
         return expiration.getTime();
@@ -101,14 +100,17 @@ public class JwtTokenProvider {
     // 토큰 유효성 검사
     public boolean validateToken(String token) {
         try {
-            // 블랙리스트에 있는 토큰인지 확인
             if (tokenBlacklist.isBlacklisted(token)) {
                 log.warn("Blacklisted token: {}", token);
                 return false;
             }
 
-            Jws<Claims> claims = Jwts.parser().setSigningKey(key).build().parseSignedClaims(token);
-            return !claims.getPayload().getExpiration().before(new Date());
+            JwtParser parser = Jwts.parser()
+                    .verifyWith((SecretKey) key)
+                    .build();
+
+            Claims claims = parser.parseSignedClaims(token).getPayload();
+            return !claims.getExpiration().before(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Invalid JWT token: {}", e.getMessage());
             return false;
@@ -117,7 +119,7 @@ public class JwtTokenProvider {
 
     // 인증 정보 조회
     public Authentication getAuthentication(String token) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(getUsername(token));
+        UserDetails userDetails = userDetailsService.loadUserByUsername(getUserUuid(token));
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 }

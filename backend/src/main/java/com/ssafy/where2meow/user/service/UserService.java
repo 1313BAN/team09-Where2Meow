@@ -53,7 +53,7 @@ public class UserService {
           .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
       // JWT 토큰 생성
-      String token = jwtTokenProvider.createToken(user.getEmail(), user.getRole().name());
+      String token = jwtTokenProvider.createToken(user.getUuid(), user.getRole().name());
 
       return LoginResponse.builder()
           .token(token)
