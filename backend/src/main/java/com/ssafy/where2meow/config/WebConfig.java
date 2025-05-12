@@ -12,7 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
 //    return null;
 //  }
 
-  @Override
-  public void addInterceptors(InterceptorRegistry registry) {
-  }
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+    }
 }
