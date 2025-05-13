@@ -1,8 +1,8 @@
 package com.ssafy.where2meow.user.controller;
 
-import com.ssafy.where2meow.user.dto.LoginRequest;
-import com.ssafy.where2meow.user.dto.LoginResponse;
-import com.ssafy.where2meow.user.service.UserService;
+import com.ssafy.where2meow.exception.LogoutException;
+import com.ssafy.where2meow.user.dto.*;
+import com.ssafy.where2meow.user.service.AuthService;
 import com.ssafy.where2meow.user.token.JwtTokenProvider;
 import com.ssafy.where2meow.user.token.TokenBlacklist;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class AuthController {
 
-  private final UserService userService;
+  private final AuthService authService;
   private final LoginCookie loginCookie;
   private final JwtTokenProvider jwtTokenProvider;
   private final TokenBlacklist tokenBlacklist;
@@ -34,7 +34,7 @@ public class AuthController {
    */
   @PostMapping("/login")
   public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest loginRequest, HttpServletResponse response) {
-    LoginResponse loginResponse = userService.login(loginRequest);
+    LoginResponse loginResponse = authService.login(loginRequest);
 
     // 아이디 저장 쿠키 처리 (서버에서 쿠키 생성/삭제 수행)
     loginCookie.setEmailCookie(loginRequest.getEmail(), loginRequest.isRememberEmail(), response);
@@ -50,56 +50,59 @@ public class AuthController {
    */
   @PostMapping("/logout")
   public ResponseEntity<Void> logout(HttpServletRequest request) {
-    try {
-      // 요청 헤더에서 토큰 추출
-      String token = jwtTokenProvider.resolveToken(request);
+    // 요청 헤더에서 토큰 추출
+    String token = jwtTokenProvider.resolveToken(request);
 
-      if (token == null) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-      }
+    if (token == null) {
+      throw new LogoutException("인증 토큰이 없습니다");
+    }
 
-      // 포함된 토큰을 저장
-      String currentToken = token;
+    // 이미 블랙리스트에 있는 토큰인지 확인
+    boolean isBlacklisted = tokenBlacklist.isBlacklisted(token);
 
-      // 이미 블랙리스트에 있는 토큰인지 확인
-      boolean isBlacklisted = tokenBlacklist.isBlacklisted(token);
+    if (isBlacklisted) {
+      throw new LogoutException("이미 로그아웃 처리된 토큰입니다");
+    }
 
-      if (isBlacklisted) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-      }
+    // 로그아웃 서비스 호출
+    authService.logout();
 
+    // 토큰이 블랙리스트에 추가되었는지 다시 확인
+    boolean isNowBlacklisted = tokenBlacklist.isBlacklisted(token);
+
+    // 블랙리스트에 추가되지 않았다면 강제 추가
+    if (!isNowBlacklisted) {
       try {
-        userService.logout();
-
-        // 토큰이 블랙리스트에 추가되었는지 다시 확인
-        boolean isNowBlacklisted = tokenBlacklist.isBlacklisted(currentToken);
-
-        // 블랙리스트에 추가되지 않았다면 강제 추가
-        if (!isNowBlacklisted) {
-          long expirationTime = jwtTokenProvider.getExpirationTime(currentToken);
-          tokenBlacklist.addToBlacklist(currentToken, expirationTime);
-        }
-
-        return ResponseEntity.ok().build();
-
-      } catch (Exception e) {
-        e.printStackTrace();
-
-        // 오류가 발생해도 토큰을 블랙리스트에 추가
-        try {
-          long expirationTime = jwtTokenProvider.getExpirationTime(currentToken);
-          tokenBlacklist.addToBlacklist(currentToken, expirationTime);
-        } catch (Exception ex) {
-          log.error("[로그아웃] 직접 추가 실패: {}", ex.getMessage());
-        }
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        long expirationTime = jwtTokenProvider.getExpirationTime(token);
+        tokenBlacklist.addToBlacklist(token, expirationTime);
+      } catch (Exception ex) {
+        throw new LogoutException("토큰 블랙리스트 추가 실패: " + ex.getMessage(), ex);
       }
+    }
 
-    } catch (Exception e) {
-      // 인증 토큰이 없거나 유효하지 않은 경우 403 Forbidden 반환
-      log.error("[로그아웃] 오류 발생: {}", e.getMessage());
-      e.printStackTrace();
+    return ResponseEntity.ok().build();
+  }
+
+  @PostMapping("/find-id")
+  public ResponseEntity<String> findId(@RequestBody @Valid FIndIdRequest fIndIdRequest) {
+    String userId = authService.findId(fIndIdRequest);
+    return ResponseEntity.ok(userId);
+  }
+
+  @PostMapping("/password/check")
+  public ResponseEntity<Void> userCheck(@RequestBody @Valid ResetPasswordCheckRequest checkRequest) {
+    if(authService.checkUser(checkRequest)) {
+      return ResponseEntity.ok().build();
+    } else {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    }
+  }
+
+  @PutMapping("/password/reset")
+  public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest resetPasswordRequest) {
+    if(authService.resetPassword(resetPasswordRequest)) {
+      return ResponseEntity.ok().build();
+    } else {
       return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
   }

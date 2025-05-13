@@ -1,7 +1,7 @@
 package com.ssafy.where2meow.user.service;
 
-import com.ssafy.where2meow.user.dto.LoginRequest;
-import com.ssafy.where2meow.user.dto.LoginResponse;
+import com.ssafy.where2meow.exception.LogoutException;
+import com.ssafy.where2meow.user.dto.*;
 import com.ssafy.where2meow.user.entity.User;
 import com.ssafy.where2meow.user.repository.UserRepository;
 import com.ssafy.where2meow.user.token.JwtTokenProvider;
@@ -16,21 +16,22 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class UserService {
+public class AuthService {
 
   private final AuthenticationManager authenticationManager;
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
   private final HttpServletRequest request;
+  private final PasswordEncoder passwordEncoder;
 
   /**
    * 로그인 처리
@@ -54,7 +55,7 @@ public class UserService {
 
       // 사용자 정보 조회 - 활성 상태인 사용자만 조회
       User user = userRepository.findByEmailAndIsActiveTrue(loginRequest.getEmail())
-          .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+          .orElseThrow(() -> new UsernameNotFoundException(loginRequest.getEmail()+"과 일치하는 사용자가 없습니다."));
 
       // JWT 토큰 생성
       String token = jwtTokenProvider.createToken(user.getEmail(), user.getRole().name());
@@ -80,38 +81,38 @@ public class UserService {
     }
   }
   
-  /**
-   * 토큰을 사용하여 자동 로그인 처리
-   *
-   * @param token 자동 로그인용 토큰
-   * @return 로그인 응답 (토큰, 사용자 정보)
-   * @throws RuntimeException 토큰 검증 실패 시 발생
-   */
-  public LoginResponse loginWithToken(String token) {
-    // 토큰 유효성 검사
-    if (!jwtTokenProvider.validateToken(token)) {
-      throw new RuntimeException("유효하지 않은 또는 만료된 토큰입니다.");
-    }
-    
-    // 토큰에서 사용자 이메일 가져오기
-    String email = jwtTokenProvider.getUsername(token);
-    
-    // 사용자 정보 조회
-    User user = userRepository.findByEmailAndIsActiveTrue(email)
-        .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
-    
-    // 인증 객체 생성 및 설정
-    Authentication authentication = jwtTokenProvider.getAuthentication(token);
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-    
-    return LoginResponse.builder()
-        .token(token) // 기존 토큰 재사용
-        .uuid(user.getUuid().toString())
-        .name(user.getName())
-        .email(user.getEmail())
-        .role(user.getRole().name())
-        .build();
-  }
+//  /**
+//   * 토큰을 사용하여 자동 로그인 처리
+//   *
+//   * @param token 자동 로그인용 토큰
+//   * @return 로그인 응답 (토큰, 사용자 정보)
+//   * @throws RuntimeException 토큰 검증 실패 시 발생
+//   */
+//  public LoginResponse loginWithToken(String token) {
+//    // 토큰 유효성 검사
+//    if (!jwtTokenProvider.validateToken(token)) {
+//      throw new RuntimeException("유효하지 않은 또는 만료된 토큰입니다.");
+//    }
+//
+//    // 토큰에서 사용자 이메일 가져오기
+//    String email = jwtTokenProvider.getUsername(token);
+//
+//    // 사용자 정보 조회
+//    User user = userRepository.findByEmailAndIsActiveTrue(email)
+//        .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다."));
+//
+//    // 인증 객체 생성 및 설정
+//    Authentication authentication = jwtTokenProvider.getAuthentication(token);
+//    SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//    return LoginResponse.builder()
+//        .token(token) // 기존 토큰 재사용
+//        .uuid(user.getUuid().toString())
+//        .name(user.getName())
+//        .email(user.getEmail())
+//        .role(user.getRole().name())
+//        .build();
+//  }
 
   /**
    * 로그아웃 처리
@@ -125,19 +126,58 @@ public class UserService {
     
     if (token == null) {
       log.info("[UserService] 토큰이 null임");
-      throw new RuntimeException("인증 토큰이 없습니다.");
+      throw new LogoutException("인증 토큰이 없습니다.");
     }
     
     // 토큰 유효성 검사
     if (!jwtTokenProvider.validateToken(token)) {
       log.info("[UserService] 토큰 검증 실패");
-      throw new RuntimeException("유효하지 않은 토큰입니다.");
+      throw new LogoutException("유효하지 않은 토큰입니다.");
     }
 
-    // 토큰을 블랙리스트에 추가
-    jwtTokenProvider.blacklistToken(token);
-    
-    // 현재 인증 컨텍스트 초기화
-    SecurityContextHolder.clearContext();
+    try {
+      // 토큰을 블랙리스트에 추가
+      jwtTokenProvider.blacklistToken(token);
+      
+      // 현재 인증 컨텍스트 초기화
+      SecurityContextHolder.clearContext();
+    } catch (Exception e) {
+      throw new LogoutException("토큰 블랙리스트 처리 오류: " + e.getMessage(), e);
+    }
+  }
+
+  public String findId(FIndIdRequest fIndIdRequest) {
+    User user = userRepository.findByName(fIndIdRequest.getName())
+        .orElseThrow(() -> new UsernameNotFoundException(fIndIdRequest.getName() + "과 일치하는 유저가 없습니다."));
+
+    if(user.getPhone().equals(fIndIdRequest.getPhone())){
+      return user.getEmail();
+    } else {
+      throw new UsernameNotFoundException("일치하는 유저가 없습니다.");
+    }
+  }
+
+  public Boolean checkUser(ResetPasswordCheckRequest checkRequest) {
+    User user = userRepository.findByName(checkRequest.getName()).orElseThrow(() -> new UsernameNotFoundException(checkRequest.getName() + "과 일치하는 유저가 없습니다."));
+    if (user.getEmail().equals(checkRequest.getEmail())) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public Boolean resetPassword(ResetPasswordRequest resetPasswordRequest) {
+    // 비밀번호와 확인 비밀번호가 일치하는지 확인
+    if(!resetPasswordRequest.getPassword().equals(resetPasswordRequest.getConfirmPassword())){
+      return false;
+    }
+
+    User user = userRepository.findByEmailAndIsActiveTrue(resetPasswordRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
+
+    // 비밀번호 인코딩 후 저장
+    String encodedPassword = passwordEncoder.encode(resetPasswordRequest.getPassword());
+    user.setPassword(encodedPassword);
+    userRepository.save(user);
+    return true;
   }
 }

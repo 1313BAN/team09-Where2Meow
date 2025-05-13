@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
@@ -26,6 +28,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(LogoutException.class)
+    public ResponseEntity<Map<String, String>> handleLogoutException(LogoutException e) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", "로그아웃 처리 중 오류가 발생했습니다: " + e.getMessage());
+        log.error("[로그아웃] 오류 발생: {}", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+    
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGlobalException(Exception e) {
         Map<String, String> errorResponse = new HashMap<>();
