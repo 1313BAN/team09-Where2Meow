@@ -50,36 +50,8 @@ public class AuthController {
    */
   @PostMapping("/logout")
   public ResponseEntity<Void> logout(HttpServletRequest request) {
-    // 요청 헤더에서 토큰 추출
-    String token = jwtTokenProvider.resolveToken(request);
-
-    if (token == null) {
-      throw new LogoutException("인증 토큰이 없습니다");
-    }
-
-    // 이미 블랙리스트에 있는 토큰인지 확인
-    boolean isBlacklisted = tokenBlacklist.isBlacklisted(token);
-
-    if (isBlacklisted) {
-      throw new LogoutException("이미 로그아웃 처리된 토큰입니다");
-    }
-
-    // 로그아웃 서비스 호출
-    authService.logout();
-
-    // 토큰이 블랙리스트에 추가되었는지 다시 확인
-    boolean isNowBlacklisted = tokenBlacklist.isBlacklisted(token);
-
-    // 블랙리스트에 추가되지 않았다면 강제 추가
-    if (!isNowBlacklisted) {
-      try {
-        long expirationTime = jwtTokenProvider.getExpirationTime(token);
-        tokenBlacklist.addToBlacklist(token, expirationTime);
-      } catch (Exception ex) {
-        throw new LogoutException("토큰 블랙리스트 추가 실패: " + ex.getMessage(), ex);
-      }
-    }
-
+    // 로그아웃 서비스 호출하여 토큰 블랙리스트 처리
+    authService.logout(request);
     return ResponseEntity.ok().build();
   }
 
@@ -103,7 +75,7 @@ public class AuthController {
     if(authService.resetPassword(resetPasswordRequest)) {
       return ResponseEntity.ok().build();
     } else {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
   }
 }

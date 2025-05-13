@@ -44,18 +44,7 @@ public class TokenBlacklist {
      * @return 블랙리스트에 있으면 true, 없으면 false
      */
     public boolean isBlacklisted(String token) {
-        // 토큰 자체를 확인
-        boolean directMatch = blacklistedTokens.containsKey(token);
-        
-        if (directMatch) {
-            return true;
-        }
-        
-        if (blacklistedTokens.size() > 0) {
-            String firstToken = blacklistedTokens.keySet().iterator().next();
-        }
-        
-        return false;
+        return blacklistedTokens.containsKey(token);
     }
 
     /**

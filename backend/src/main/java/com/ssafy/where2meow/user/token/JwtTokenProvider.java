@@ -103,6 +103,11 @@ public class JwtTokenProvider {
         }
     }
 
+    // 토큰이 블랙리스트에 있는지 확인
+    public boolean isTokenBlacklisted(String token) {
+        return tokenBlacklist.isBlacklisted(token);
+    }
+    
     // 토큰 유효성 검사
     public boolean validateToken(String token) {
         try {
