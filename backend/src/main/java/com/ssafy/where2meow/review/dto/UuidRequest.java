@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.review.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,5 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UuidRequest {
+
+  @NotNull(message = "사용자 식별자는 필수입니다.")
   private UUID uuid;
 }

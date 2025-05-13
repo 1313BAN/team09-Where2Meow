@@ -27,5 +27,6 @@ public class ReviewCreateRequest {
     @Max(value = 5, message = "평점은 최대 5점까지 가능합니다.")
     private Integer score;
 
+    @NotNull(message = "사용자 식별자는 필수입니다.")
     private UUID uuid;
 }
