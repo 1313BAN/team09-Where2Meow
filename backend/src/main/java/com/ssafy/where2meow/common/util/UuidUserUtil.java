@@ -27,7 +27,7 @@ public class UuidUserUtil {
             throw new EntityNotFoundException("User", "uuid", "null");
         }
         User user = userRepository.findByUuidAndIsActiveTrue(uuid)
-                .orElseThrow(() -> new EntityNotFoundException("User", "uuid", uuid));
+            .orElseThrow(() -> new EntityNotFoundException("User", "uuid", uuid));
         return user.getUserId();
     }
 

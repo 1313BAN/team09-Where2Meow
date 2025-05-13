@@ -9,9 +9,8 @@ import java.util.UUID;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class UserReviewRequest {
-
-    private UUID uuid;
+@AllArgsConstructor
+public class UuidRequest {
+  private UUID uuid;
 }
