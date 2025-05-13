@@ -4,8 +4,6 @@ import com.ssafy.where2meow.board.entity.BoardLike;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 
-import java.util.List;
-
 public interface BoardLikeRepository extends JpaRepository<BoardLike, Integer> {
 
     // 사용자가 게시글에 좋아요를 눌렀는지 확인

@@ -1,4 +1,4 @@
-package com.ssafy.where2meow.board.dto;
+package com.ssafy.where2meow.comment.dto;
 
 import lombok.*;
 
@@ -14,10 +14,9 @@ public class CommentResponse {
     private int commentId;
     private int boardId;
     private int userId;
-    private String username; // 사용자 이름
+    private String username;
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Integer parentCommentId;
-    private List<CommentResponse> childComments; // 대댓글 목록
 }

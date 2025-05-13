@@ -1,6 +1,7 @@
 package com.ssafy.where2meow.board.dto;
 
 import com.ssafy.where2meow.board.entity.Board;
+import com.ssafy.where2meow.comment.dto.CommentResponse;
 import lombok.*;
 
 import java.time.LocalDateTime;
