@@ -30,7 +30,6 @@ public class AuthService {
   private final AuthenticationManager authenticationManager;
   private final JwtTokenProvider jwtTokenProvider;
   private final UserRepository userRepository;
-  private final HttpServletRequest request;
   private final PasswordEncoder passwordEncoder;
 
   /**
@@ -59,7 +58,7 @@ public class AuthService {
 
       // JWT 토큰 생성 (rememberMe 값 적용)
       String token = jwtTokenProvider.createToken(
-          user.getEmail(), 
+          user.getUuid(),
           user.getRole().name(),
           loginRequest.isRememberMe() // rememberMe 값 전달
       );
