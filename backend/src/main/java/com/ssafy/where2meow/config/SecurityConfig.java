@@ -62,6 +62,9 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/plan/**").authenticated()
             .requestMatchers(HttpMethod.PUT, "/api/plan/**").authenticated()
             .requestMatchers(HttpMethod.DELETE, "/api/plan/**").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/board/**").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/board/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/board/**").authenticated()
             .anyRequest().permitAll()
         )
         // Remember-Me 기능 활성화
