@@ -7,6 +7,7 @@ import de.mkammerer.argon2.Argon2Factory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -54,6 +55,9 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers("/api/auth/logout").authenticated()
             .requestMatchers("/api/plan/user").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/plan/**").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/plan/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/plan/**").authenticated()
             .anyRequest().permitAll()
         )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

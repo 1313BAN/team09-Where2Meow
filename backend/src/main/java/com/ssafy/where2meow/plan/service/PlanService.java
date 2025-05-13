@@ -102,7 +102,7 @@ public class PlanService {
         return getPlanDetail(planId, getUuidToUserId(uuid));
     }
 
-    // 여행 계획 생성
+    // 여행 계획 추가
     @Transactional
     public PlanResponse createPlan(PlanRequest planRequest, Integer userId) {
         Plan plan = new Plan();
@@ -139,6 +139,12 @@ public class PlanService {
         }
 
         return convertToDto(savedPlan, userId);
+    }
+
+    // uuid를 기반으로 여행 계획 추가
+    @Transactional
+    public PlanResponse createPlanByUuid(PlanRequest planRequest, UUID uuid) {
+        return createPlan(planRequest, getRequiredUserId(uuid));
     }
 
     // 여행 계획 수정
@@ -193,6 +199,21 @@ public class PlanService {
         return convertToDto(savedPlan, userId);
     }
 
+    // uuid를 기반으로 여행 계획 수정
+    @Transactional
+    public PlanResponse updatePlanByUuid(int planId, PlanRequest planRequest, UUID uuid) {
+        int userId = getRequiredUserId(uuid);
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
+
+        // plan이 작성자가 맞는지 확인
+        if (plan.getUserId() != userId) {
+            throw new ForbiddenAccessException("이 여행 계획을 수정할 권한이 없습니다.");
+        }
+        
+        return updatePlan(planId, planRequest, userId);
+    }
+
     // 여행 계획 삭제
     @Transactional
     public void deletePlan(int planId) {
@@ -200,6 +221,21 @@ public class PlanService {
         planBookmarkRepository.deleteByPlanId(planId);
         planAttractionRepository.deleteByPlanId(planId);
         planRepository.deleteByPlanId(planId);
+    }
+
+    // uuid를 기반으로 여행 계획 삭제
+    @Transactional
+    public void deletePlanByUuid(int planId, UUID uuid) {
+        int userId = getRequiredUserId(uuid);
+        Plan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
+
+        // plan이 작성자가 맞는지 확인
+        if (plan.getUserId() != userId) {
+            throw new ForbiddenAccessException("이 여행 계획을 삭제할 권한이 없습니다.");
+        }
+
+        deletePlan(planId);
     }
 
     // Entity -> DTO 변환
@@ -267,7 +303,7 @@ public class PlanService {
         return null;
     }
 
-    // 필수적인 사용자 id 추출 메서드
+    // uuid를 기반으로 사용자 id를 필수로 가져오는 메서드
     private Integer getRequiredUserId(UUID uuid) {
         if (uuid != null) {
             User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);

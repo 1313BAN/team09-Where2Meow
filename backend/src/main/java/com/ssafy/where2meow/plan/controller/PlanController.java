@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,7 +43,6 @@ public class PlanController {
         return ResponseEntity.ok(plans);
     }
 
-    // 여행 계획 리스트 조회(사용자)
     @GetMapping("/user")
     @Operation(
             summary = "여행 계획 리스트 조회 (사용자)",
@@ -72,27 +72,51 @@ public class PlanController {
         return ResponseEntity.ok(planDetail);
     }
 
-    // 여행 계획 추가
     @PostMapping
-    public ResponseEntity<PlanResponse> createPlan(@RequestBody PlanRequest planRequest, @RequestParam int userId) {
-        PlanResponse createdPlan = planService.createPlan(planRequest, userId);
-        return ResponseEntity.ok(createdPlan);
+    @Operation(
+            summary = "여행 계획 추가",
+            description = "여행 계획을 추가합니다."
+    )
+    @ApiResponse(responseCode = "201", description = "여행 계획 추가 성공")
+    public ResponseEntity<PlanResponse> createPlan(@RequestBody PlanRequest planRequest) {
+        // 인증 정보 추출
+        UUID uuid = getCurrentUserUuid();
+
+        PlanResponse createdPlan = planService.createPlanByUuid(planRequest, uuid);
+        URI location = URI.create("/api/plan/" + createdPlan.getPlanId());
+        return ResponseEntity.created(location).body(createdPlan);
     }
 
-    // 여행 계획 수정
     @PutMapping("/{planId}")
+    @Operation(
+            summary = "여행 계획 수정",
+            description = "여행 계획을 수정합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "여행 계획 수정 성공")
+    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
+    @ApiResponse(responseCode = "403", description = "여행 계획 수정 권한 없음")
     public ResponseEntity<PlanResponse> updatePlan(
-            @PathVariable int planId,
-            @RequestParam int userId,
-            @RequestBody PlanRequest planRequest) {
-        PlanResponse updatedPlan = planService.updatePlan(planId, planRequest, userId);
+            @PathVariable int planId, @RequestBody PlanRequest planRequest) {
+        // 인증 정보 추출
+        UUID uuid = getCurrentUserUuid();
+
+        PlanResponse updatedPlan = planService.updatePlanByUuid(planId, planRequest, uuid);
         return ResponseEntity.ok(updatedPlan);
     }
 
-    // 여행 계획 삭제
     @DeleteMapping("/{planId}")
+    @Operation(
+            summary = "여행 계획 삭제",
+            description = "여행 계획을 삭제합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "여행 계획 삭제 성공")
+    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
+    @ApiResponse(responseCode = "403", description = "여행 계획 삭제 권한 없음")
     public ResponseEntity<Void> deletePlan(@PathVariable int planId) {
-        planService.deletePlan(planId);
+        // 인증된 사용자 확인
+        UUID uuid = getCurrentUserUuid();
+
+        planService.deletePlanByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
     }
 
