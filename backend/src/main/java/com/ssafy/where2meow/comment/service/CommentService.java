@@ -2,6 +2,7 @@ package com.ssafy.where2meow.comment.service;
 
 import com.ssafy.where2meow.comment.dto.CommentRequest;
 import com.ssafy.where2meow.comment.entity.Comment;
+import com.ssafy.where2meow.comment.repository.CommentLikeRepository;
 import com.ssafy.where2meow.comment.repository.CommentRepository;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
 import com.ssafy.where2meow.exception.EntityNotFoundException;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
 
     private final UuidUserUtil uuidUserUtil;
 
@@ -57,6 +59,7 @@ public class CommentService {
 
         checkCommentOwnership(comment, userId);
 
+        commentLikeRepository.deleteByCommentId(commentId);
         commentRepository.delete(comment);
     }
 

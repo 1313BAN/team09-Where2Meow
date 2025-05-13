@@ -2,6 +2,7 @@ package com.ssafy.where2meow.comment.controller;
 
 import com.ssafy.where2meow.comment.dto.CommentRequest;
 import com.ssafy.where2meow.comment.entity.Comment;
+import com.ssafy.where2meow.comment.service.CommentLikeService;
 import com.ssafy.where2meow.comment.service.CommentService;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class CommentController {
 
     private final CommentService commentService;
+    private final CommentLikeService commentLikeService;
 
     private final UuidUserUtil uuidUserUtil;
 
@@ -73,8 +75,30 @@ public class CommentController {
         return ResponseEntity.noContent().build();
     }
 
-    // 댓글 좋아요 추가(/{commentId}/like)
+    @PostMapping("/{commentId}/like")
+    @Operation(
+            summary = "댓글 좋아요 추가",
+            description = "로그인한 사용자가 특정 댓글에 좋아요를 추가합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "댓글 좋아요 추가 성공")
+    public ResponseEntity<Void> createLike(@PathVariable int commentId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
-    // 댓글 좋아요 삭제(/{commentId}/like)
+        commentLikeService.createLike(commentId, uuid);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{commentId}/like")
+    @Operation(
+            summary = "댓글 좋아요 삭제",
+            description = "로그인한 사용자가 특정 댓글에 좋아요를 삭제합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "댓글 좋아요 삭제 성공")
+    public ResponseEntity<Void> deleteLike(@PathVariable int commentId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        commentLikeService.deleteLike(commentId, uuid);
+        return ResponseEntity.noContent().build();
+    }
 
 }
