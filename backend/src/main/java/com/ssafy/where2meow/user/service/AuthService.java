@@ -154,56 +154,35 @@ public class AuthService {
     User user = userRepository.findByNameAndPhone(fIndIdRequest.getName(), fIndIdRequest.getPhone())
         .orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
 
-    if (user.getPhone().equals(fIndIdRequest.getPhone())) {
-      return user.getEmail();
-    } else {
-      throw new UsernameNotFoundException("일치하는 유저가 없습니다.");
-    }
+    return user.getEmail();
   }
 
-  //  public Boolean checkUser(ResetPasswordCheckRequest checkRequest) {
-//    User user = userRepository.findByEmailAndIsActiveTrue(checkRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
-//    if (user.getName().equals(checkRequest.getName())) {
-//      return true;
-//    } else {
-//      return false;
-//    }
-//  }
   public void checkUser(ResetPasswordCheckRequest checkRequest) {
     User user = userRepository.findByEmailAndIsActiveTrue(checkRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
     if (!user.getName().equals(checkRequest.getName())) {
       throw new IllegalArgumentException("사용자 이름이 일치하지 않습니다.");
     }
-    // 검증 성공 시 아무것도 반환하지 않음
   }
 
-
-  //  public Boolean resetPassword(ResetPasswordRequest resetPasswordRequest) {
-//    // 비밀번호와 확인 비밀번호가 일치하는지 확인
-//    if(!resetPasswordRequest.getPassword().equals(resetPasswordRequest.getConfirmPassword())){
-//      return false;
-//    }
-//
-//    User user = userRepository.findByEmailAndIsActiveTrue(resetPasswordRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
-//
-//    // 비밀번호 인코딩 후 저장
-//    String encodedPassword = passwordEncoder.encode(resetPasswordRequest.getPassword());
-//    user.setPassword(encodedPassword);
-//    userRepository.save(user);
-//    return true;
-//  }
   public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
     // 비밀번호와 확인 비밀번호가 일치하는지 확인
     if (!resetPasswordRequest.getPassword().equals(resetPasswordRequest.getConfirmPassword())) {
       throw new IllegalArgumentException("비밀번호와 확인 비밀번호가 일치하지 않습니다.");
     }
 
+    // 비밀번호 복잡도 검증
+    PasswordComplexityUtil.validatePasswordComplexity(resetPasswordRequest.getPassword());
+
     User user = userRepository.findByEmailAndIsActiveTrue(resetPasswordRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
+
+    // 이전 비밀번호와 동일한지 확인
+    if (passwordEncoder.matches(resetPasswordRequest.getPassword(), user.getPassword())) {
+      throw new IllegalArgumentException("이 비밀번호로 변경할 수 없습니다.");
+    }
 
     // 비밀번호 인코딩 후 저장
     String encodedPassword = passwordEncoder.encode(resetPasswordRequest.getPassword());
     user.setPassword(encodedPassword);
     userRepository.save(user);
-    // 성공 시 아무것도 반환하지 않음
   }
 }
