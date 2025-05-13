@@ -1,0 +1,36 @@
+package com.ssafy.where2meow.common.util;
+
+import com.ssafy.where2meow.exception.EntityNotFoundException;
+import com.ssafy.where2meow.exception.ForbiddenAccessException;
+import com.ssafy.where2meow.plan.entity.Plan;
+import com.ssafy.where2meow.user.entity.User;
+import com.ssafy.where2meow.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.UUID;
+
+@Component
+@RequiredArgsConstructor
+public class UuidUserUtil {
+
+    private final UserRepository userRepository;
+
+    public Integer getOptionalUserId(UUID uuid) {
+        if (uuid == null) {
+            return null;
+        }
+        User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
+        return user != null ? user.getUserId() : null;
+    }
+
+    public Integer getRequiredUserId(UUID uuid) {
+        if (uuid == null) {
+            throw new EntityNotFoundException("User", "uuid", "null");
+        }
+        User user = userRepository.findByUuidAndIsActiveTrue(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("User", "uuid", uuid));
+        return user.getUserId();
+    }
+
+}

@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.plan.service;
 
+import com.ssafy.where2meow.common.util.UuidUserUtil;
 import com.ssafy.where2meow.exception.EntityNotFoundException;
 import com.ssafy.where2meow.exception.ForbiddenAccessException;
 import com.ssafy.where2meow.plan.dto.PlanDetailResponse;
@@ -33,6 +34,8 @@ public class PlanService {
     private final PlanAttractionRepository planAttractionRepository;
     private final UserRepository userRepository;
 
+    private final UuidUserUtil uuidUserUtil;
+
     // 모든 여행 계획 목록 조회
     // 사용자 ID가 제공된 경우 : 본인 여행 계획 전부 + 다른 사용자의 공개 여행 계획 조회
     // 사용자 ID가 제공되지 않은 경우 : 공개된 여행 계획 조회
@@ -54,7 +57,8 @@ public class PlanService {
 
     // uuid를 기반으로 여행 계획 목록 조회
     public List<PlanResponse> getAllPlansByUuid(UUID uuid) {
-        return getAllPlans(getUuidToUserId(uuid));
+        Integer userId = uuidUserUtil.getOptionalUserId(uuid);
+        return getAllPlans(userId);
     }
 
     // 사용자의 여행 계획 목록 조회
@@ -65,7 +69,8 @@ public class PlanService {
 
     // uuid를 기반으로 사용자의 여행 계획 목록 조회
     public List<PlanResponse> getUserPlansByUuid(UUID uuid) {
-        return getUserPlans(getRequiredUserId(uuid));
+        Integer userId = uuidUserUtil.getRequiredUserId(uuid);
+        return getUserPlans(userId);
     }
 
     // 특정 여행 계획 상세 조회
@@ -99,7 +104,8 @@ public class PlanService {
     // uuid를 기반으로 특정 여행 계획 상세 조회
     @Transactional
     public PlanDetailResponse getPlanDetailByUuid(int planId, UUID uuid) {
-        return getPlanDetail(planId, getUuidToUserId(uuid));
+        Integer userId = uuidUserUtil.getOptionalUserId(uuid);
+        return getPlanDetail(planId, userId);
     }
 
     // 여행 계획 추가
@@ -144,7 +150,8 @@ public class PlanService {
     // uuid를 기반으로 여행 계획 추가
     @Transactional
     public PlanResponse createPlanByUuid(PlanRequest planRequest, UUID uuid) {
-        return createPlan(planRequest, getRequiredUserId(uuid));
+        Integer userId = uuidUserUtil.getRequiredUserId(uuid);
+        return createPlan(planRequest, userId);
     }
 
     // 여행 계획 수정
@@ -202,15 +209,11 @@ public class PlanService {
     // uuid를 기반으로 여행 계획 수정
     @Transactional
     public PlanResponse updatePlanByUuid(int planId, PlanRequest planRequest, UUID uuid) {
-        int userId = getRequiredUserId(uuid);
+        int userId = uuidUserUtil.getRequiredUserId(uuid);
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
 
-        // plan이 작성자가 맞는지 확인
-        if (plan.getUserId() != userId) {
-            throw new ForbiddenAccessException("이 여행 계획을 수정할 권한이 없습니다.");
-        }
-        
+        checkPlanOwnership(plan, userId);
         return updatePlan(planId, planRequest, userId);
     }
 
@@ -226,15 +229,11 @@ public class PlanService {
     // uuid를 기반으로 여행 계획 삭제
     @Transactional
     public void deletePlanByUuid(int planId, UUID uuid) {
-        int userId = getRequiredUserId(uuid);
+        int userId = uuidUserUtil.getRequiredUserId(uuid);
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
 
-        // plan이 작성자가 맞는지 확인
-        if (plan.getUserId() != userId) {
-            throw new ForbiddenAccessException("이 여행 계획을 삭제할 권한이 없습니다.");
-        }
-
+        checkPlanOwnership(plan, userId);
         deletePlan(planId);
     }
 
@@ -292,26 +291,11 @@ public class PlanService {
         }).toList();
     }
 
-    // uuid를 사용자 id로 변환하는 메서드
-    private Integer getUuidToUserId(UUID uuid) {
-        if (uuid != null) {
-            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
-            if (user != null) {
-                return user.getUserId();
-            }
+    // plan에 대한 사용자 권한 확인
+    private void checkPlanOwnership(Plan plan, Integer userId) {
+        if (plan.getUserId() != userId) {
+            throw new ForbiddenAccessException("이 여행 계획에 대한 권한이 없습니다.");
         }
-        return null;
-    }
-
-    // uuid를 기반으로 사용자 id를 필수로 가져오는 메서드
-    private Integer getRequiredUserId(UUID uuid) {
-        if (uuid != null) {
-            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
-            if (user != null) {
-                return user.getUserId();
-            }
-        }
-        throw new EntityNotFoundException("User", "uuid", uuid);
     }
 
 }

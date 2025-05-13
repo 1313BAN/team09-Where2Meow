@@ -122,29 +122,61 @@ public class PlanController {
 
     // 여행 계획 좋아요 추가
     @PostMapping("/{planId}/like")
-    public ResponseEntity<Void> createLike(@PathVariable int planId, @RequestParam int userId) {
-        planLikeService.createLike(planId, userId);
+    @Operation(
+            summary = "여행 계획 좋아요 추가",
+            description = "로그인한 사용자가 특정 여행 계획에 좋아요를 추가합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "여행 계획 좋아요 추가 성공")
+    public ResponseEntity<Void> createLike(@PathVariable int planId) {
+        // 인증된 사용자 확인
+        UUID uuid = getCurrentUserUuid();
+
+        planLikeService.createLikeByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
     }
 
     // 여행 계획 좋아요 삭제
     @DeleteMapping("/{planId}/like")
-    public ResponseEntity<Void> deleteLike(@PathVariable int planId, @RequestParam int userId) {
-        planLikeService.deleteLike(planId, userId);
+    @Operation(
+            summary = "여행 계획 좋아요 삭제",
+            description = "로그인한 사용자가 특정 여행 계획의 좋아요를 삭제합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "여행 계획 좋아요 삭제 성공")
+    public ResponseEntity<Void> deleteLike(@PathVariable int planId) {
+        // 인증된 사용자 확인
+        UUID uuid = getCurrentUserUuid();
+
+        planLikeService.deleteLikeByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
     }
 
     // 여행 계획 북마크 추가
     @PostMapping("/{planId}/bookmark")
+    @Operation(
+            summary = "여행 계획 북마크 추가",
+            description = "로그인한 사용자가 특정 여행 계획에 북마크를 추가합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "여행 계획 북마크 추가 성공")
     public ResponseEntity<Void> createBookmark(@PathVariable int planId, @RequestParam int userId) {
-        planBookmarkService.createBookmark(planId, userId);
+        // 인증된 사용자 확인
+        UUID uuid = getCurrentUserUuid();
+
+        planBookmarkService.createBookmarkByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
     }
 
     // 여행 계획 북마크 삭제
     @DeleteMapping("/{planId}/bookmark")
-    public ResponseEntity<Void> deleteBookmark(@PathVariable int planId, @RequestParam int userId) {
-        planBookmarkService.deleteBookmark(planId, userId);
+    @Operation(
+            summary = "여행 계획 북마크 삭제",
+            description = "로그인한 사용자가 특정 여행 계획의 북마크를 삭제합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "여행 계획 북마크 삭제 성공")
+    public ResponseEntity<Void> deleteBookmark(@PathVariable int planId) {
+        // 인증된 사용자 확인
+        UUID uuid = getCurrentUserUuid();
+
+        planBookmarkService.deleteBookmarkByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
     }
 
