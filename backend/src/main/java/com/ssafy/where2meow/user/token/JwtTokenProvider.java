@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.user.token;
 
+import com.ssafy.where2meow.user.token.TokenBlacklist;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -28,6 +29,10 @@ public class JwtTokenProvider {
     @Value("${jwt.token-validity-in-seconds}")
     private long tokenValidityInSeconds; // 기본값 24시간
 
+    // 자동 로그인용 토큰 유효 기간 (기본값 7일)
+    @Value("${jwt.remember-me-validity-in-seconds:604800}")
+    private long rememberMeTokenValidityInSeconds;
+
     private final UserDetailsService userDetailsService;
     private final TokenBlacklist tokenBlacklist;
 
@@ -44,12 +49,21 @@ public class JwtTokenProvider {
 
     // JWT 토큰 생성
     public String createToken(UUID uuid, String role) {
+        return createToken(uuid, role, false); // 기본값은 rememberMe = false
+    }
+
+    public String createToken(UUID uuid, String role, boolean rememberMe) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("uuid", uuid.toString());
         claims.put("role", role);
 
         Date now = new Date();
-        Date validity = new Date(now.getTime() + tokenValidityInSeconds * 1000);
+        // rememberMe가 true인 경우 더 긴 토큰 유효 기간 설정 (7일)
+        long validityPeriod = rememberMe
+            ? rememberMeTokenValidityInSeconds
+            : tokenValidityInSeconds;
+
+        Date validity = new Date(now.getTime() + validityPeriod * 1000);
 
         return Jwts.builder()
                 .claims(claims)
@@ -68,7 +82,6 @@ public class JwtTokenProvider {
         Claims claims = parser.parseSignedClaims(token).getPayload();
         return claims.get("uuid", String.class);
     }
-
 
     // 토큰 만료 시간 조회
     public long getExpirationTime(String token) {
@@ -97,9 +110,15 @@ public class JwtTokenProvider {
         tokenBlacklist.addToBlacklist(token, expirationTime);
     }
 
+    // 토큰이 블랙리스트에 있는지 확인
+    public boolean isTokenBlacklisted(String token) {
+        return tokenBlacklist.isBlacklisted(token);
+    }
+
     // 토큰 유효성 검사
     public boolean validateToken(String token) {
         try {
+            // 블랙리스트에 있는 토큰인지 확인
             if (tokenBlacklist.isBlacklisted(token)) {
                 log.warn("Blacklisted token: {}", token);
                 return false;

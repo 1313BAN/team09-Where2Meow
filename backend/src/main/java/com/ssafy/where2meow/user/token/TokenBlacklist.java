@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.user.token;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit;
  * 운영 환경에서는 Redis 등을 사용하여 구현하는 것이 좋음
  */
 @Component
+@Slf4j
 public class TokenBlacklist {
 
     private final Map<String, Long> blacklistedTokens = new ConcurrentHashMap<>();
@@ -50,6 +52,12 @@ public class TokenBlacklist {
      */
     private void removeExpiredTokens() {
         long currentTimeMillis = System.currentTimeMillis();
+        int beforeSize = blacklistedTokens.size();
         blacklistedTokens.entrySet().removeIf(entry -> entry.getValue() < currentTimeMillis);
+        int afterSize = blacklistedTokens.size();
+        
+        if (beforeSize > afterSize) {
+            log.info("[블랙리스트 정리] 만료된 토큰 {}개 제거, 현재 {}개 남음", beforeSize - afterSize, afterSize);
+        }
     }
 }
