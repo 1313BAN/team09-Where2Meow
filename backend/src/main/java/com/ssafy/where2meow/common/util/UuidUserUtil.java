@@ -1,8 +1,6 @@
 package com.ssafy.where2meow.common.util;
 
 import com.ssafy.where2meow.exception.EntityNotFoundException;
-import com.ssafy.where2meow.exception.ForbiddenAccessException;
-import com.ssafy.where2meow.plan.entity.Plan;
 import com.ssafy.where2meow.user.entity.User;
 import com.ssafy.where2meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

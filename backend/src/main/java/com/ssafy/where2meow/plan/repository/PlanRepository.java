@@ -14,10 +14,6 @@ public interface PlanRepository extends JpaRepository<Plan, Integer> {
 
     // 공개된 모든 여행 계획 조회
     List<Plan> findByIsPublicTrue();
-    
-    // planId로 Plan 상세 정보 조회 (Plan 및 PlanAttraction 함께 조회)
-    //    @Query("SELECT p FROM Plan p LEFT JOIN FETCH p.planAttractions WHERE p.planId = :planId")
-    //    Plan findByIdWithAttractions(int planId);
 
     // 특정 여행 계획 삭제
     @Modifying

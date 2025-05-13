@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import com.ssafy.where2meow.user.entity.User;
 import java.util.stream.Collectors;
 
 @Service
@@ -161,11 +160,8 @@ public class PlanService {
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
 
-        // plan이 작성자가 맞는지 확인
-        if (plan.getUserId() != userId) {
-            throw new ForbiddenAccessException("이 여행 계획을 수정할 권한이 없습니다.");
-        }
-        
+        checkPlanOwnership(plan, userId);
+
         // plan 기본 정보 업데이트
         plan.setTitle(planRequest.getTitle());
         plan.setContent(planRequest.getContent());
@@ -210,10 +206,6 @@ public class PlanService {
     @Transactional
     public PlanResponse updatePlanByUuid(int planId, PlanRequest planRequest, UUID uuid) {
         int userId = uuidUserUtil.getRequiredUserId(uuid);
-        Plan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new EntityNotFoundException("Plan", "planId", planId));
-
-        checkPlanOwnership(plan, userId);
         return updatePlan(planId, planRequest, userId);
     }
 

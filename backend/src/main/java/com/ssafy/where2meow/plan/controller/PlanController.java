@@ -157,7 +157,7 @@ public class PlanController {
             description = "로그인한 사용자가 특정 여행 계획에 북마크를 추가합니다."
     )
     @ApiResponse(responseCode = "204", description = "여행 계획 북마크 추가 성공")
-    public ResponseEntity<Void> createBookmark(@PathVariable int planId, @RequestParam int userId) {
+    public ResponseEntity<Void> createBookmark(@PathVariable int planId) {
         // 인증된 사용자 확인
         UUID uuid = getCurrentUserUuid();
 
