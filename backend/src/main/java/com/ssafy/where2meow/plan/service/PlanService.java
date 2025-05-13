@@ -54,16 +54,7 @@ public class PlanService {
 
     // uuid를 기반으로 여행 계획 목록 조회
     public List<PlanResponse> getAllPlansByUuid(UUID uuid) {
-        Integer userId = null;
-        
-        if (uuid != null) {
-            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
-            if (user != null) {
-                userId = user.getUserId();
-            }
-        }
-
-        return getAllPlans(userId);
+        return getAllPlans(getUuidToUserId(uuid));
     }
 
     // 사용자의 여행 계획 목록 조회
@@ -74,16 +65,7 @@ public class PlanService {
 
     // uuid를 기반으로 사용자의 여행 계획 목록 조회
     public List<PlanResponse> getUserPlansByUuid(UUID uuid) {
-        Integer userId = null;
-
-        if (uuid != null) {
-            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
-            if (user != null) {
-                userId = user.getUserId();
-            }
-        }
-
-        return getUserPlans(userId);
+        return getUserPlans(getRequiredUserId(uuid));
     }
 
     // 특정 여행 계획 상세 조회
@@ -117,16 +99,7 @@ public class PlanService {
     // uuid를 기반으로 특정 여행 계획 상세 조회
     @Transactional
     public PlanDetailResponse getPlanDetailByUuid(int planId, UUID uuid) {
-        Integer userId = null;
-
-        if (uuid != null) {
-            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
-            if (user != null) {
-                userId = user.getUserId();
-            }
-        }
-
-        return getPlanDetail(planId, userId);
+        return getPlanDetail(planId, getUuidToUserId(uuid));
     }
 
     // 여행 계획 생성
@@ -281,6 +254,28 @@ public class PlanService {
 
             return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
         }).toList();
+    }
+
+    // uuid를 사용자 id로 변환하는 메서드
+    private Integer getUuidToUserId(UUID uuid) {
+        if (uuid != null) {
+            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
+            if (user != null) {
+                return user.getUserId();
+            }
+        }
+        return null;
+    }
+
+    // 필수적인 사용자 id 추출 메서드
+    private Integer getRequiredUserId(UUID uuid) {
+        if (uuid != null) {
+            User user = userRepository.findByUuidAndIsActiveTrue(uuid).orElse(null);
+            if (user != null) {
+                return user.getUserId();
+            }
+        }
+        throw new EntityNotFoundException("User", "uuid", uuid);
     }
 
 }
