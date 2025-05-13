@@ -30,6 +30,10 @@ public class JwtTokenProvider {
 
     @Value("${jwt.token-validity-in-seconds}")
     private long tokenValidityInSeconds; // 기본값 24시간
+    
+    // 자동 로그인용 토큰 유효 기간 (기본값 7일)
+    @Value("${jwt.remember-me-validity-in-seconds:604800}")
+    private long rememberMeTokenValidityInSeconds;
 
     private final UserDetailsService userDetailsService;
     private final TokenBlacklist tokenBlacklist;
@@ -47,12 +51,22 @@ public class JwtTokenProvider {
 
     // JWT 토큰 생성
     public String createToken(String email, String role) {
+        return createToken(email, role, false); // 기본값은 rememberMe = false
+    }
+    
+    // JWT 토큰 생성 (rememberMe 옵션 포함)
+    public String createToken(String email, String role, boolean rememberMe) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("sub", email);
         claims.put("role", role);
 
         Date now = new Date();
-        Date validity = new Date(now.getTime() + tokenValidityInSeconds * 1000);
+        // rememberMe가 true인 경우 더 긴 토큰 유효 기간 설정 (7일)
+        long validityPeriod = rememberMe 
+            ? rememberMeTokenValidityInSeconds 
+            : tokenValidityInSeconds;
+            
+        Date validity = new Date(now.getTime() + validityPeriod * 1000);
 
         return Jwts.builder()
                 .claims(claims)

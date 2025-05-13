@@ -57,8 +57,12 @@ public class AuthService {
       User user = userRepository.findByEmailAndIsActiveTrue(loginRequest.getEmail())
           .orElseThrow(() -> new UsernameNotFoundException(loginRequest.getEmail() + "과 일치하는 사용자가 없습니다."));
 
-      // JWT 토큰 생성
-      String token = jwtTokenProvider.createToken(user.getEmail(), user.getRole().name());
+      // JWT 토큰 생성 (rememberMe 값 적용)
+      String token = jwtTokenProvider.createToken(
+          user.getEmail(), 
+          user.getRole().name(),
+          loginRequest.isRememberMe() // rememberMe 값 전달
+      );
 
       return LoginResponse.builder()
           .token(token)
