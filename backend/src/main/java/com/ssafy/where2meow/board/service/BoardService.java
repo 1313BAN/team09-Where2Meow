@@ -5,6 +5,8 @@ import com.ssafy.where2meow.board.dto.BoardRequest;
 import com.ssafy.where2meow.board.entity.Board;
 import com.ssafy.where2meow.board.repository.BoardRepository;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
+import com.ssafy.where2meow.exception.EntityNotFoundException;
+import com.ssafy.where2meow.exception.ForbiddenAccessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,39 @@ public class BoardService {
         board.setUpdatedAt(LocalDateTime.now());
 
         return boardRepository.save(board);
+    }
+
+    // 게시글 수정
+    @Transactional
+    public Board updateBoard(int boardId, BoardRequest boardRequest, UUID uuid) {
+        Integer userId = uuidUserUtil.getRequiredUserId(uuid);
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("Board", "boardId", boardId));
+
+        checkBoardOwnership(board, userId);
+
+        board.setTitle(boardRequest.getTitle());
+        board.setContent(boardRequest.getContent());
+        board.setCategoryId(boardRequest.getCategoryId());
+        board.setUpdatedAt(LocalDateTime.now());
+        return boardRepository.save(board);
+    }
+
+    // 게시글 삭제
+    @Transactional
+    public void deleteBoard(int boardId, UUID uuid) {
+        Integer userId = uuidUserUtil.getRequiredUserId(uuid);
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("Board", "boardId", boardId));
+
+        checkBoardOwnership(board, userId);
+        boardRepository.delete(board);
+    }
+
+    private void checkBoardOwnership(Board board, Integer userId) {
+        if (board.getUserId() != userId) {
+            throw new ForbiddenAccessException("이 게시글에 대한 권한이 없습니다");
+        }
     }
 
 }

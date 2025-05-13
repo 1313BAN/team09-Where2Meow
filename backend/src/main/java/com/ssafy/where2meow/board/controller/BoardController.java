@@ -65,10 +65,37 @@ public class BoardController {
         URI location = URI.create("/api/board/" + createdBoard.getBoardId());
         return ResponseEntity.created(location).body(createdBoard);
     }
-    
-    // 게시글 삭제(/api/board/{board_id})
-    
-    // 게시글 수정(/api/board/{board_id})
+
+    @PutMapping("/{boardId}")
+    @Operation(
+            summary = "게시글 수정",
+            description = "게시글을 수정합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "게시글 수정 성공")
+    @ApiResponse(responseCode = "403", description = "게시글 수정 권한 없음")
+    @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    public ResponseEntity<Board> updateBoard(
+            @PathVariable int boardId, @RequestBody BoardRequest boardRequest) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        Board updatedBoard = boardService.updateBoard(boardId, boardRequest, uuid);
+        return ResponseEntity.ok(updatedBoard);
+    }
+
+    @DeleteMapping("/{boardId}")
+    @Operation(
+            summary = "게시글 삭제",
+            description = "게시글을 삭제합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "게시글 삭제 성공")
+    @ApiResponse(responseCode = "403", description = "게시글 삭제 권한 없음")
+    @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    public ResponseEntity<Void> deleteBoard(@PathVariable int boardId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        boardService.deleteBoard(boardId, uuid);
+        return ResponseEntity.noContent().build();
+    }
     
     // 게시글 좋아요 추가(/api/board/{board_id}/like)
     

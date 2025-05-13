@@ -94,8 +94,8 @@ public class PlanController {
             description = "여행 계획을 수정합니다."
     )
     @ApiResponse(responseCode = "200", description = "여행 계획 수정 성공")
-    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     @ApiResponse(responseCode = "403", description = "여행 계획 수정 권한 없음")
+    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     public ResponseEntity<PlanResponse> updatePlan(
             @PathVariable int planId, @RequestBody PlanRequest planRequest) {
         // 인증 정보 추출
@@ -111,8 +111,8 @@ public class PlanController {
             description = "여행 계획을 삭제합니다."
     )
     @ApiResponse(responseCode = "204", description = "여행 계획 삭제 성공")
-    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     @ApiResponse(responseCode = "403", description = "여행 계획 삭제 권한 없음")
+    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     public ResponseEntity<Void> deletePlan(@PathVariable int planId) {
         // 인증된 사용자 확인
         UUID uuid = uuidUserUtil.getCurrentUserUuid();
