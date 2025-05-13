@@ -55,7 +55,7 @@ public class AuthService {
 
       // 사용자 정보 조회 - 활성 상태인 사용자만 조회
       User user = userRepository.findByEmailAndIsActiveTrue(loginRequest.getEmail())
-          .orElseThrow(() -> new UsernameNotFoundException(loginRequest.getEmail()+"과 일치하는 사용자가 없습니다."));
+          .orElseThrow(() -> new UsernameNotFoundException(loginRequest.getEmail() + "과 일치하는 사용자가 없습니다."));
 
       // JWT 토큰 생성
       String token = jwtTokenProvider.createToken(user.getEmail(), user.getRole().name());
@@ -80,7 +80,7 @@ public class AuthService {
       throw new RuntimeException("로그인 처리 중 오류가 발생했습니다.", e);
     }
   }
-  
+
 //  /**
 //   * 토큰을 사용하여 자동 로그인 처리
 //   *
@@ -117,23 +117,23 @@ public class AuthService {
   /**
    * 로그아웃 처리
    * 현재 사용 중인 토큰을 블랙리스트에 추가하여 무효화
-   * 
+   *
    * @param request HTTP 요청 객체
    * @throws LogoutException 토큰이 없거나 검증에 실패한 경우 발생
    */
   public void logout(HttpServletRequest request) {
     // 요청 헤더에서 토큰 추출
     String token = jwtTokenProvider.resolveToken(request);
-    
+
     if (token == null) {
       throw new LogoutException("인증 토큰이 없습니다.");
     }
-    
+
     // 이미 블랙리스트에 있는 토큰인지 확인
     if (jwtTokenProvider.isTokenBlacklisted(token)) {
       throw new LogoutException("이미 로그아웃 처리된 토큰입니다.");
     }
-    
+
     // 토큰 유효성 검사
     if (!jwtTokenProvider.validateToken(token)) {
       throw new LogoutException("유효하지 않은 토큰입니다.");
@@ -142,7 +142,7 @@ public class AuthService {
     try {
       // 토큰을 블랙리스트에 추가
       jwtTokenProvider.blacklistToken(token);
-      
+
       // 현재 인증 컨텍스트 초기화
       SecurityContextHolder.clearContext();
     } catch (Exception e) {
@@ -154,26 +154,48 @@ public class AuthService {
     User user = userRepository.findByNameAndPhone(fIndIdRequest.getName(), fIndIdRequest.getPhone())
         .orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
 
-    if(user.getPhone().equals(fIndIdRequest.getPhone())){
+    if (user.getPhone().equals(fIndIdRequest.getPhone())) {
       return user.getEmail();
     } else {
       throw new UsernameNotFoundException("일치하는 유저가 없습니다.");
     }
   }
 
-  public Boolean checkUser(ResetPasswordCheckRequest checkRequest) {
+  //  public Boolean checkUser(ResetPasswordCheckRequest checkRequest) {
+//    User user = userRepository.findByEmailAndIsActiveTrue(checkRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
+//    if (user.getName().equals(checkRequest.getName())) {
+//      return true;
+//    } else {
+//      return false;
+//    }
+//  }
+  public void checkUser(ResetPasswordCheckRequest checkRequest) {
     User user = userRepository.findByEmailAndIsActiveTrue(checkRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
-    if (user.getName().equals(checkRequest.getName())) {
-      return true;
-    } else {
-      return false;
+    if (!user.getName().equals(checkRequest.getName())) {
+      throw new IllegalArgumentException("사용자 이름이 일치하지 않습니다.");
     }
+    // 검증 성공 시 아무것도 반환하지 않음
   }
 
-  public Boolean resetPassword(ResetPasswordRequest resetPasswordRequest) {
+
+  //  public Boolean resetPassword(ResetPasswordRequest resetPasswordRequest) {
+//    // 비밀번호와 확인 비밀번호가 일치하는지 확인
+//    if(!resetPasswordRequest.getPassword().equals(resetPasswordRequest.getConfirmPassword())){
+//      return false;
+//    }
+//
+//    User user = userRepository.findByEmailAndIsActiveTrue(resetPasswordRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
+//
+//    // 비밀번호 인코딩 후 저장
+//    String encodedPassword = passwordEncoder.encode(resetPasswordRequest.getPassword());
+//    user.setPassword(encodedPassword);
+//    userRepository.save(user);
+//    return true;
+//  }
+  public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
     // 비밀번호와 확인 비밀번호가 일치하는지 확인
-    if(!resetPasswordRequest.getPassword().equals(resetPasswordRequest.getConfirmPassword())){
-      return false;
+    if (!resetPasswordRequest.getPassword().equals(resetPasswordRequest.getConfirmPassword())) {
+      throw new IllegalArgumentException("비밀번호와 확인 비밀번호가 일치하지 않습니다.");
     }
 
     User user = userRepository.findByEmailAndIsActiveTrue(resetPasswordRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
@@ -182,6 +204,6 @@ public class AuthService {
     String encodedPassword = passwordEncoder.encode(resetPasswordRequest.getPassword());
     user.setPassword(encodedPassword);
     userRepository.save(user);
-    return true;
+    // 성공 시 아무것도 반환하지 않음
   }
 }

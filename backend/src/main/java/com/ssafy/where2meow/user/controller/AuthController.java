@@ -22,8 +22,6 @@ public class AuthController {
 
   private final AuthService authService;
   private final LoginCookie loginCookie;
-  private final JwtTokenProvider jwtTokenProvider;
-  private final TokenBlacklist tokenBlacklist;
 
   /**
    * 로그인 처리
@@ -61,21 +59,33 @@ public class AuthController {
     return ResponseEntity.ok(userId);
   }
 
+//  @PostMapping("/password/check")
+//  public ResponseEntity<Void> userCheck(@RequestBody @Valid ResetPasswordCheckRequest checkRequest) {
+//    if(authService.checkUser(checkRequest)) {
+//      return ResponseEntity.ok().build();
+//    } else {
+//      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+//    }
+//  }
+//
+//  @PutMapping("/password/reset")
+//  public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest resetPasswordRequest) {
+//    if(authService.resetPassword(resetPasswordRequest)) {
+//      return ResponseEntity.ok().build();
+//    } else {
+//      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+//    }
+//  }
+
   @PostMapping("/password/check")
   public ResponseEntity<Void> userCheck(@RequestBody @Valid ResetPasswordCheckRequest checkRequest) {
-    if(authService.checkUser(checkRequest)) {
-      return ResponseEntity.ok().build();
-    } else {
-      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-    }
+    authService.checkUser(checkRequest);
+    return ResponseEntity.ok().build();
   }
 
   @PutMapping("/password/reset")
   public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest resetPasswordRequest) {
-    if(authService.resetPassword(resetPasswordRequest)) {
-      return ResponseEntity.ok().build();
-    } else {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-    }
+    authService.resetPassword(resetPasswordRequest);
+    return ResponseEntity.ok().build();
   }
 }
