@@ -31,7 +31,7 @@ public class UserTest {
     admin.setName("admin");
     admin.setNickname("admin nickname");
     admin.setEmail("admin@admin.com");
-    admin.setPassword(passwordEncoder.encode("123123123"));
+    admin.setPassword(passwordEncoder.encode("12345678"));
     admin.setPhone("010-0000-0000");
     admin.setRole(Role.ADMIN);
     admin.setIsActive(true);
@@ -40,7 +40,7 @@ public class UserTest {
     user.setName("user");
     user.setNickname("nickname");
     user.setEmail("user@user.com");
-    user.setPassword(passwordEncoder.encode("123123123"));
+    user.setPassword(passwordEncoder.encode("12345678"));
     user.setPhone("010-0000-0000");
     user.setRole(Role.USER);
     user.setIsActive(true);
