@@ -3,6 +3,8 @@ package com.ssafy.where2meow.board.controller;
 import com.ssafy.where2meow.board.dto.BoardListResponse;
 import com.ssafy.where2meow.board.dto.BoardRequest;
 import com.ssafy.where2meow.board.entity.Board;
+import com.ssafy.where2meow.board.service.BoardBookmarkService;
+import com.ssafy.where2meow.board.service.BoardLikeService;
 import com.ssafy.where2meow.board.service.BoardService;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +25,8 @@ import java.util.UUID;
 public class BoardController {
 
     private final BoardService boardService;
+    private final BoardLikeService boardLikeService;
+    private final BoardBookmarkService boardBookmarkService;
 
     private final UuidUserUtil uuidUserUtil;
 
@@ -96,14 +100,58 @@ public class BoardController {
         boardService.deleteBoard(boardId, uuid);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{boardId}/like")
+    @Operation(
+            summary = "게시글 좋아요 추가",
+            description = "로그인한 사용자가 특정 게시글에 좋아요를 추가합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "게시글 좋아요 추가 성공")
+    public ResponseEntity<Void> createLike(@PathVariable int boardId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        boardLikeService.createLike(boardId, uuid);
+        return ResponseEntity.noContent().build();
+    }
     
-    // 게시글 좋아요 추가(/api/board/{board_id}/like)
-    
-    // 게시글 좋아요 삭제(/api/board/{board_id}/like)
-    
-    // 게시글 북마크 추가(/api/board/{board_id}/bookmark)
-    
-    // 게시글 북마크 삭제(/api/board/{board_id}/bookmark)
+    @DeleteMapping("/{boardId}/like")
+    @Operation(
+            summary = "게시글 좋아요 삭제",
+            description = "로그인한 사용자가 특정 게시글에 좋아요를 삭제합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "게시글 좋아요 삭제 성공")
+    public ResponseEntity<Void> deleteLike(@PathVariable int boardId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        boardLikeService.deleteLike(boardId, uuid);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{boardId}/bookmark")
+    @Operation(
+            summary = "게시글 북마크 추가",
+            description = "로그인한 사용자가 특정 게시글에 북마크를 추가합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "게시글 북마크 추가 성공")
+    public ResponseEntity<Void> createBookmark(@PathVariable int boardId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        boardBookmarkService.createBookmark(boardId, uuid);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{boardId}/bookmark")
+    @Operation(
+            summary = "게시글 북마크 삭제",
+            description = "로그인한 사용자가 특정 게시글에 북마크를 삭제합니다."
+    )
+    @ApiResponse(responseCode = "204", description = "게시글 북마크 삭제 성공")
+    public ResponseEntity<Void> deleteBookmark(@PathVariable int boardId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        boardBookmarkService.deleteBookmark(boardId, uuid);
+        return ResponseEntity.noContent().build();
+    }
     
     // 게시글의 댓글 조회(/api/board/{board_id}/comment)
     

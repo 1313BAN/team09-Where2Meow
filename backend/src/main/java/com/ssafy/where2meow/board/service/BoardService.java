@@ -3,6 +3,7 @@ package com.ssafy.where2meow.board.service;
 import com.ssafy.where2meow.board.dto.BoardListResponse;
 import com.ssafy.where2meow.board.dto.BoardRequest;
 import com.ssafy.where2meow.board.entity.Board;
+import com.ssafy.where2meow.board.repository.BoardLikeRepository;
 import com.ssafy.where2meow.board.repository.BoardRepository;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
 import com.ssafy.where2meow.exception.EntityNotFoundException;
@@ -21,6 +22,7 @@ public class BoardService {
     private final BoardRepository boardRepository;
 
     private final UuidUserUtil uuidUserUtil;
+    private final BoardLikeRepository boardLikeRepository;
 
     // 게시글 리스트 조회
     // 쿼리 파라미터를 통해 필터링 및 정렬을 선택적으로 지원
@@ -69,6 +71,8 @@ public class BoardService {
                 .orElseThrow(() -> new EntityNotFoundException("Board", "boardId", boardId));
 
         checkBoardOwnership(board, userId);
+
+        boardLikeRepository.deleteByBoardId(boardId);
         boardRepository.delete(board);
     }
 
