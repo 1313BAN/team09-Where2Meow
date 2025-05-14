@@ -18,5 +18,7 @@ public class CommentResponse {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Integer parentCommentId;
+
+    private int likeCount;
+    private boolean isLiked;
 }

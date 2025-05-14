@@ -1,11 +1,14 @@
 package com.ssafy.where2meow.board.controller;
 
+import com.ssafy.where2meow.board.dto.BoardDetailResponse;
 import com.ssafy.where2meow.board.dto.BoardListResponse;
 import com.ssafy.where2meow.board.dto.BoardRequest;
 import com.ssafy.where2meow.board.entity.Board;
 import com.ssafy.where2meow.board.service.BoardBookmarkService;
 import com.ssafy.where2meow.board.service.BoardLikeService;
 import com.ssafy.where2meow.board.service.BoardService;
+import com.ssafy.where2meow.comment.dto.CommentResponse;
+import com.ssafy.where2meow.comment.service.CommentService;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,6 +31,7 @@ public class BoardController {
     private final BoardService boardService;
     private final BoardLikeService boardLikeService;
     private final BoardBookmarkService boardBookmarkService;
+    private final CommentService commentService;
 
     private final UuidUserUtil uuidUserUtil;
 
@@ -51,8 +56,20 @@ public class BoardController {
     }
     
     // 내가 쓴 게시글 조회(/api/board/user)
-    
-    // 게시글 상세 조회(/api/board/{board_id})
+
+    @GetMapping("/{boardId}")
+    @Operation(
+            summary = "게시글 상세 조회",
+            description = "특정 게시글의 상세 정보를 조회합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "게시글 상세 조회 성공")
+    @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    public ResponseEntity<BoardDetailResponse> getBoardDetail(@PathVariable int boardId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        BoardDetailResponse board = boardService.getBoardDetail(boardId, uuid);
+        return ResponseEntity.ok(board);
+    }
     
     // 게시글 검색(/api/board/search?keyword={keyword})
 
@@ -153,6 +170,17 @@ public class BoardController {
         return ResponseEntity.noContent().build();
     }
     
-    // 게시글의 댓글 조회(/api/board/{board_id}/comment)
+    @GetMapping("/{boardId}/comment")
+    @Operation(
+            summary = "게시글 댓글 목록 조회",
+            description = "특정 게시글의 댓글 목록을 조회합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공")
+    public ResponseEntity<List<CommentResponse>> getCommentsByBoardId(@PathVariable int boardId) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+        
+        List<CommentResponse> comments = commentService.getCommentsByBoardId(boardId, uuid);
+        return ResponseEntity.ok(comments);
+    }
     
 }

@@ -1,17 +1,22 @@
 package com.ssafy.where2meow.comment.service;
 
 import com.ssafy.where2meow.comment.dto.CommentRequest;
+import com.ssafy.where2meow.comment.dto.CommentResponse;
 import com.ssafy.where2meow.comment.entity.Comment;
 import com.ssafy.where2meow.comment.repository.CommentLikeRepository;
 import com.ssafy.where2meow.comment.repository.CommentRepository;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
 import com.ssafy.where2meow.exception.EntityNotFoundException;
 import com.ssafy.where2meow.exception.ForbiddenAccessException;
+import com.ssafy.where2meow.user.entity.User;
+import com.ssafy.where2meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,8 +25,47 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
+    private final UserRepository userRepository;
 
     private final UuidUserUtil uuidUserUtil;
+
+    // 게시글에 해당하는 모든 댓글 조회
+    public List<CommentResponse> getCommentsByBoardId(int boardId, UUID uuid) {
+        Integer userId = uuidUserUtil.getOptionalUserId(uuid);
+        List<Comment> comments = commentRepository.findByBoardId(boardId);
+        List<CommentResponse> commentResponses = new ArrayList<>();
+
+        for (Comment comment : comments) {
+            // 사용자 정보 조회 - 실제로는 사용자 서비스 호출
+            User user = userRepository.findById(comment.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("User", "userId", comment.getUserId()));
+            String username = user.getName();
+
+            // 좋아요 수 조회
+            int likeCount = commentLikeRepository.countByCommentId(comment.getCommentId());
+
+            // 사용자가 좋아요를 눌렀는지 확인
+            boolean isLiked = userId != null &&
+                    commentLikeRepository.existsByCommentIdAndUserId(comment.getCommentId(), userId);
+
+            // CommentResponse 객체 생성
+            CommentResponse response = CommentResponse.builder()
+                    .commentId(comment.getCommentId())
+                    .boardId(comment.getBoardId())
+                    .userId(comment.getUserId())
+                    .username(username)
+                    .content(comment.getContent())
+                    .createdAt(comment.getCreatedAt())
+                    .updatedAt(comment.getUpdatedAt())
+                    .likeCount(likeCount)
+                    .isLiked(isLiked)
+                    .build();
+
+            commentResponses.add(response);
+        }
+
+        return commentResponses;
+    }
 
     // 댓글 추가
     @Transactional
