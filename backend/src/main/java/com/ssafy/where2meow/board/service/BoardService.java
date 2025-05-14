@@ -3,14 +3,15 @@ package com.ssafy.where2meow.board.service;
 import com.ssafy.where2meow.board.dto.BoardDetailResponse;
 import com.ssafy.where2meow.board.dto.BoardListResponse;
 import com.ssafy.where2meow.board.dto.BoardRequest;
+import com.ssafy.where2meow.board.dto.BoardResponse;
 import com.ssafy.where2meow.board.entity.Board;
+import com.ssafy.where2meow.board.entity.BoardBookmark;
 import com.ssafy.where2meow.board.entity.BoardCategory;
 import com.ssafy.where2meow.board.repository.BoardBookmarkRepository;
 import com.ssafy.where2meow.board.repository.BoardCategoryRepository;
 import com.ssafy.where2meow.board.repository.BoardLikeRepository;
 import com.ssafy.where2meow.board.repository.BoardRepository;
 import com.ssafy.where2meow.comment.dto.CommentResponse;
-import com.ssafy.where2meow.comment.repository.CommentRepository;
 import com.ssafy.where2meow.comment.service.CommentService;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
 import com.ssafy.where2meow.exception.EntityNotFoundException;
@@ -19,6 +20,7 @@ import com.ssafy.where2meow.user.entity.User;
 import com.ssafy.where2meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,7 +34,6 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final BoardLikeRepository boardLikeRepository;
     private final BoardBookmarkRepository boardBookmarkRepository;
-    private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final BoardCategoryRepository boardCategoryRepository;
 
@@ -45,7 +46,35 @@ public class BoardService {
     public BoardListResponse getAllBoards(UUID uuid, Integer categoryId, String sort, String direction, int page, int size, boolean bookmarked) {
         Integer userId = uuidUserUtil.getOptionalUserId(uuid);
 
-        return null;
+        // 정렬 기준 설정
+        Sort sortOption = createSort(sort, direction);
+
+        // 페이징 설정
+        Pageable pageable = PageRequest.of(page, size, sortOption);
+
+        // 게시글 리스트 조회
+        Page<Board> boardPage;
+
+        if(bookmarked && userId != null) {
+            boardPage = getBoardsBookmarkedByUser(userId, categoryId, pageable);
+        } else if (categoryId != null) {
+            boardPage = boardRepository.findAllByCategoryId(categoryId, pageable);
+        } else {
+            boardPage = boardRepository.findAll(pageable);
+        }
+
+        List<BoardResponse> boardResponses = boardPage.getContent().stream()
+                .map(board -> convertToBoardResponse(board, userId))
+                .toList();
+
+        return BoardListResponse.builder()
+                .boards(boardResponses)
+                .totalPages(boardPage.getTotalPages())
+                .totalElements(boardPage.getTotalElements())
+                .currentPage(boardPage.getNumber())
+                .isFirst(boardPage.isFirst())
+                .isLast(boardPage.isLast())
+                .build();
     }
 
     // 특정 게시글 상세 조회
@@ -139,6 +168,80 @@ public class BoardService {
         if (board.getUserId() != userId) {
             throw new ForbiddenAccessException("이 게시글에 대한 권한이 없습니다");
         }
+    }
+
+    private Sort createSort(String sort, String direction) {
+        if (sort == null || direction == null) {
+            throw new IllegalArgumentException("sort와 direction은 필수 파라미터입니다.");
+        }
+
+        Sort.Direction dir;
+        try {
+            dir = Sort.Direction.fromString(direction);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid sort direction: " + direction);
+        }
+
+        return Sort.by(dir, sort);
+    }
+
+    private Page<Board> getBoardsBookmarkedByUser(int userId, Integer categoryId, Pageable pageable) {
+        // 먼저 사용자의 북마크 목록 조회
+        Page<BoardBookmark> bookmarks = boardBookmarkRepository.findAllByUserId(userId, pageable);
+
+        // 북마크에서 게시글 ID 추출
+        List<Integer> bookmarkedBoardIds = bookmarks.getContent().stream()
+                .map(BoardBookmark::getBoardId)
+                .toList();
+
+        // 빈 목록인 경우 빈 페이지 반환
+        if (bookmarkedBoardIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 카테고리 필터링 여부에 따라 쿼리 분기
+        List<Board> boards;
+        if (categoryId == null) {
+            boards = boardRepository.findAllById(bookmarkedBoardIds);
+        } else {
+            boards = boardRepository.findAllById(bookmarkedBoardIds).stream()
+                    .filter(board -> board.getCategoryId() == categoryId)
+                    .toList();
+        }
+
+        // Page 객체로 변환
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), boards.size());
+
+        return new PageImpl<>(
+                boards.subList(start, end),
+                pageable,
+                boards.size()
+        );
+    }
+
+    private BoardResponse convertToBoardResponse(Board board, Integer userId) {
+        // 카테고리 이름 조회
+        String categoryName = boardCategoryRepository.findById(board.getCategoryId())
+                .map(BoardCategory::getCategoryName)
+                .orElseThrow(() -> new EntityNotFoundException("Category", "categoryId", board.getCategoryId()));
+        // 좋아요 수 조회
+        int likeCount = boardLikeRepository.countByBoardId(board.getBoardId());
+
+        // 좋아요 여부 확인
+        boolean isLiked = false;
+        if (userId != null) {
+            isLiked = boardLikeRepository.existsByBoardIdAndUserId(board.getBoardId(), userId);
+        }
+
+        // 북마크 여부 확인
+        boolean isBookmarked = false;
+        if (userId != null) {
+            isBookmarked = boardBookmarkRepository.existsByBoardIdAndUserId(board.getBoardId(), userId);
+        }
+
+        // BoardResponse 생성 및 반환
+        return BoardResponse.fromBoard(board, categoryName, likeCount, isLiked, isBookmarked);
     }
 
 }
