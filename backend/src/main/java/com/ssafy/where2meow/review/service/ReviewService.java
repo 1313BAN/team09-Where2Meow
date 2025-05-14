@@ -230,12 +230,12 @@ public class ReviewService {
      * 현재 로그인한 사용자의 리뷰 목록 조회
      */
     @Transactional(readOnly = true)
-    public List<UserReviewResponse> getUserReviews(UserReviewRequest userReviewRequest) {
+    public List<UserReviewResponse> getUserReviews(UUID uuid) {
         User user;
         
         // 사용자 ID가 제공된 경우 해당 사용자의 리뷰 조회
-        if (userReviewRequest.getUuid() != null) {
-            user = userRepository.findByUuidAndIsActiveTrue(userReviewRequest.getUuid())
+        if (uuid != null) {
+            user = userRepository.findByUuidAndIsActiveTrue(uuid)
                     .orElseThrow(() -> new EntityNotFoundException("해당 사용자를 찾을 수 없습니다."));
         } else {
             // 제공되지 않은 경우 현재 사용자의 리뷰 조회

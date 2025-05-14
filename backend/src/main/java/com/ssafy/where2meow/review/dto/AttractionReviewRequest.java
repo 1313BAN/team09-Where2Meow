@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.review.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +12,10 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserReviewRequest {
+public class AttractionReviewRequest {
 
-    private UUID uuid;
+  @NotBlank
+  private Integer attractionId;
+  @NotBlank
+  private UUID uuid;
 }

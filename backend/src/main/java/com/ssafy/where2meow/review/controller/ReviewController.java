@@ -27,13 +27,13 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @GetMapping("/user")
-    public ResponseEntity<List<UserReviewResponse>> getUserReviews(@RequestBody UserReviewRequest userReviewRequest) {
-        List<UserReviewResponse> reviewList = reviewService.getUserReviews(userReviewRequest);
+    public ResponseEntity<List<UserReviewResponse>> getUserReviews(@RequestBody @Valid UuidRequest uuid) {
+        List<UserReviewResponse> reviewList = reviewService.getUserReviews(uuid.getUuid());
         return ResponseEntity.ok(reviewList);
     }
 
     @GetMapping("/{reviewId}")
-    public ResponseEntity<ReviewDetailResponse> getReviewDetail(@PathVariable Integer reviewId, @RequestBody UuidRequest uuid) {
+    public ResponseEntity<ReviewDetailResponse> getReviewDetail(@PathVariable Integer reviewId, @RequestBody @Valid UuidRequest uuid) {
         ReviewDetailResponse review = reviewService.getReviewDetail(reviewId, uuid.getUuid());
         return ResponseEntity.ok(review);
     }
@@ -45,20 +45,20 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{reviewId}")
-    public ResponseEntity<Void> deleteReview(@PathVariable Integer reviewId, @RequestBody UuidRequest uuid) {
+    public ResponseEntity<Void> deleteReview(@PathVariable Integer reviewId, @RequestBody @Valid UuidRequest uuid) {
         reviewService.deleteReview(reviewId, uuid.getUuid());
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping
-    public ResponseEntity<List<ReviewListResponse>> getAllReviewsByAttraction(@RequestParam Integer attractionId, @RequestBody UuidRequest uuid) {
-        List<ReviewListResponse> reviewList = reviewService.getAllReviewsByAttraction(attractionId, uuid.getUuid());
-        return ResponseEntity.ok(reviewList);
-    }
+//    @GetMapping
+//    public ResponseEntity<List<ReviewListResponse>> getAllReviewsByAttraction(@RequestParam Integer attractionId, @RequestBody UuidRequest uuid) {
+//        List<ReviewListResponse> reviewList = reviewService.getAllReviewsByAttraction(attractionId, uuid.getUuid());
+//        return ResponseEntity.ok(reviewList);
+//    }
 
-    @GetMapping("/paging")
-    public ResponseEntity<PageResponse<ReviewListResponse>> getReviewsByAttraction(@RequestParam Integer attractionId, @RequestBody UuidRequest uuid, @PageableDefault(size = 10, sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
-        PageResponse<ReviewListResponse> pageResponse = reviewService.getReviewsByAttraction(attractionId, pageable, uuid.getUuid());
+    @GetMapping
+    public ResponseEntity<PageResponse<ReviewListResponse>> getReviewsByAttraction(@RequestBody @Valid AttractionReviewRequest attractionReviewRequest, @PageableDefault(size = 10, sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
+        PageResponse<ReviewListResponse> pageResponse = reviewService.getReviewsByAttraction(attractionReviewRequest.getAttractionId(), pageable, attractionReviewRequest.getUuid());
         return ResponseEntity.ok(pageResponse);
     }
 
