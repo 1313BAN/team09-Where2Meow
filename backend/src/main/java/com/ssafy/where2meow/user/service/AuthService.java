@@ -155,13 +155,13 @@ public class AuthService {
 
   public String findId(FIndIdRequest fIndIdRequest) {
     User user = userRepository.findByNameAndPhone(fIndIdRequest.getName(), fIndIdRequest.getPhone())
-        .orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
+        .orElseThrow(() -> new IllegalArgumentException("일치하는 유저가 없습니다."));
 
     return user.getEmail();
   }
 
   public void checkUser(ResetPasswordCheckRequest checkRequest) {
-    User user = userRepository.findByEmailAndIsActiveTrue(checkRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
+    User user = userRepository.findByEmailAndIsActiveTrue(checkRequest.getEmail()).orElseThrow(() -> new IllegalArgumentException("일치하는 유저가 없습니다."));
     if (!user.getName().equals(checkRequest.getName())) {
       throw new IllegalArgumentException("사용자 이름이 일치하지 않습니다.");
     }
@@ -176,7 +176,7 @@ public class AuthService {
     // 비밀번호 복잡도 검증
     PasswordComplexityUtil.validatePasswordComplexity(resetPasswordRequest.getPassword());
 
-    User user = userRepository.findByEmailAndIsActiveTrue(resetPasswordRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
+    User user = userRepository.findByEmailAndIsActiveTrue(resetPasswordRequest.getEmail()).orElseThrow(() -> new IllegalArgumentException("일치하는 유저가 없습니다."));
 
     // 이전 비밀번호와 동일한지 확인
     if (passwordEncoder.matches(resetPasswordRequest.getPassword(), user.getPassword())) {

@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -66,6 +67,13 @@ public class GlobalExceptionHandler {
     errorResponse.put("message", e.getMessage());
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
+
+//  @ExceptionHandler(UsernameNotFoundException.class)
+//  public ResponseEntity<Map<String, String>> handleUsernameNotFoundException(UsernameNotFoundException e) {
+//    Map<String, String> errorResponse = new HashMap<>();
+//    errorResponse.put("message", "인증 실패: " + e.getMessage());
+//    return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+//  }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Map<String, String>> handleGlobalException(Exception e) {
