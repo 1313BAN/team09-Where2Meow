@@ -36,6 +36,7 @@ public class UserSignupRequest {
   @Size(min = 8, max = 100, message = "비밀번호는 8자 이상 100자 이하여야 합니다.")
   private String confirmPassword;
 
+  @NotBlank(message = "휴대폰 번호는 필수 입력값입니다.")
   @Pattern(regexp = "^01([0|1|6|7|8|9])-?([0-9]{3,4})-?([0-9]{4})$",
       message = "휴대폰 번호 형식이 올바르지 않습니다.")
   private String phone;
