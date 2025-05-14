@@ -1,6 +1,7 @@
 package com.ssafy.where2meow.comment.controller;
 
 import com.ssafy.where2meow.comment.dto.CommentRequest;
+import com.ssafy.where2meow.comment.dto.CommentResponse;
 import com.ssafy.where2meow.comment.entity.Comment;
 import com.ssafy.where2meow.comment.service.CommentLikeService;
 import com.ssafy.where2meow.comment.service.CommentService;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,7 +28,18 @@ public class CommentController {
 
     private final UuidUserUtil uuidUserUtil;
 
-    // 내가 쓴 댓글 조회(/user)
+    @GetMapping("/user")
+    @Operation(
+            summary = "내 댓글 리스트 조회",
+            description = "로그인한 사용자가 작성한 댓글 리스트를 조회합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "내 댓글 리스트 조회 성공")
+    public ResponseEntity<List<CommentResponse>> getUserComments() {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        List<CommentResponse> comments = commentService.getUserComments(uuid);
+        return ResponseEntity.ok(comments);
+    }
 
     @PostMapping
     @Operation(
