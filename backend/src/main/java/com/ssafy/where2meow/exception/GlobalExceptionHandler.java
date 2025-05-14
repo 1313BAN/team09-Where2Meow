@@ -101,13 +101,6 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
-//  @ExceptionHandler(UsernameNotFoundException.class)
-//  public ResponseEntity<Map<String, String>> handleUsernameNotFoundException(UsernameNotFoundException e) {
-//    Map<String, String> errorResponse = new HashMap<>();
-//    errorResponse.put("message", "인증 실패: " + e.getMessage());
-//    return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
-//  }
-
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Map<String, String>> handleGlobalException(Exception e) {
     Map<String, String> errorResponse = new HashMap<>();
