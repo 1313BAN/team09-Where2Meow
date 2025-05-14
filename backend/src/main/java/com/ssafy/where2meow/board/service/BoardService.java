@@ -53,27 +53,70 @@ public class BoardService {
         Pageable pageable = PageRequest.of(page, size, sortOption);
 
         // 게시글 리스트 조회
-        Page<Board> boardPage;
+        Page<Board> boards;
 
         if(bookmarked && userId != null) {
-            boardPage = getBoardsBookmarkedByUser(userId, categoryId, pageable);
+            boards = getBoardsBookmarkedByUser(userId, categoryId, pageable);
         } else if (categoryId != null) {
-            boardPage = boardRepository.findAllByCategoryId(categoryId, pageable);
+            boards = boardRepository.findAllByCategoryId(categoryId, pageable);
         } else {
-            boardPage = boardRepository.findAll(pageable);
+            boards = boardRepository.findAll(pageable);
         }
 
-        List<BoardResponse> boardResponses = boardPage.getContent().stream()
+        List<BoardResponse> boardResponses = boards.getContent().stream()
                 .map(board -> convertToBoardResponse(board, userId))
                 .toList();
 
         return BoardListResponse.builder()
                 .boards(boardResponses)
-                .totalPages(boardPage.getTotalPages())
-                .totalElements(boardPage.getTotalElements())
-                .currentPage(boardPage.getNumber())
-                .isFirst(boardPage.isFirst())
-                .isLast(boardPage.isLast())
+                .totalPages(boards.getTotalPages())
+                .totalElements(boards.getTotalElements())
+                .currentPage(boards.getNumber())
+                .isFirst(boards.isFirst())
+                .isLast(boards.isLast())
+                .build();
+    }
+
+    // 내가 쓴 게시글 리스트 조회
+    public BoardListResponse getUserBoards(UUID uuid, String sort, String direction, int page, int size) {
+        Integer userId = uuidUserUtil.getRequiredUserId(uuid);
+
+        Sort sortOption = createSort(sort, direction);
+        Pageable pageable = PageRequest.of(page, size, sortOption);
+        Page<Board> boards = boardRepository.findAllByUserId(userId, pageable);
+
+        List<BoardResponse> boardResponses = boards.stream()
+                .map(board -> convertToBoardResponse(board, userId))
+                .toList();
+
+        return BoardListResponse.builder()
+                .boards(boardResponses)
+                .totalPages(boards.getTotalPages())
+                .totalElements(boards.getTotalElements())
+                .currentPage(boards.getNumber())
+                .isFirst(boards.isFirst())
+                .isLast(boards.isLast())
+                .build();
+    }
+
+    // 게시글 검색
+    public BoardListResponse searchBoards(String keyword, String sort, String direction, int page, int size) {
+        Sort sortOption = createSort(sort, direction);
+        Pageable pageable = PageRequest.of(page, size, sortOption);
+
+        Page<Board> boards = boardRepository.searchByKeyword(keyword, pageable);
+
+        List<BoardResponse> boardResponses = boards.getContent().stream()
+                .map(board -> convertToBoardResponse(board, null))
+                .toList();
+
+        return BoardListResponse.builder()
+                .boards(boardResponses)
+                .totalPages(boards.getTotalPages())
+                .totalElements(boards.getTotalElements())
+                .currentPage(boards.getNumber())
+                .isFirst(boards.isFirst())
+                .isLast(boards.isLast())
                 .build();
     }
 
