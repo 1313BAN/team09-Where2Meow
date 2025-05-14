@@ -2,7 +2,6 @@ package com.ssafy.where2meow.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.util.UUID;
 
@@ -16,35 +15,35 @@ import java.util.UUID;
 @ToString
 @EqualsAndHashCode
 public class User {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "user_id")
-  private int userId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
+    private int userId;
 
-  @Column(unique = true, columnDefinition = "BINARY(16)")
-  private UUID uuid;
+    @Column(unique = true, columnDefinition = "BINARY(16)")
+    private UUID uuid;
 
-  @PrePersist
-  public void generateUuid() {
-    if (this.uuid == null) {
-      this.uuid = UUID.randomUUID();
+    @PrePersist
+    public void generateUuid() {
+        if (this.uuid == null) {
+            this.uuid = UUID.randomUUID();
+        }
     }
-  }
 
-  private String name;
-  private String nickname;
+    private String name;
+    private String nickname;
 
-  @Column(unique = true)
-  private String email;
+    @Column(unique = true)
+    private String email;
 
-  private String password;
-  private String phone;
+    private String password;
+    private String phone;
 
-  @Enumerated(EnumType.STRING)
-  private Role role;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
-  private String image;
+    private String image;
 
-  @Column(name = "is_active")
-  private Boolean isActive;
+    @Column(name = "is_active")
+    private Boolean isActive;
 }

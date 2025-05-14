@@ -26,22 +26,22 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final CustomUserDetailsService userDetailsService;
-  
+
   @Value("${argon2.type:ARGON2id}")
   private String argon2Type;
-  
+
   @Value("${argon2.salt-length:16}")
   private int argon2SaltLength;
-  
+
   @Value("${argon2.hash-length:32}")
   private int argon2HashLength;
-  
+
   @Value("${argon2.iterations:4}")
   private int argon2Iterations;
-  
+
   @Value("${argon2.memory:65536}")
   private int argon2Memory;
-  
+
   @Value("${argon2.parallelism:1}")
   private int argon2Parallelism;
 
@@ -75,13 +75,13 @@ public class SecurityConfig {
 
     return http.build();
   }
-  
+
   // 쿠키 유틸리티 빈
   @Bean
   public LoginCookie cookieUtil() {
     return new LoginCookie();
   }
-  
+
   @Bean
   public PasswordEncoder passwordEncoder() {
     // Argon2 인코더 구현
@@ -116,7 +116,7 @@ public class SecurityConfig {
   public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
     return authenticationConfiguration.getAuthenticationManager();
   }
-  
+
   // 문자열 타입을 Argon2Factory.Argon2Types 열거형으로 변환
   private Argon2Factory.Argon2Types getArgon2Type(String type) {
     if ("ARGON2i".equalsIgnoreCase(type)) {
