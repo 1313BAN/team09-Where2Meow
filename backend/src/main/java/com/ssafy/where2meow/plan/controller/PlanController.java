@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.plan.controller;
 
+import com.ssafy.where2meow.common.util.UuidUserUtil;
 import com.ssafy.where2meow.plan.dto.PlanDetailResponse;
 import com.ssafy.where2meow.plan.dto.PlanRequest;
 import com.ssafy.where2meow.plan.dto.PlanResponse;
@@ -11,8 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -29,6 +28,8 @@ public class PlanController {
     private final PlanLikeService planLikeService;
     private final PlanBookmarkService planBookmarkService;
 
+    private final UuidUserUtil uuidUserUtil;
+
     @GetMapping
     @Operation(
             summary = "여행 계획 리스트 조회",
@@ -37,7 +38,7 @@ public class PlanController {
     @ApiResponse(responseCode = "200", description = "여행 계획 리스트 조회 성공")
     public ResponseEntity<List<PlanResponse>> getAllPlans() {
         // 인증 정보 추출
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         List<PlanResponse> plans = planService.getAllPlansByUuid(uuid);
         return ResponseEntity.ok(plans);
@@ -51,7 +52,7 @@ public class PlanController {
     @ApiResponse(responseCode = "200", description = "여행 계획 리스트 조회 성공")
     public ResponseEntity<List<PlanResponse>> getUserPlans() {
         // 인증 정보 추출
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         List<PlanResponse> plans = planService.getUserPlansByUuid(uuid);
         return ResponseEntity.ok(plans);
@@ -66,7 +67,7 @@ public class PlanController {
     @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     public ResponseEntity<PlanDetailResponse> getPlanDetail(@PathVariable int planId) {
         // 인증 정보 추출
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         PlanDetailResponse planDetail = planService.getPlanDetailByUuid(planId, uuid);
         return ResponseEntity.ok(planDetail);
@@ -80,7 +81,7 @@ public class PlanController {
     @ApiResponse(responseCode = "201", description = "여행 계획 추가 성공")
     public ResponseEntity<PlanResponse> createPlan(@RequestBody PlanRequest planRequest) {
         // 인증 정보 추출
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         PlanResponse createdPlan = planService.createPlanByUuid(planRequest, uuid);
         URI location = URI.create("/api/plan/" + createdPlan.getPlanId());
@@ -93,12 +94,12 @@ public class PlanController {
             description = "여행 계획을 수정합니다."
     )
     @ApiResponse(responseCode = "200", description = "여행 계획 수정 성공")
-    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     @ApiResponse(responseCode = "403", description = "여행 계획 수정 권한 없음")
+    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     public ResponseEntity<PlanResponse> updatePlan(
             @PathVariable int planId, @RequestBody PlanRequest planRequest) {
         // 인증 정보 추출
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         PlanResponse updatedPlan = planService.updatePlanByUuid(planId, planRequest, uuid);
         return ResponseEntity.ok(updatedPlan);
@@ -110,11 +111,11 @@ public class PlanController {
             description = "여행 계획을 삭제합니다."
     )
     @ApiResponse(responseCode = "204", description = "여행 계획 삭제 성공")
-    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     @ApiResponse(responseCode = "403", description = "여행 계획 삭제 권한 없음")
+    @ApiResponse(responseCode = "404", description = "여행 계획을 찾을 수 없음")
     public ResponseEntity<Void> deletePlan(@PathVariable int planId) {
         // 인증된 사용자 확인
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         planService.deletePlanByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
@@ -129,7 +130,7 @@ public class PlanController {
     @ApiResponse(responseCode = "204", description = "여행 계획 좋아요 추가 성공")
     public ResponseEntity<Void> createLike(@PathVariable int planId) {
         // 인증된 사용자 확인
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         planLikeService.createLikeByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
@@ -144,7 +145,7 @@ public class PlanController {
     @ApiResponse(responseCode = "204", description = "여행 계획 좋아요 삭제 성공")
     public ResponseEntity<Void> deleteLike(@PathVariable int planId) {
         // 인증된 사용자 확인
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         planLikeService.deleteLikeByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
@@ -159,7 +160,7 @@ public class PlanController {
     @ApiResponse(responseCode = "204", description = "여행 계획 북마크 추가 성공")
     public ResponseEntity<Void> createBookmark(@PathVariable int planId) {
         // 인증된 사용자 확인
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         planBookmarkService.createBookmarkByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
@@ -174,24 +175,10 @@ public class PlanController {
     @ApiResponse(responseCode = "204", description = "여행 계획 북마크 삭제 성공")
     public ResponseEntity<Void> deleteBookmark(@PathVariable int planId) {
         // 인증된 사용자 확인
-        UUID uuid = getCurrentUserUuid();
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
         planBookmarkService.deleteBookmarkByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
-    }
-
-    // 인증 정보에서 UUID 추출
-    private UUID getCurrentUserUuid() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && !auth.getPrincipal().equals("anonymousUser")) {
-            try {
-                String uuidString = auth.getName();
-                return UUID.fromString(uuidString);
-            } catch (IllegalArgumentException e) {
-                return null;
-            }
-        }
-        return null;
     }
 
 }

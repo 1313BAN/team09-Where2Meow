@@ -67,6 +67,12 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/plan/**").authenticated()
             .requestMatchers(HttpMethod.PUT, "/api/plan/**").authenticated()
             .requestMatchers(HttpMethod.DELETE, "/api/plan/**").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/board/**").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/board/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/board/**").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/comment/**").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/comment/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/comment/**").authenticated()
 
             // user & auth
             .requestMatchers("/api/user/**").authenticated()

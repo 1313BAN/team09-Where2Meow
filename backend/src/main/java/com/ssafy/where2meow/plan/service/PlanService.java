@@ -123,7 +123,6 @@ public class PlanService {
         }
         
         plan.setPublic(planRequest.isPublic());
-        plan.setUpdatedAt(LocalDateTime.now());
 
         Plan savedPlan = planRepository.save(plan);
 
@@ -174,7 +173,6 @@ public class PlanService {
         }
         
         plan.setPublic(planRequest.isPublic());
-        plan.setUpdatedAt(LocalDateTime.now());
 
         Plan savedPlan = planRepository.save(plan);
         

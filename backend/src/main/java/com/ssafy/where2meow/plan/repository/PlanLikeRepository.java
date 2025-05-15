@@ -31,7 +31,6 @@ public interface PlanLikeRepository extends JpaRepository<PlanLike, Integer> {
 
     // 특정 여행 계획에 속한 좋아요 삭제
     @Modifying
-    @Query("DELETE FROM PlanLike pl WHERE pl.planId = :planId")
     void deleteByPlanId(int planId);
 
 }
