@@ -56,12 +56,29 @@ public class SecurityConfig {
         .httpBasic(httpBasic -> httpBasic.disable())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
+            // 허용 url
             .requestMatchers("/api/auth/login").permitAll()
-            .requestMatchers("/api/auth/logout").authenticated()
+            .requestMatchers("/api/auth/find-id").permitAll()
+            .requestMatchers("/api/auth/check-email").permitAll()
+            .requestMatchers("/api/user/signup").permitAll()
+
+            // plan
             .requestMatchers("/api/plan/user").authenticated()
             .requestMatchers(HttpMethod.POST, "/api/plan/**").authenticated()
             .requestMatchers(HttpMethod.PUT, "/api/plan/**").authenticated()
             .requestMatchers(HttpMethod.DELETE, "/api/plan/**").authenticated()
+
+            // user & auth
+            .requestMatchers("/api/user/**").authenticated()
+            .requestMatchers("/api/auth/logout").authenticated()
+
+            // review
+            .requestMatchers(HttpMethod.POST, "/api/review/**").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/review/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/review/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/api/review/user").authenticated()
+
+            // other
             .anyRequest().permitAll()
         )
         // Remember-Me 기능 활성화
