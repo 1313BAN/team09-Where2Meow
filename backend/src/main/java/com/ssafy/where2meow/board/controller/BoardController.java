@@ -54,8 +54,23 @@ public class BoardController {
         
         return ResponseEntity.ok(response);
     }
-    
-    // 내가 쓴 게시글 조회(/api/board/user)
+
+    @GetMapping("/user")
+    @Operation(
+            summary = "내가 쓴 게시글 리스트 조회",
+            description = "로그인한 사용자가 생성한 게시글 리스트를 조회합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "내가 쓴 게시글 리스트 조회 성공")
+    public ResponseEntity<BoardListResponse> getUserBoards(
+            @Parameter(description = "정렬 기준 (createdAt, updatedAt, viewCount, likeCount)") @RequestParam(defaultValue = "createdAt") String sort,
+            @Parameter(description = "정렬 방향 (asc, desc)") @RequestParam(defaultValue = "desc") String direction,
+            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        UUID uuid = uuidUserUtil.getCurrentUserUuid();
+
+        BoardListResponse boards = boardService.getUserBoards(uuid, sort, direction, page, size);
+        return ResponseEntity.ok(boards);
+    }
 
     @GetMapping("/{boardId}")
     @Operation(
@@ -72,6 +87,22 @@ public class BoardController {
     }
     
     // 게시글 검색(/api/board/search?keyword={keyword})
+    @GetMapping("/search")
+    @Operation(
+            summary = "게시글 검색",
+            description = "게시글을 제목 또는 내용으로 검색합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "게시글 검색 성공")
+    public ResponseEntity<BoardListResponse> searchBoards(
+            @Parameter(description = "검색 키워드") @RequestParam String keyword,
+            @Parameter(description = "정렬 기준 (createdAt, updatedAt, viewCount, likeCount)") @RequestParam(defaultValue = "createdAt") String sort,
+            @Parameter(description = "정렬 방향 (asc, desc)") @RequestParam(defaultValue = "desc") String direction,
+            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+
+        BoardListResponse boards = boardService.searchBoards(keyword, sort, direction, page, size);
+        return ResponseEntity.ok(boards);
+    }
 
     @PostMapping
     @Operation(

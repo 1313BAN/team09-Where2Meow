@@ -31,6 +31,37 @@ public class CommentService {
 
     private final UuidUserUtil uuidUserUtil;
 
+    // 내가 쓴 댓글 조회
+    public List<CommentResponse> getUserComments(UUID uuid) {
+        Integer userId = uuidUserUtil.getRequiredUserId(uuid);
+        List<Comment> comments = commentRepository.findByUserId(userId);
+        List<CommentResponse> commentResponses = new ArrayList<>();
+
+        for (Comment comment : comments) {
+            User user = userRepository.findById(comment.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("User", "userId", comment.getUserId()));
+
+            String username = user.getName();
+
+            int likeCount = commentLikeRepository.countByCommentId(comment.getCommentId());
+            boolean isLiked = commentLikeRepository.existsByCommentIdAndUserId(comment.getCommentId(), userId);
+
+            CommentResponse response = CommentResponse.builder()
+                    .commentId(comment.getCommentId())
+                    .boardId(comment.getBoardId())
+                    .userId(comment.getUserId())
+                    .username(username)
+                    .content(comment.getContent())
+                    .createdAt(comment.getCreatedAt())
+                    .updatedAt(comment.getUpdatedAt())
+                    .likeCount(likeCount)
+                    .isLiked(isLiked)
+                    .build();
+            commentResponses.add(response);
+        }
+        return commentResponses;
+    }
+
     // 게시글에 해당하는 모든 댓글 조회
     public List<CommentResponse> getCommentsByBoardId(int boardId, UUID uuid) {
         Integer userId = uuidUserUtil.getOptionalUserId(uuid);
