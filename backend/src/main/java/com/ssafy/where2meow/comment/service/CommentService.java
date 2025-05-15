@@ -43,7 +43,7 @@ public class CommentService {
 
         List<CommentResponse> commentResponses = new ArrayList<>();
 
-        // 사용자 정보를 한 번만 조회 (N+1 문제 해결)
+        // 사용자 정보를 한 번만 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User", "userId", userId));
         String username = user.getName();

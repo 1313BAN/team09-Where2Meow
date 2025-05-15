@@ -7,6 +7,7 @@ import com.ssafy.where2meow.comment.service.CommentLikeService;
 import com.ssafy.where2meow.comment.service.CommentService;
 import com.ssafy.where2meow.common.util.UuidUserUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -34,10 +35,13 @@ public class CommentController {
             description = "로그인한 사용자가 작성한 댓글 리스트를 조회합니다."
     )
     @ApiResponse(responseCode = "200", description = "내 댓글 리스트 조회 성공")
-    public ResponseEntity<List<CommentResponse>> getUserComments() {
+    public ResponseEntity<List<CommentResponse>> getUserComments(
+            @Parameter(description = "페이지 번호") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size
+    ) {
         UUID uuid = uuidUserUtil.getCurrentUserUuid();
 
-        List<CommentResponse> comments = commentService.getUserComments(uuid);
+        List<CommentResponse> comments = commentService.getUserComments(uuid, page, size);
         return ResponseEntity.ok(comments);
     }
 
