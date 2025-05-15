@@ -28,6 +28,7 @@ public class CommentLikeService {
     }
 
     // 댓글 좋아요 추가
+    @Transactional
     public void createLike(int commentId, UUID uuid) {
         Integer userId = uuidUserUtil.getRequiredUserId(uuid);
         if (!hasUserLiked(commentId, userId)) {
@@ -44,6 +45,9 @@ public class CommentLikeService {
     @Transactional
     public void deleteLike(int commentId, UUID uuid) {
         Integer userId = uuidUserUtil.getRequiredUserId(uuid);
+        if (!hasUserLiked(commentId, userId)) {
+            throw new EntityNotFoundException("CommentLike", "commentId", commentId);
+        }
         commentLikeRepository.deleteByCommentIdAndUserId(commentId, userId);
     }
 

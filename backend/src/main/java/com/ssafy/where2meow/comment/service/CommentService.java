@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.comment.service;
 
+import com.ssafy.where2meow.board.repository.BoardRepository;
 import com.ssafy.where2meow.comment.dto.CommentRequest;
 import com.ssafy.where2meow.comment.dto.CommentResponse;
 import com.ssafy.where2meow.comment.entity.Comment;
@@ -26,6 +27,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final UserRepository userRepository;
+    private final BoardRepository boardRepository;
 
     private final UuidUserUtil uuidUserUtil;
 
@@ -71,11 +73,16 @@ public class CommentService {
     @Transactional
     public Comment createComment(CommentRequest commentRequest, UUID uuid) {
         Integer userId = uuidUserUtil.getRequiredUserId(uuid);
+
+        int boardId = commentRequest.getBoardId();
+        if(!boardRepository.existsById(boardId)) {
+            throw new EntityNotFoundException("Board", "boardId", boardId);
+        }
+
         Comment comment = new Comment();
         comment.setUserId(userId);
         comment.setBoardId(commentRequest.getBoardId());
         comment.setContent(commentRequest.getContent());
-        comment.setUpdatedAt(LocalDateTime.now());
 
         return commentRepository.save(comment);
     }
@@ -90,7 +97,6 @@ public class CommentService {
         checkCommentOwnership(comment, userId);
 
         comment.setContent(commentRequest.getContent());
-        comment.setUpdatedAt(LocalDateTime.now());
         return commentRepository.save(comment);
     }
 

@@ -78,7 +78,7 @@ public class BoardService {
             isBookmarked = boardBookmarkRepository.existsByBoardIdAndUserId(boardId, userId);
         }
 
-        // 관련 댓글 정보 조회 - CommentResponse 형태로 가져오기
+        // 관련 댓글 정보 조회
         List<CommentResponse> commentResponses = commentService.getCommentsByBoardId(boardId, uuid);
 
         return BoardDetailResponse.fromBoard(board,
@@ -100,7 +100,6 @@ public class BoardService {
         board.setTitle(boardRequest.getTitle());
         board.setContent(boardRequest.getContent());
         board.setCategoryId(boardRequest.getCategoryId());
-        board.setUpdatedAt(LocalDateTime.now());
 
         return boardRepository.save(board);
     }
@@ -117,7 +116,6 @@ public class BoardService {
         board.setTitle(boardRequest.getTitle());
         board.setContent(boardRequest.getContent());
         board.setCategoryId(boardRequest.getCategoryId());
-        board.setUpdatedAt(LocalDateTime.now());
         return boardRepository.save(board);
     }
 
