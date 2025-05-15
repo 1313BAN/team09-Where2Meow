@@ -227,38 +227,7 @@ public class BoardService {
     }
 
     private Page<Board> getBoardsBookmarkedByUser(int userId, Integer categoryId, Pageable pageable) {
-        // 먼저 사용자의 북마크 목록 조회
-        Page<BoardBookmark> bookmarks = boardBookmarkRepository.findAllByUserId(userId, pageable);
-
-        // 북마크에서 게시글 ID 추출
-        List<Integer> bookmarkedBoardIds = bookmarks.getContent().stream()
-                .map(BoardBookmark::getBoardId)
-                .toList();
-
-        // 빈 목록인 경우 빈 페이지 반환
-        if (bookmarkedBoardIds.isEmpty()) {
-            return Page.empty(pageable);
-        }
-
-        // 카테고리 필터링 여부에 따라 쿼리 분기
-        List<Board> boards;
-        if (categoryId == null) {
-            boards = boardRepository.findAllById(bookmarkedBoardIds);
-        } else {
-            boards = boardRepository.findAllById(bookmarkedBoardIds).stream()
-                    .filter(board -> board.getCategoryId() == categoryId)
-                    .toList();
-        }
-
-        // Page 객체로 변환
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), boards.size());
-
-        return new PageImpl<>(
-                boards.subList(start, end),
-                pageable,
-                boards.size()
-        );
+        return boardRepository.findBookmarkedBoardsByUserIdAndCategoryId(userId, categoryId, pageable);
     }
 
     private BoardResponse convertToBoardResponse(Board board, Integer userId) {
