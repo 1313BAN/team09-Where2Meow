@@ -5,7 +5,6 @@ import com.ssafy.where2meow.board.dto.BoardListResponse;
 import com.ssafy.where2meow.board.dto.BoardRequest;
 import com.ssafy.where2meow.board.dto.BoardResponse;
 import com.ssafy.where2meow.board.entity.Board;
-import com.ssafy.where2meow.board.entity.BoardBookmark;
 import com.ssafy.where2meow.board.entity.BoardCategory;
 import com.ssafy.where2meow.board.repository.BoardBookmarkRepository;
 import com.ssafy.where2meow.board.repository.BoardCategoryRepository;
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 

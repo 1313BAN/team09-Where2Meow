@@ -13,12 +13,13 @@ import com.ssafy.where2meow.user.entity.User;
 import com.ssafy.where2meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -32,19 +33,47 @@ public class CommentService {
     private final UuidUserUtil uuidUserUtil;
 
     // 내가 쓴 댓글 조회
-    public List<CommentResponse> getUserComments(UUID uuid) {
+    public List<CommentResponse> getUserComments(UUID uuid, int page, int size) {  // 매개변수 추가
         Integer userId = uuidUserUtil.getRequiredUserId(uuid);
-        List<Comment> comments = commentRepository.findByUserId(userId);
+
+        // 페이지네이션 적용
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Comment> commentPage = commentRepository.findByUserId(userId, pageable);
+        List<Comment> comments = commentPage.getContent();
+
         List<CommentResponse> commentResponses = new ArrayList<>();
 
+        // 사용자 정보를 한 번만 조회 (N+1 문제 해결)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User", "userId", userId));
+        String username = user.getName();
+
+        // 모든 댓글 ID 추출
+        List<Integer> commentIds = comments.stream()
+                .map(Comment::getCommentId)
+                .toList();
+
+        // 좋아요 수 조회 및 Map으로 변환
+        Map<Integer, Integer> likeCounts = new HashMap<>();
+        if (!commentIds.isEmpty()) {
+            List<Object[]> likeCountResults = commentLikeRepository.countByCommentIdIn(commentIds);
+            for (Object[] result : likeCountResults) {
+                Integer commentId = (Integer) result[0];
+                Long count = (Long) result[1];
+                likeCounts.put(commentId, count.intValue());
+            }
+        }
+
+        // 사용자 좋아요 여부 조회
+        List<Integer> likedCommentIds = new ArrayList<>();
+        if (!commentIds.isEmpty()) {
+            likedCommentIds = commentLikeRepository.findCommentIdsLikedByUser(commentIds, userId);
+        }
+
+        // 댓글 응답 생성
         for (Comment comment : comments) {
-            User user = userRepository.findById(comment.getUserId())
-                    .orElseThrow(() -> new EntityNotFoundException("User", "userId", comment.getUserId()));
-
-            String username = user.getName();
-
-            int likeCount = commentLikeRepository.countByCommentId(comment.getCommentId());
-            boolean isLiked = commentLikeRepository.existsByCommentIdAndUserId(comment.getCommentId(), userId);
+            int likeCount = likeCounts.getOrDefault(comment.getCommentId(), 0);
+            boolean isLiked = likedCommentIds.contains(comment.getCommentId());
 
             CommentResponse response = CommentResponse.builder()
                     .commentId(comment.getCommentId())
@@ -59,6 +88,7 @@ public class CommentService {
                     .build();
             commentResponses.add(response);
         }
+
         return commentResponses;
     }
 
