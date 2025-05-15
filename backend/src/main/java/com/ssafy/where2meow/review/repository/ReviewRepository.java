@@ -1,11 +1,11 @@
 package com.ssafy.where2meow.review.repository;
 
 import com.ssafy.where2meow.review.entity.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -43,7 +43,9 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
    * 특정 여행지에 대한 페이징된 리뷰 조회
    */
   Page<Review> findByAttractionId(Integer attractionId, Pageable pageable);
-  
+
+  List<Review> findAllByUserId(Integer userId);
+
   /**
    * 리뷰 수를 반환하는 인터페이스
    */

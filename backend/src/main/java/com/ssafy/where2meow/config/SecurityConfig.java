@@ -26,22 +26,22 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final CustomUserDetailsService userDetailsService;
-  
+
   @Value("${argon2.type:ARGON2id}")
   private String argon2Type;
-  
+
   @Value("${argon2.salt-length:16}")
   private int argon2SaltLength;
-  
+
   @Value("${argon2.hash-length:32}")
   private int argon2HashLength;
-  
+
   @Value("${argon2.iterations:4}")
   private int argon2Iterations;
-  
+
   @Value("${argon2.memory:65536}")
   private int argon2Memory;
-  
+
   @Value("${argon2.parallelism:1}")
   private int argon2Parallelism;
 
@@ -56,8 +56,13 @@ public class SecurityConfig {
         .httpBasic(httpBasic -> httpBasic.disable())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
+            // 허용 url
             .requestMatchers("/api/auth/login").permitAll()
-            .requestMatchers("/api/auth/logout").authenticated()
+            .requestMatchers("/api/auth/find-id").permitAll()
+            .requestMatchers("/api/auth/check-email").permitAll()
+            .requestMatchers("/api/user/signup").permitAll()
+
+            // plan
             .requestMatchers("/api/plan/user").authenticated()
             .requestMatchers(HttpMethod.POST, "/api/plan/**").authenticated()
             .requestMatchers(HttpMethod.PUT, "/api/plan/**").authenticated()
@@ -68,6 +73,18 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/comment/**").authenticated()
             .requestMatchers(HttpMethod.PUT, "/api/comment/**").authenticated()
             .requestMatchers(HttpMethod.DELETE, "/api/comment/**").authenticated()
+
+            // user & auth
+            .requestMatchers("/api/user/**").authenticated()
+            .requestMatchers("/api/auth/logout").authenticated()
+
+            // review
+            .requestMatchers(HttpMethod.POST, "/api/review/**").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/api/review/**").authenticated()
+            .requestMatchers(HttpMethod.DELETE, "/api/review/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/api/review/user").authenticated()
+
+            // other
             .anyRequest().permitAll()
         )
         // Remember-Me 기능 활성화
@@ -81,13 +98,13 @@ public class SecurityConfig {
 
     return http.build();
   }
-  
+
   // 쿠키 유틸리티 빈
   @Bean
   public LoginCookie cookieUtil() {
     return new LoginCookie();
   }
-  
+
   @Bean
   public PasswordEncoder passwordEncoder() {
     // Argon2 인코더 구현
@@ -122,7 +139,7 @@ public class SecurityConfig {
   public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
     return authenticationConfiguration.getAuthenticationManager();
   }
-  
+
   // 문자열 타입을 Argon2Factory.Argon2Types 열거형으로 변환
   private Argon2Factory.Argon2Types getArgon2Type(String type) {
     if ("ARGON2i".equalsIgnoreCase(type)) {

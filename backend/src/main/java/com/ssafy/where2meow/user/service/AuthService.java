@@ -154,8 +154,8 @@ public class AuthService {
   }
 
   public String findId(FIndIdRequest fIndIdRequest) {
-    User user = userRepository.findByNameAndPhone(fIndIdRequest.getName(), fIndIdRequest.getPhone())
-        .orElseThrow(() -> new UsernameNotFoundException("일치하는 유저가 없습니다."));
+    User user = userRepository.findByNameAndPhoneAndIsActiveTrue(fIndIdRequest.getName(), fIndIdRequest.getPhone())
+        .orElseThrow(() -> new IllegalArgumentException("일치하는 유저가 없습니다."));
 
     return user.getEmail();
   }
