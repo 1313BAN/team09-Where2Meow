@@ -1,2 +1,2 @@
-def rag_plan(query: str) -> object:
-    return {}
+def rag_plan(query: str) -> str:
+    return ""

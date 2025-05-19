@@ -36,9 +36,9 @@ def main():
     print(f"✅ 성공적으로 {len(documents)}개 문서 저장 완료")
 
 if __name__ == "__main__":
-    if os.path.exists(CHROMA_DB_PATH):
-        shutil.rmtree(CHROMA_DB_PATH)
-        print(f"{CHROMA_DB_PATH} 폴더가 삭제되었습니다.")
-    else:
-        print(f"{CHROMA_DB_PATH} 폴더가 존재하지 않습니다.")
+    # if os.path.exists(CHROMA_DB_PATH):
+    #     shutil.rmtree(CHROMA_DB_PATH)
+    #     print(f"{CHROMA_DB_PATH} 폴더가 삭제되었습니다.")
+    # else:
+    #     print(f"{CHROMA_DB_PATH} 폴더가 존재하지 않습니다.")
     main()
