@@ -19,6 +19,7 @@ vectordb = FAISS.load_local(
     allow_dangerous_deserialization=True,
 )
 
+# 데이터베이스를 검색기로 사용하기 위해 retriever 변수에 할당
 retriever = vectordb.as_retriever(
     search_type="mmr", 
     search_kwargs={
@@ -29,19 +30,20 @@ retriever = vectordb.as_retriever(
         }
     )
 
-def rag_attraction(query: str) -> str:
-    # 유사도 검색 실행
-    result_set = retriever.invoke(query)
+# 동적 설정
+# 검색 설정을 지정. score_threshold 0.8 이상의 점수를 가진 문서만 반환
+# config = {
+#     "configurable": {
+#         "search_type": "similarity_score_threshold",
+#         "search_kwargs": {
+#             "score_threshold": 0.8,
+#         },
+#     }
+# }
 
-    # 결과 출력
-    result = ""
-    for doc in result_set:
-        result += f"{doc.page_content}\n"
-    
-    return result
+# 관련 문서를 검색
+docs = retriever.invoke("강릉 관광지")
 
-if __name__ == "__main__":
-    # 테스트용 쿼리
-    test_query = "강릉 관광지"
-    result = rag_attraction(test_query)
-    print(result)
+for doc in docs:
+    print(doc.page_content)
+    print("=========================================================")

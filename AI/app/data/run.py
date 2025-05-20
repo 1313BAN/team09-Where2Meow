@@ -1,11 +1,9 @@
 from mysql_connector import execute_query
 from document_converter import convert_to_documents
-from chroma_manager import save_to_chroma
+# from chroma_manager import save_to_chroma
+from faiss_manager import save_to_faiss
 import os
-import shutil
-
-# 프로젝트 루트 설정
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+from app.config import PROJECT_ROOT
 
 QUERY = """
     SELECT 
@@ -27,12 +25,14 @@ QUERY = """
         ON a.attraction_category_id = ac.attraction_category_id
 """
 
-CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "chroma_db")
+CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "data/chroma_db")
+FAISS_DB_PATH = os.path.join(PROJECT_ROOT, "data/faiss_db")
 
 def main():
     rows = execute_query(QUERY)
     documents = convert_to_documents(rows)
-    vector_store = save_to_chroma(documents, CHROMA_DB_PATH)
+    # vector_store = save_to_chroma(documents, CHROMA_DB_PATH)
+    vector_store = save_to_faiss(documents, FAISS_DB_PATH)
     print(f"✅ 성공적으로 {len(documents)}개 문서 저장 완료")
 
 if __name__ == "__main__":
