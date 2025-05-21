@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, text
-from config import DB_CONFIG
+from app.data.config import DB_CONFIG
 
 def get_mysql_engine():
     return create_engine(

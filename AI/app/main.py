@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from rag.plan import rag_plan
-from rag.attraction import rag_attraction
+from AI.app.rag.attraction_search import rag_attraction
 from pydantic import BaseModel
-from generator import gen
+from AI.app.generator.generator_rag import gen
 
 app = FastAPI()
 

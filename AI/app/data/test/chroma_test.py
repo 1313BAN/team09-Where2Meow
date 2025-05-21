@@ -2,7 +2,7 @@ from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 import os
 from dotenv import load_dotenv
-from run import PROJECT_ROOT
+from AI.app.data.run.run_chroma import PROJECT_ROOT
 
 load_dotenv()  # .env 파일 로드
 

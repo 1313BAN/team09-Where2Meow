@@ -1,7 +1,6 @@
-from mysql_connector import execute_query
-from document_converter import convert_to_documents
-# from chroma_manager import save_to_chroma
-from faiss_manager import save_to_faiss
+from app.data.util.mysql_connector import execute_query
+from app.data.util.document_converter import convert_to_documents
+from app.data.manager.chroma_manager import save_to_chroma
 import os
 from app.config import PROJECT_ROOT
 
@@ -26,13 +25,11 @@ QUERY = """
 """
 
 CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "data/chroma_db")
-FAISS_DB_PATH = os.path.join(PROJECT_ROOT, "data/faiss_db")
 
 def main():
     rows = execute_query(QUERY)
     documents = convert_to_documents(rows)
-    # vector_store = save_to_chroma(documents, CHROMA_DB_PATH)
-    vector_store = save_to_faiss(documents, FAISS_DB_PATH)
+    vector_store = save_to_chroma(documents, CHROMA_DB_PATH)
     print(f"✅ 성공적으로 {len(documents)}개 문서 저장 완료")
 
 if __name__ == "__main__":
