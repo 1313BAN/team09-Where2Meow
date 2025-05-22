@@ -9,13 +9,13 @@ embedding_function = OpenAIEmbeddings()
 
 # 1. 벡터스토어 로드 (기존 코드 유지)
 attraction_faiss = FAISS.load_local(
-    folder_path="app/database/faiss_db/attraction",
+    folder_path="database/faiss_db/attraction",
     embeddings=embedding_function,
     allow_dangerous_deserialization=True,
 )
 
 restaurant_faiss = FAISS.load_local(
-    folder_path="app/database/faiss_db/restaurant",
+    folder_path="database/faiss_db/restaurant",
     embeddings=embedding_function,
     allow_dangerous_deserialization=True,
 )

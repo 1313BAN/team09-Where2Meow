@@ -2,7 +2,7 @@ from langchain_openai import ChatOpenAI
 from langchain.chains import RetrievalQA
 import json
 from dotenv import load_dotenv
-from app.rag.attraction_rag import retriever
+from rag.attraction_rag import retriever
 
 load_dotenv()
 
@@ -103,7 +103,7 @@ def parse_doc_to_dict(doc_content):
     return result
 
 
-def gen(query: str, method: str) -> str:
+def gen(query: str, method: str) -> object:
     llm = ChatOpenAI(model="gpt-4.1-mini", max_completion_tokens=2000, temperature=0.3)
     # RetrievalQA 체인 생성
     qa_chain = RetrievalQA.from_chain_type(
@@ -114,7 +114,7 @@ def gen(query: str, method: str) -> str:
     if method == "create":
         prompt_template = make_prompt_template(query, create_notice + common_notice)
         response = qa_chain.invoke(prompt_template)["result"]
-    return response
+    return json.loads(response)
 
 
 import time

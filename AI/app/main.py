@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from rag.plan import rag_plan
-from AI.app.rag.attraction_search import rag_attraction
 from pydantic import BaseModel
-from AI.app.generator.generator_rag import gen
+from generator.create_rag import gen
 
 app = FastAPI()
 
@@ -22,16 +21,14 @@ class QueryRequest(BaseModel):
     
 @app.post("/ai/create")
 async def create_plan(request: QueryRequest):
-    # RAG 처리
-    rag_result = rag_plan(request.query)
-    if not rag_result:
-        rag_result = rag_attraction(request.query)
-    
+    # plan 검색
+    result = rag_plan(request.query)
+
     # 생성
-    result = gen(request.query, rag_result)
+    if not result:
+        result = gen(request.query, "create")
+
+        # json 검사
     
-    # json 검사
-    
-    
-    response = None
+    response = result
     return response
