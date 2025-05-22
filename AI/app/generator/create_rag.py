@@ -3,7 +3,7 @@ from langchain.chains import RetrievalQA
 import json
 from dotenv import load_dotenv
 from app.rag.attraction_rag import retriever
-from validation.json_validation import validate_json
+from app.validation.json_validation import validate_json
 
 load_dotenv()
 
