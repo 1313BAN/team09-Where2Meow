@@ -21,17 +21,6 @@ create_notice = """
 - 사용자가 선호하는 여행 스타일을 바탕으로 여행일정을 작성합니다.
   - 사용자가 선호하는 여행 스타일이 없을 경우 보통의 사람들이 선호하는 여행 스타일을 바탕으로 여행일정을 작성합니다.
 - 관광지와 식당의 중복은 최대한 피합니다.
-"""
-update_notice = """
-"""
-
-common_notice = """
-출력문 공통 사항
-1. 출력은 json 형식으로 작성합니다.
-2. 반드시 예시에 제시된 json 형식에 맞춰서 작성합니다.
-3. 다른 말은 제외하고 json만 작성합니다.
-4. 출력문은 반드시 포맷팅 해서 작성합니다.
-5. query는 포함하지 않고 바로 attractions만 작성합니다.
 
 예시:
 {
@@ -69,42 +58,86 @@ common_notice = """
   ]
 }
 """
+update_notice = """
+- 사용자가 요청한 여행 일정에 추가/삭제를 적용합니다.
+- 추가 요청은 반드시 사용자가 요청한 일정에 포함됨 지역내에서 관광지와 음식점을 선택합니다.
+  - 필요시 근처 가까운 지역은 추가가 가능합니다.
+- 사용자가 수정 요청을 한 관광지 외의 관광지와 음식점은 기존 여행 일정에서 삭제하지 않습니다.
+- 점심, 저녁 식사 장소를 포함하여 하루 일정을 구성합니다.
+  - 점심, 저녁 식사 장소는 restaurans db에서 검색한 음식점 정보에서 제공된 관광지들 중 category_id가 39인 정보에서만 선택합니다.
+  - 식사 시간은 1시간을 가정하여 작성합니다.
+
+예시:
+{
+    "attractions": [
+        {
+            "mode": "add",
+            "uniqueKey": "2025-06-20_4_60896",
+            "attractionId": 60896,
+            "attractionName": "강릉 남산공원",
+            "addr": "강원특별자치도 강릉시 노암동",
+            "categoryId": 12,
+            "categoryName": "관광지",
+            "date": "2025-06-20",
+            "attractionOrder": 4,
+            "content": ""
+        },
+        {
+            "mode": "delete",
+            "uniqueKey": "2025-06-20_4_65432",
+        }
+    ]
+}
+"""
+
+common_notice = """
+출력문 공통 사항
+1. 출력은 json 형식으로 작성합니다.
+2. 반드시 예시에 제시된 json 형식에 맞춰서 작성합니다.
+3. 다른 말은 제외하고 json만 작성합니다. (코드 블럭 사용금지)
+4. 출력문은 반드시 포맷팅 해서 작성합니다.
+5. query는 포함하지 않고 바로 attractions만 작성합니다.
+"""
 
 
-def make_prompt_template(query: str, notice: str) -> str:
+def make_prompt_template(query: str, notice: str, plan: str = "") -> str:
     return f"""
         [사용자 요청] 
         {query}
+
+        {"[기존 일정]\n"+plan if len(plan) > 0 else ""}
 
         [여행 일정 생성 시 참고 사항]
         {notice}
     """
 
 
-def parse_doc_to_dict(doc_content):
-    # 이미 dict면 그대로 반환
-    if isinstance(doc_content, dict):
-        return doc_content
-    # JSON 문자열이면 파싱
-    try:
-        return json.loads(doc_content)
-    except json.JSONDecodeError as e:
-        print(f"JSON 파싱 실패: {e}")
-    # 그 외에는 기존 라인 파싱 로직 (필요시)
-    result = {}
-    for line in doc_content.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        if ":" in line:
-            key, value = line.split(":", 1)
-            key = key.strip()
-            value = value.strip()
-            result[key] = value
-    return result
+# def parse_doc_to_dict(doc_content):
+#     # 이미 dict면 그대로 반환
+#     if isinstance(doc_content, dict):
+#         return doc_content
+#     # JSON 문자열이면 파싱
+#     try:
+#         return json.loads(doc_content)
+#     except json.JSONDecodeError as e:
+#         print(f"JSON 파싱 실패: {e}")
+#     # 그 외에는 기존 라인 파싱 로직 (필요시)
+#     result = {}
+#     for line in doc_content.splitlines():
+#         line = line.strip()
+#         if not line:
+#             continue
+#         if ":" in line:
+#             key, value = line.split(":", 1)
+#             key = key.strip()
+#             value = value.strip()
+#             result[key] = value
+#     return result
 
 
-def gen(query: str, method: str, retry_count: int = 0, max_retries: int = 10) -> object:
+def gen(
+    query: str, method: str, plan: str = "", retry_count: int = 0, max_retries: int = 10
+) -> object:
     llm = ChatOpenAI(model="gpt-4.1-mini", max_completion_tokens=2000, temperature=0.3)
     # RetrievalQA 체인 생성
     qa_chain = RetrievalQA.from_chain_type(
@@ -115,22 +148,23 @@ def gen(query: str, method: str, retry_count: int = 0, max_retries: int = 10) ->
     if method == "create":
         prompt_template = make_prompt_template(query, create_notice + common_notice)
         response = qa_chain.invoke(prompt_template)["result"]
+        print("여행 계획 생성 완료")
+        if not validate_json(response):
+            # JSON 유효성 검사 통과
+            print("JSON 유효성 검사 실패. 재생성합니다...")
+            if retry_count >= max_retries:
+                raise ValueError(
+                    f"JSON 생성 실패: 최대 재시도 횟수({max_retries})를 초과했습니다."
+                )
+            return gen(query, method, retry_count + 1, max_retries)
     elif method == "update":
         prompt_template = make_prompt_template(query, update_notice + common_notice)
         response = qa_chain.invoke(prompt_template)["result"]
-    print("여행 계획 생성 완료")
+        print("여행 계획 생성 완료")
+        print(response)
 
-    if not validate_json(response):
-        # JSON 유효성 검사 통과
-        print("JSON 유효성 검사 실패. 재생성합니다...")
-        if retry_count >= max_retries:
-            raise ValueError(
-                f"JSON 생성 실패: 최대 재시도 횟수({max_retries})를 초과했습니다."
-            )
-        return gen(query, method, retry_count + 1, max_retries)
     # JSON 유효성 검사 통과
     print("JSON 유효성 검사 성공")
-
     return json.loads(response)
 
 
