@@ -37,4 +37,4 @@ async def create_plan(request: QueryRequest):
 
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"계획 생성 중 오류 발생: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"계획 생성 중 오류 발생: {str(e)}") from e
