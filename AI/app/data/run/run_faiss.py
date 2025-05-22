@@ -25,13 +25,13 @@ QUERY = """
         ON a.attraction_category_id = ac.attraction_category_id
 """
 
-FAISS_DB_PATH = os.path.join(PROJECT_ROOT, "data/faiss_db")
+FAISS_DB_PATH = os.path.join(PROJECT_ROOT, "database/faiss_db")
 
 def main():
     rows = execute_query(QUERY)
     attractions, restaurants = convert_to_documents(rows)
-    vector_store_attraction = save_to_faiss(attractions, FAISS_DB_PATH+"_attraction")
-    vector_store_restaurant = save_to_faiss(restaurants, FAISS_DB_PATH+"_restaurant")
+    vector_store_attraction = save_to_faiss(attractions, "관광지", FAISS_DB_PATH+"/attraction")
+    vector_store_restaurant = save_to_faiss(restaurants, "음식점", FAISS_DB_PATH+"/restaurant")
     print(f"✅ 성공적으로 {len(attractions)}개 관광지 저장 완료")
     print(f"✅ 성공적으로 {len(restaurants)}개 음식점 저장 완료")
 

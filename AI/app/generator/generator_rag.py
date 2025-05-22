@@ -5,17 +5,17 @@ from dotenv import load_dotenv
 from app.rag.attraction_rag import retriever
 
 load_dotenv()
-# print(f"OPENAI_API_KEY from env: {os.environ.get('OPENAI_API_KEY')}")
-
 
 create_notice = """
 - 사용자 요청에 맞는 여행 일정을 생성합니다.
+- 반드시 사용자가 요청한 지역내에서 관광지와 음식점을 선택합니다.
+  - 필요시 근처 가까운 지역은 추가가 가능합니다.
 - 점심, 저녁 식사 장소를 포함하여 하루 일정을 구성합니다.
-  - 점심, 저녁 식사 장소는 관광지 정보에서 제공된 관광지들 중 category_id가 39인 정보에서만 선택합니다.
+  - 점심, 저녁 식사 장소는 restaurans db에서 검색한 음식점 정보에서 제공된 관광지들 중 category_id가 39인 정보에서만 선택합니다.
   - 식사 시간은 1시간을 가정하여 작성합니다.
 - 여행 일정은 사용자가 요청한 날짜를 기준으로 작성합니다.
 - 여행 일정은 아침에 관광지 1곳 방문 후 점심 식사, 점심 식사 이후 오후에 관광지 2곳 방문 후 저녁 식사, 저녁 식사 이후 저녁에 관광지 1곳 방문하는 형태로 작성합니다.
-- 반드시 관광지는 관광지 정보에서 제공된 관광지들 중 category_id가 39가 아닌 정보에서만 선택합니다.
+- 반드시 관광지는 attrantion db에서 검색한 관광지 정보에서 제공된 관광지들 중 category_id가 39가 아닌 정보에서만 선택합니다.
 - 여행 일정은 이동시간을 고려하여 작성합니다.
 - 사용자가 선호하는 여행 스타일을 바탕으로 여행일정을 작성합니다.
   - 사용자가 선호하는 여행 스타일이 없을 경우 보통의 사람들이 선호하는 여행 스타일을 바탕으로 여행일정을 작성합니다.
@@ -79,6 +79,7 @@ def make_prompt_template(query: str, notice: str) -> str:
         {notice}
     """
 
+
 def parse_doc_to_dict(doc_content):
     # 이미 dict면 그대로 반환
     if isinstance(doc_content, dict):
@@ -94,20 +95,19 @@ def parse_doc_to_dict(doc_content):
         line = line.strip()
         if not line:
             continue
-        if ':' in line:
-            key, value = line.split(':', 1)
+        if ":" in line:
+            key, value = line.split(":", 1)
             key = key.strip()
             value = value.strip()
             result[key] = value
     return result
 
+
 def gen(query: str, method: str) -> str:
     llm = ChatOpenAI(model="gpt-4.1-mini", max_completion_tokens=2000, temperature=0.3)
     # RetrievalQA 체인 생성
     qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",  # 혹은 "map_reduce" 등 선택
-        retriever=retriever
+        llm=llm, chain_type="stuff", retriever=retriever  # 혹은 "map_reduce" 등 선택
     )
     # 쿼리만 넘기면 자동으로 벡터DB에서 검색 후 LLM에 컨텍스트로 전달
     response = ""
@@ -116,8 +116,16 @@ def gen(query: str, method: str) -> str:
         response = qa_chain.invoke(prompt_template)["result"]
     return response
 
+
+import time
+
 if __name__ == "__main__":
+    start = time.time()  # 시작 시간 기록
+
     # 테스트용 쿼리
-    test_query = "강릉 3박 4일 여행스케줄을 짜줘"
+    test_query = "강릉 2박 3일 여행스케줄을 짜줘"
     result = gen(test_query, "create")
     print(result)
+
+    end = time.time()  # 끝난 시간 기록
+    print(f"\n실행 시간: {end - start:.4f}초")
