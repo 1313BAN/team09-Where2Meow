@@ -456,4 +456,9 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,git,java,maven,eclipse,intellij,visualstudiocode,python
+
+# custom
 backend/src/main/resources/application.properties
+AI/app/database/chroma_db
+AI/app/database/faiss_db
+.github/copilot-instructions.md
