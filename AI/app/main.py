@@ -26,9 +26,8 @@ async def create_plan(request: QueryRequest):
 
     # 생성
     if not result:
+        print("저장된 여행 계획을 찾지 못해서 여행 계획을 생성합니다.")
         result = gen(request.query, "create")
 
-        # json 검사
-    
     response = result
     return response

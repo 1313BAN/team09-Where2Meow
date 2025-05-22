@@ -3,6 +3,7 @@ from langchain.chains import RetrievalQA
 import json
 from dotenv import load_dotenv
 from rag.attraction_rag import retriever
+from validation.json_validation import validate_json
 
 load_dotenv()
 
@@ -114,6 +115,18 @@ def gen(query: str, method: str) -> object:
     if method == "create":
         prompt_template = make_prompt_template(query, create_notice + common_notice)
         response = qa_chain.invoke(prompt_template)["result"]
+    elif method == "update":
+        prompt_template = make_prompt_template(query, update_notice + common_notice)
+        response = qa_chain.invoke(prompt_template)["result"]
+    print("여행 계획 생성 완료")
+
+    if not validate_json(response):
+        # JSON 유효성 검사 통과
+        print("JSON 유효성 검사 실패. 재생성합니다...")
+        return gen(query, method)
+    # JSON 유효성 검사 통과
+    print("JSON 유효성 검사 성공")
+
     return json.loads(response)
 
 
