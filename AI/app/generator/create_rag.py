@@ -88,8 +88,8 @@ def parse_doc_to_dict(doc_content):
     # JSON 문자열이면 파싱
     try:
         return json.loads(doc_content)
-    except Exception:
-        pass
+    except json.JSONDecodeError as e:
+        print(f"JSON 파싱 실패: {e}")
     # 그 외에는 기존 라인 파싱 로직 (필요시)
     result = {}
     for line in doc_content.splitlines():

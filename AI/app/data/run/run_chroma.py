@@ -27,10 +27,14 @@ QUERY = """
 CHROMA_DB_PATH = os.path.join(PROJECT_ROOT, "data/chroma_db")
 
 def main():
-    rows = execute_query(QUERY)
-    documents = convert_to_documents(rows)
-    vector_store = save_to_chroma(documents, CHROMA_DB_PATH)
-    print(f"✅ 성공적으로 {len(documents)}개 문서 저장 완료")
+    try:
+        rows = execute_query(QUERY)
+        documents = convert_to_documents(rows)
+        save_to_chroma(documents, CHROMA_DB_PATH)
+        print(f"✅ 성공적으로 {len(documents)}개 문서 저장 완료")
+    except Exception as e:
+        print(f"❌ 오류 발생: {e}")
+        raise
 
 if __name__ == "__main__":
     # if os.path.exists(CHROMA_DB_PATH):
