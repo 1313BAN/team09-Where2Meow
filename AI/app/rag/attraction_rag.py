@@ -2,20 +2,25 @@ from langchain_community.vectorstores import FAISS
 from langchain.retrievers import EnsembleRetriever  # ★ 클래스 변경
 from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
+from app.config import PROJECT_ROOT
+import os
 
 load_dotenv()
+
+# 경로 설정
+FAISS_DB_PATH = os.path.join(PROJECT_ROOT, "database/faiss_db/")
 
 embedding_function = OpenAIEmbeddings()
 
 # 1. 벡터스토어 로드 (기존 코드 유지)
 attraction_faiss = FAISS.load_local(
-    folder_path="database/faiss_db/attraction",
+    folder_path=FAISS_DB_PATH + "attraction",
     embeddings=embedding_function,
     allow_dangerous_deserialization=True,
 )
 
 restaurant_faiss = FAISS.load_local(
-    folder_path="database/faiss_db/restaurant",
+    folder_path=FAISS_DB_PATH + "restaurant",
     embeddings=embedding_function,
     allow_dangerous_deserialization=True,
 )
