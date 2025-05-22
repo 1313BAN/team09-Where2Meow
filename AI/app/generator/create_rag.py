@@ -2,7 +2,7 @@ from langchain_openai import ChatOpenAI
 from langchain.chains import RetrievalQA
 import json
 from dotenv import load_dotenv
-from rag.attraction_rag import retriever
+from app.rag.attraction_rag import retriever
 
 load_dotenv()
 

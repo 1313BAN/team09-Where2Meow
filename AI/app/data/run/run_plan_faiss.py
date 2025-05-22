@@ -70,11 +70,13 @@ def main():
     plans = convert_to_documents(rows)
     vector_store_plan = save_to_faiss(plans, "여행 일정", FAISS_DB_PATH+"/plan")
     print(f"✅ 성공적으로 {len(plans)}개 관광지 저장 완료")
+    print(plans[0])
+
 
 if __name__=="__main__":
-    if os.path.exists(FAISS_DB_PATH):
-        shutil.rmtree(FAISS_DB_PATH)
-        print(f"{FAISS_DB_PATH} 폴더가 삭제되었습니다.")
-    else:
-        print(f"{FAISS_DB_PATH} 폴더가 존재하지 않습니다.")
+    # if os.path.exists(FAISS_DB_PATH):
+    #     shutil.rmtree(FAISS_DB_PATH)
+    #     print(f"{FAISS_DB_PATH} 폴더가 삭제되었습니다.")
+    # else:
+    #     print(f"{FAISS_DB_PATH} 폴더가 존재하지 않습니다.")
     main()

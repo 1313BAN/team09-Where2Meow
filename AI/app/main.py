@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from rag.plan import rag_plan
+from app.rag.plan import rag_plan
 from pydantic import BaseModel
-from generator.create_rag import gen
+from app.generator.create_rag import gen
 
 app = FastAPI()
 
