@@ -27,13 +27,31 @@ QUERY = """
 
 FAISS_DB_PATH = os.path.join(PROJECT_ROOT, "database/faiss_db")
 
+
 def main():
-    rows = execute_query(QUERY)
-    attractions, restaurants = convert_to_documents(rows)
-    vector_store_attraction = save_to_faiss(attractions, "관광지", FAISS_DB_PATH+"/attraction")
-    vector_store_restaurant = save_to_faiss(restaurants, "음식점", FAISS_DB_PATH+"/restaurant")
-    print(f"✅ 성공적으로 {len(attractions)}개 관광지 저장 완료")
-    print(f"✅ 성공적으로 {len(restaurants)}개 음식점 저장 완료")
+    try:
+        rows = execute_query(QUERY)
+        if not rows:
+            print("⚠️ 데이터베이스에서 관광지 정보를 찾을 수 없습니다.")
+            return
+
+        attractions, restaurants = convert_to_documents(rows)
+
+        vector_store_attraction = save_to_faiss( attractions, "관광지", FAISS_DB_PATH + "/attraction")
+        vector_store_restaurant = save_to_faiss(restaurants, "음식점", FAISS_DB_PATH + "/restaurant")
+
+        if vector_store_attraction is not None:
+            print(f"✅ 성공적으로 {len(attractions)}개 관광지 저장 완료")
+        else:
+            print("⚠️ 관광지 저장에 실패했습니다.")
+
+        if vector_store_restaurant is not None:
+            print(f"✅ 성공적으로 {len(restaurants)}개 음식점 저장 완료")
+        else:
+            print("⚠️ 음식점 저장에 실패했습니다.")
+    except Exception as e:
+        print(f"오류 발생: {e}")
+
 
 if __name__ == "__main__":
     if os.path.exists(FAISS_DB_PATH):

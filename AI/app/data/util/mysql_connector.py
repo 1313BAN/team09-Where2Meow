@@ -9,6 +9,10 @@ def get_mysql_engine():
 
 def execute_query(query):
     engine = get_mysql_engine()
-    with engine.connect() as conn:
-        result = conn.execute(text(query))
-        return result.fetchall()
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text(query))
+            return result.fetchall()
+    except Exception as e:
+        print(f"쿼리 실행 중 오류 발생: {e}")
+        raise

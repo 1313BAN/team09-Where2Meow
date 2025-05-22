@@ -3,6 +3,7 @@ from langchain.chains import RetrievalQA
 import json
 from dotenv import load_dotenv
 from rag.attraction_rag import retriever
+from validation.json_validation import validate_json
 
 load_dotenv()
 
@@ -87,8 +88,8 @@ def parse_doc_to_dict(doc_content):
     # JSON 문자열이면 파싱
     try:
         return json.loads(doc_content)
-    except Exception:
-        pass
+    except json.JSONDecodeError as e:
+        print(f"JSON 파싱 실패: {e}")
     # 그 외에는 기존 라인 파싱 로직 (필요시)
     result = {}
     for line in doc_content.splitlines():
@@ -103,7 +104,7 @@ def parse_doc_to_dict(doc_content):
     return result
 
 
-def gen(query: str, method: str) -> object:
+def gen(query: str, method: str, retry_count: int = 0, max_retries: int = 10) -> object:
     llm = ChatOpenAI(model="gpt-4.1-mini", max_completion_tokens=2000, temperature=0.3)
     # RetrievalQA 체인 생성
     qa_chain = RetrievalQA.from_chain_type(
@@ -114,6 +115,22 @@ def gen(query: str, method: str) -> object:
     if method == "create":
         prompt_template = make_prompt_template(query, create_notice + common_notice)
         response = qa_chain.invoke(prompt_template)["result"]
+    elif method == "update":
+        prompt_template = make_prompt_template(query, update_notice + common_notice)
+        response = qa_chain.invoke(prompt_template)["result"]
+    print("여행 계획 생성 완료")
+
+    if not validate_json(response):
+        # JSON 유효성 검사 통과
+        print("JSON 유효성 검사 실패. 재생성합니다...")
+        if retry_count >= max_retries:
+            raise ValueError(
+                f"JSON 생성 실패: 최대 재시도 횟수({max_retries})를 초과했습니다."
+            )
+        return gen(query, method, retry_count + 1, max_retries)
+    # JSON 유효성 검사 통과
+    print("JSON 유효성 검사 성공")
+
     return json.loads(response)
 
 
