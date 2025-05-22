@@ -104,7 +104,7 @@ def parse_doc_to_dict(doc_content):
     return result
 
 
-def gen(query: str, method: str) -> object:
+def gen(query: str, method: str, retry_count: int = 0, max_retries: int = 10) -> object:
     llm = ChatOpenAI(model="gpt-4.1-mini", max_completion_tokens=2000, temperature=0.3)
     # RetrievalQA 체인 생성
     qa_chain = RetrievalQA.from_chain_type(
@@ -123,7 +123,11 @@ def gen(query: str, method: str) -> object:
     if not validate_json(response):
         # JSON 유효성 검사 통과
         print("JSON 유효성 검사 실패. 재생성합니다...")
-        return gen(query, method)
+        if retry_count >= max_retries:
+            raise ValueError(
+                f"JSON 생성 실패: 최대 재시도 횟수({max_retries})를 초과했습니다."
+            )
+        return gen(query, method, retry_count + 1, max_retries)
     # JSON 유효성 검사 통과
     print("JSON 유효성 검사 성공")
 

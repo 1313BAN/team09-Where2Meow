@@ -3,6 +3,7 @@ from langchain_core.prompts import ChatPromptTemplate
 import os
 from dotenv import load_dotenv
 from app.rag.attraction_search import search_attraction
+import json
 
 load_dotenv()
 # print(f"OPENAI_API_KEY from env: {os.environ.get('OPENAI_API_KEY')}")
@@ -81,17 +82,20 @@ def gen(query: str, attractions: list, restaurants: str, method: str) -> str:
     prompt = ChatPromptTemplate.from_template(itinerary_template)
     
     # attractions가 문자열인지 리스트인지 확인하고 적절히 처리
-    if isinstance(attractions, list):
-        if all(isinstance(item, dict) for item in attractions):
-            # 딕셔너리 리스트인 경우 JSON 문자열로 변환
-            import json
-            attractions_str = json.dumps(attractions, ensure_ascii=False)
+    try:
+        if isinstance(attractions, list):
+            if all(isinstance(item, dict) for item in attractions):
+                # 딕셔너리 리스트인 경우 JSON 문자열로 변환
+                attractions_str = json.dumps(attractions, ensure_ascii=False)
+            else:
+                # 문자열 리스트인 경우 조인
+                attractions_str = ", ".join(attractions)
         else:
-            # 문자열 리스트인 경우 조인
-            attractions_str = ", ".join(attractions)
-    else:
-        # 이미 문자열인 경우 그대로 사용
-        attractions_str = attractions
+            # 이미 문자열인 경우 그대로 사용
+            attractions_str = attractions
+    except Exception as e:
+        print(f"attractions 데이터 처리 중 오류 발생: {e}")
+        attractions_str = str(attractions)
 
     # 프롬프트에 query와 attractions를 올바르게 삽입
     if method == "create":

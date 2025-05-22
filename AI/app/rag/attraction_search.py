@@ -25,7 +25,7 @@ try:
         search_kwargs={"k": 30, "lambda_mult": 0.6, "score_threshold": 0.8},
     )
 except Exception as e:
-    raise RuntimeError(f"FAISS 벡터 데이터베이스 로드 실패: {e}")
+    raise RuntimeError(f"FAISS 벡터 데이터베이스 로드 실패: {e}") from e
 
 
 def parse_doc_to_dict(doc_content: str) -> dict:

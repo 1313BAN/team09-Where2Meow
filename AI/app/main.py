@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from rag.plan import rag_plan
 from pydantic import BaseModel
 from generator.create_rag import gen
+from fastapi import HTTPException
 
 app = FastAPI()
 
@@ -32,8 +33,8 @@ async def create_plan(request: QueryRequest):
 
         # 결과가 없으면 에러 처리
         if not result:
-            return {"error": "생성된 결과가 없습니다"}, 500
+            raise HTTPException(status_code=500, detail="생성된 결과가 없습니다")
 
-        return result, 200
+        return result
     except Exception as e:
-        return {"error": f"계획 생성 중 오류 발생: {str(e)}"}, 500
+        raise HTTPException(status_code=500, detail=f"계획 생성 중 오류 발생: {str(e)}")
