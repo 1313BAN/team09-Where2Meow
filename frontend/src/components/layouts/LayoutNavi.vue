@@ -38,8 +38,8 @@
         <div v-if="!isLoggedIn" class="hidden md:block">
           <Button
             label="로그인"
-            class="cursor-pointer text-white border-none rounded-lg px-5 py-2 font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-            style="background-image: var(--gradient-primary)"
+            pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] active:scale-95 transition-all duration-200 ease-in-out rounded-xl px-6 py-2 shadow-md text-white border-none flex items-center gap-2 cursor-pointer"
+            pt:label="text-white font-semibold text-base tracking-wide"
           />
         </div>
 
@@ -100,8 +100,8 @@
         <div v-if="!isLoggedIn" class="mt-4 pt-4 border-t border-gray-100">
           <Button
             label="로그인"
-            pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] hover:from-[#FF7A54] hover:to-[#4E249A] active:scale-95 transition-all duration-200 ease-in-out rounded-xl px-6 py-2 shadow-md text-white border-none flex items-center gap-2 cursor-pointer"
-            pt:label="text-white font-semibold text-base tracking-wide"
+            class="w-full cursor-pointer text-white border-none rounded-full py-2 font-medium shadow-sm hover:shadow-md"
+            style="background-image: var(--gradient-primary)"
           />
         </div>
       </div>

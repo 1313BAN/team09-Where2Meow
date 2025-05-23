@@ -35,7 +35,7 @@
             <InputText
               v-model="searchQuery"
               :placeholder="searchPlaceholder"
-              class="w-full py-3 pl-11 pr-4 rounded-xl border-0 shadow-inner text-white/80"
+              class="w-full py-2.5 pl-11 pr-4 rounded-xl border-0 shadow-inner text-white/80"
               size="large"
             />
           </div>
