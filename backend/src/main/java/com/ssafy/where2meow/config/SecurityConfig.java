@@ -84,6 +84,9 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/api/review/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/api/review/user").authenticated()
 
+            // ai plan 생성 및 업데이트
+            .requestMatchers("/api/ai/**").authenticated()
+
             // other
             .anyRequest().permitAll()
         )
