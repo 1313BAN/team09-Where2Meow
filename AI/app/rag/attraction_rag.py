@@ -2,7 +2,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.retrievers import EnsembleRetriever  # ★ 클래스 변경
 from langchain_openai import OpenAIEmbeddings
 from dotenv import load_dotenv
-from app.config import PROJECT_ROOT
+from config import PROJECT_ROOT
 import os
 
 load_dotenv()

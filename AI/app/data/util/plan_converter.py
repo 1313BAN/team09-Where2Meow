@@ -118,7 +118,7 @@ attractions: {json.dumps(attractions, ensure_ascii=False)}"""
 
     return plan_documents
 
-from app.data.util.mysql_connector import execute_query
+from data.util.mysql_connector import execute_query
 
 if __name__=="__main__":
     QUERY = """

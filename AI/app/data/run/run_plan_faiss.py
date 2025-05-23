@@ -1,9 +1,9 @@
-from app.data.util.mysql_connector import execute_query
-from app.data.util.plan_converter import convert_to_documents
-from app.data.manager.faiss_manager import save_to_faiss
+from data.util.mysql_connector import execute_query
+from data.util.plan_converter import convert_to_documents
+from data.manager.faiss_manager import save_to_faiss
 import os
 import shutil
-from app.config import PROJECT_ROOT
+from config import PROJECT_ROOT
 
 QUERY = """
     SELECT 

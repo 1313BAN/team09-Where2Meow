@@ -41,7 +41,7 @@ def convert_to_documents(rows):
     return attraction_documents, restaurant_documents
 
 
-from app.data.util.mysql_connector import execute_query
+from data.util.mysql_connector import execute_query
 
 if __name__ == "__main__":
     QUERY = """
