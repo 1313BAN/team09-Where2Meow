@@ -25,8 +25,7 @@
           v-for="item in menuItems"
           :key="item.path"
           :to="item.path"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-70"
-          active-class="text-[var(--primary-color)] font-bold"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-70 font-semibold"
         >
           <i :class="[item.icon, 'text-[var(--primary-color)]']"></i>
           <span>{{ item.label }}</span>

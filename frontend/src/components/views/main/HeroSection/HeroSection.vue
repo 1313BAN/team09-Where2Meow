@@ -41,8 +41,7 @@
             />
           </div>
           <Button
-            label="검색하기"
-            icon="pi pi-search"
+            label="생성하기"
             :loading="isSearching"
             @click="handleSearch"
             class="paw-cursor"
