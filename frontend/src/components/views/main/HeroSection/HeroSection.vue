@@ -1,4 +1,3 @@
-<!-- HeroBanner.vue - 업데이트된 버전 -->
 <template>
   <section
     class="relative h-[500px] bg-cover bg-center text-white flex items-center overflow-hidden"
@@ -7,7 +6,7 @@
     <!-- 배경 오버레이 -->
     <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/70"></div>
 
-    <div class="container relative z-10 max-w-7xl mx-auto px-4">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 max-w-7xl">
       <div class="banner-content max-w-2xl p-8">
         <!-- 메인 제목 -->
         <h1 class="text-4xl font-bold mb-4 leading-tight text-shadow-lg">
@@ -31,12 +30,12 @@
         >
           <div class="flex-1 relative">
             <i
-              class="pi pi-home absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--primary-color)]"
+              class="pi pi-pencil absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--primary-color)]"
             ></i>
             <InputText
               v-model="searchQuery"
               :placeholder="searchPlaceholder"
-              class="w-full py-3 pl-10 pr-4 rounded-xl border-0 shadow-inner text-gray-900"
+              class="w-full py-3 pl-11 pr-4 rounded-xl border-0 shadow-inner text-white/80"
               size="large"
             />
           </div>
@@ -44,8 +43,7 @@
             label="생성하기"
             :loading="isSearching"
             @click="handleSearch"
-            class="paw-cursor"
-            pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] hover:from-[#FF7A54] hover:to-[#4E249A] active:scale-95 transition-all duration-200 ease-in-out rounded-xl px-6 py-2 shadow-md text-white border-none flex items-center gap-2 cursor-pointer"
+            pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] active:scale-95 transition-all duration-200 ease-in-out rounded-xl px-6 py-2 shadow-md text-white border-none flex items-center gap-2 cursor-pointer"
             pt:label="text-white font-semibold text-base tracking-wide"
           />
         </form>
@@ -66,7 +64,7 @@
     <!-- 스크롤 다운 버튼 -->
     <button
       @click="scrollDown"
-      class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center text-white/70 hover:text-white transition-colors paw-cursor"
+      class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center text-white/70 transition-colors cursor-pointer"
     >
       <span class="text-sm mb-2">더 알아보기</span>
       <i class="pi pi-chevron-down animate-bounce text-xl"></i>
@@ -120,7 +118,13 @@ const typewriterTexts = [
 const scrollDown = () => {
   const nextSection = document.querySelector('.main-view > :nth-child(2)')
   if (nextSection) {
-    nextSection.scrollIntoView({ behavior: 'smooth' })
+    const offset = 56 // h-14 = 56px
+    const top = nextSection.getBoundingClientRect().top + window.scrollY - offset
+
+    window.scrollTo({
+      top,
+      behavior: 'smooth',
+    })
   }
 }
 
