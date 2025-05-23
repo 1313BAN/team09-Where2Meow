@@ -1,7 +1,7 @@
 <template>
   <div class="main-view">
-    <!-- 메인 배너 -->
-    <MainBanner @search="handleBannerSearch" />
+    <!-- 히어로 섹션 -->
+    <HeroSection @search="handleBannerSearch" />
 
     <!-- 검색 섹션 -->
     <SearchSection @search="handleDetailSearch" @category-click="handleCategoryClick" />
@@ -49,7 +49,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import MainBanner from '@/components/views/main/MainBanner.vue'
+import HeroSection from '@/components/views/main/HeroSection/HeroSection.vue'
 import SearchSection from '@/components/views/main/SearchSection.vue'
 import PopularSection from '@/components/views/main/PopularSection.vue'
 import RecommendationSection from '@/components/views/main/RecommendationSection.vue'

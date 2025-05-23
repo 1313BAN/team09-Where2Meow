@@ -1,41 +1,37 @@
 <template>
-  <section class="relative h-[500px] bg-cover bg-center text-white flex items-center overflow-hidden" 
-           :style="{ backgroundImage: `url(${bannerImage})` }">
+  <section
+    class="relative h-[550px] bg-cover bg-center text-white flex items-center overflow-hidden"
+    :style="{ backgroundImage: `url(${bannerImage})` }"
+  >
     <!-- 배경 오버레이 -->
     <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/70"></div>
-    
-    <!-- 고양이 발자국 장식 -->
-    <div class="absolute inset-0 cat-paw-pattern"></div>
-    
+
     <div class="container relative z-10 max-w-7xl mx-auto px-4">
       <div class="banner-content max-w-2xl p-8">
-        <!-- 프로모션 태그 -->
-        <Tag 
-          :value="promoTag" 
-          severity="success" 
-          class="mb-4 px-4 py-2 text-white font-bold shadow-lg"
-          style="background-color: var(--primary-color);"
-        />
-        
         <!-- 메인 제목 -->
         <h1 class="text-4xl font-bold mb-4 leading-tight text-shadow-lg">
           {{ mainTitle }}
         </h1>
-        
+
         <!-- 고양이 아이콘 -->
-        <div class="flex items-center gap-2 mb-4 cat-ears">
-          <span class="text-[var(--accent-color)] text-lg">무엇을 찾고 계세요, 몐옴🐱</span>
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-[var(--accent-color)] text-lg">계획 세우는 걸 도와줄게, 냥!</span>
         </div>
-        
+
         <!-- 부제목 -->
         <p class="text-xl mb-8 text-shadow-sm">
           {{ subtitle }}
         </p>
-        
+
         <!-- 검색 폼 -->
-        <form @submit.prevent="handleSearch" class="flex gap-3 w-full bg-white/10 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white/20">
+        <form
+          @submit.prevent="handleSearch"
+          class="flex gap-3 w-full bg-white/10 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white/20"
+        >
           <div class="flex-1 relative">
-            <i class="pi pi-home absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--primary-color)]"></i>
+            <i
+              class="pi pi-home absolute left-4 top-1/2 transform -translate-y-1/2 text-[var(--primary-color)]"
+            ></i>
             <InputText
               v-model="searchQuery"
               :placeholder="searchPlaceholder"
@@ -53,7 +49,7 @@
             pt:label="text-white font-semibold text-base tracking-wide"
           />
         </form>
-        
+
         <!-- 타입라이터 효과 -->
         <div class="typewriter-container mt-6 h-6 overflow-hidden">
           <p class="typewriter-text text-sm text-white/80">
@@ -63,10 +59,10 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 스크롤 다운 버튼 -->
-    <button 
-      @click="scrollDown" 
+    <button
+      @click="scrollDown"
       class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center text-white/70 hover:text-white transition-colors paw-cursor"
     >
       <span class="text-sm mb-2">더 알아보기</span>
@@ -77,7 +73,6 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import Tag from 'primevue/tag'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 
@@ -85,24 +80,21 @@ import Button from 'primevue/button'
 const props = defineProps({
   bannerImage: {
     type: String,
-    default: 'https://images.unsplash.com/photo-1580137189272-c9379f8864fd?q=80&w=1920&h=1200&fit=crop'
-  },
-  promoTag: {
-    type: String,
-    default: '가냥이'
+    default:
+      'https://images.unsplash.com/photo-1580137189272-c9379f8864fd?q=80&w=1920&h=1200&fit=crop',
   },
   mainTitle: {
     type: String,
-    default: 'AI 어드바이저 가냥이와 함께\n여행 스케쥴 짜기!'
+    default: '어디가냥과 함께하는 스마트한 여행 계획',
   },
   subtitle: {
     type: String,
-    default: '지금 바로 가고싶은 곳과 일정을 입력해 보세요~'
+    default: '가냥이에게 물어보세요~',
   },
   searchPlaceholder: {
     type: String,
-    default: '예: 서울 2박 3일 여행 스케쥴 짜줘'
-  }
+    default: '예: 서울 2박 3일 여행 스케쥴 짜줘',
+  },
 })
 
 // 반응형 데이터
@@ -115,7 +107,7 @@ const typewriterTexts = [
   '고양이와 함께 가는 여행, 어디가냥이 찾아드리겠습니다',
   '"서울 2박 3일 고양이 동반 카페" 처럼 검색해보세요',
   '가냥이가 추천하는 반려동물 동반 여행지 TOP 10',
-  '스페셜 프로모션: 유저 후기 작성 시 포인트 적립!'
+  '스페셜 프로모션: 유저 후기 작성 시 포인트 적립!',
 ]
 
 // 타입라이터 효과 관련 변수
@@ -127,7 +119,7 @@ let typingTimer
 // 타입라이터 효과 함수
 const typeWriter = () => {
   const currentText = typewriterTexts[currentTextIndex]
-  
+
   if (isTyping) {
     if (charIndex < currentText.length) {
       currentTypewriterText.value = currentText.substring(0, charIndex + 1)
@@ -148,7 +140,7 @@ const typeWriter = () => {
       currentTextIndex = (currentTextIndex + 1) % typewriterTexts.length
     }
   }
-  
+
   // 타이머 속도 조정 (타이핑은 빠르게, 삭제는 조금 더 빠르게)
   const timerDelay = isTyping ? 100 : 50
   typingTimer = setTimeout(typeWriter, timerDelay)
@@ -168,9 +160,9 @@ const emit = defineEmits(['search'])
 // 검색 핸들러
 const handleSearch = async () => {
   if (!searchQuery.value.trim()) return
-  
+
   isSearching.value = true
-  
+
   try {
     emit('search', searchQuery.value.trim())
     // 실제 검색 API 호출 로직
@@ -244,8 +236,13 @@ onBeforeUnmount(() => {
 }
 
 @keyframes earWiggle {
-  0%, 100% { transform: rotate(30deg); }
-  50% { transform: rotate(20deg); }
+  0%,
+  100% {
+    transform: rotate(30deg);
+  }
+  50% {
+    transform: rotate(20deg);
+  }
 }
 
 /* 텍스트 샤도우 효과 */
@@ -282,12 +279,12 @@ onBeforeUnmount(() => {
     padding: 1.5rem;
     max-width: 100%;
   }
-  
+
   h1 {
     font-size: 2rem;
     line-height: 1.2;
   }
-  
+
   p {
     font-size: 1rem;
   }
