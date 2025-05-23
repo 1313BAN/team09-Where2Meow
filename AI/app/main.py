@@ -31,34 +31,30 @@ async def create_plan(request: CreatePlanRequest):
         # plan 검색
         result = rag_plan(request.query)
 
-        location = {query_to_location(request.query)}
+        location = query_to_location(request.query)
 
         # 생성
         if not result:
             result = gen(request.query + f"여행 장소: {location}", "create")
-
-        # 결과가 없으면 에러 처리
-        if not result:
-            raise HTTPException(status_code=500, detail="생성된 결과가 없습니다")
+            if not result:
+                raise HTTPException(status_code=500, detail="생성된 결과가 없습니다")
 
         # 결과 개선
-        if result:
-            prompt = f"""
-            - 이 일정에서 지역이 {location}이 아닌 곳이 있으면 {location} 관광지나 음식점으로 교체합니다.
-            - 여행 일정은 아침에 관광지 1곳 방문 후 점심 식사, 점심 식사 이후 오후에 관광지 2곳 방문 후 저녁 식사, 저녁 식사 이후 저녁에 관광지 1곳 방문하는 형태로 작성합니다.
-            - 삭제한 장소와 추가한 장소의 개수는 같아야 합니다.
-            - 이동 거리가 너무 먼 거리(차로 30분 이상)의 관광지도 교체합니다.
-            """
-            update = gen(prompt, "update", json.dumps(result, ensure_ascii=False))
+        update_prompt = f"""
+        - 이 일정에서 지역이 {location}이 아닌 곳이 있으면 {location} 관광지나 음식점으로 교체합니다.
+        - 여행 일정은 아침에 관광지 1곳 방문 후 점심 식사, 점심 식사 이후 오후에 관광지 2곳 방문 후 저녁 식사, 저녁 식사 이후 저녁에 관광지 1곳 방문하는 형태로 작성합니다.
+        - 삭제한 장소와 추가한 장소의 개수는 같아야 합니다.
+        - 이동 거리가 너무 먼 거리(차로 30분 이상)의 관광지도 교체합니다.
+        """
+        plan_updates = gen(
+            update_prompt, "update", json.dumps(result, ensure_ascii=False)
+        )
 
-        # 결과가 없으면 에러 처리
-        if not update:
-            raise HTTPException(status_code=500, detail="생성된 결과가 없습니다")
+        if not plan_updates:
+            raise HTTPException(status_code=500, detail="계획 업데이트에 실패했습니다")
 
         # 기존 계획과 병합
-        if result:
-            # 새로운 계획과 병합
-            result = merge_plan(result, update)
+        result = merge_plan(result, plan_updates)
 
         # 설명 생성
         description = generate_description(

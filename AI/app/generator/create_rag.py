@@ -161,8 +161,8 @@ def gen(
         prompt_template = make_prompt_template(query, create_notice + common_notice)
         # print(prompt_template)
         response = qa_chain.invoke(prompt_template)["result"]
-        if not validate_json(response):
-            # JSON 유효성 검사 통과
+        if not validate_json(response, "create"):
+            # JSON 유효성 검사 통과 실패
             print("JSON 유효성 검사 실패. 재생성합니다...")
             if retry_count >= max_retries:
                 raise ValueError(
@@ -175,12 +175,21 @@ def gen(
         prompt_template = make_prompt_template(query, update_notice + common_notice, plan)
         # print(prompt_template)
         response = qa_chain.invoke(prompt_template)["result"]
-    
-    print("생성 완료")
-    print(response)
+        if not validate_json(response, "update"):
+            # JSON 유효성 검사 통과 실패
+            print("JSON 유효성 검사 실패. 재생성합니다...")
+            if retry_count >= max_retries:
+                raise ValueError(
+                    f"JSON 생성 실패: 최대 재시도 횟수({max_retries})를 초과했습니다."
+                )
+            return gen(query, method, plan, retry_count + 1, max_retries)
 
     # JSON 유효성 검사 통과
     print("JSON 유효성 검사 성공")
+
+    print("생성 완료")
+    print(response)
+
     return json.loads(response)
 
 
