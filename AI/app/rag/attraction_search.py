@@ -3,7 +3,7 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 import json
 import os
 from dotenv import load_dotenv
-from app.config import PROJECT_ROOT
+from config import PROJECT_ROOT
 
 load_dotenv()  # .env 파일 로드
 
