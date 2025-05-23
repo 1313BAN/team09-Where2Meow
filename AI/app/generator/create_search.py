@@ -78,7 +78,7 @@ common_notice = """
 
 
 def gen(query: str, attractions: list, restaurants: str, method: str) -> str:
-    llm = ChatOpenAI(model="gpt-4.1-mini", max_completion_tokens=2000, temperature=0.3)
+    llm = ChatOpenAI(model="gpt-4o-mini", max_completion_tokens=2000, temperature=0.3)
     prompt = ChatPromptTemplate.from_template(itinerary_template)
     
     # attractions가 문자열인지 리스트인지 확인하고 적절히 처리
