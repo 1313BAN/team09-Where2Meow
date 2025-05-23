@@ -1,38 +1,61 @@
+import copy
 from collections import defaultdict
-from typing import Dict, Any
 
-def merge_plan(original_data: Dict[str, Any], changes: Dict[str, Any]) -> Dict[str, Any]:
-    # 1. 삭제 적용
-    delete_keys = {change["uniqueKey"] for change in changes.get("attractions", []) if change.get("mode") == "delete"}
-    attractions = [
-        attr for attr in original_data.get("attractions", [])
-        if attr["uniqueKey"] not in delete_keys
-    ]
+def merge_plan(base_data, change_data):
+    # 원본 데이터 복사
+    result = copy.deepcopy(base_data)
+    attractions = result["attractions"]
 
-    # 2. 추가 적용
-    existing_keys = {attr["uniqueKey"] for attr in attractions}
-    for change in changes.get("attractions", []):
-        if change.get("mode") == "add" and change["uniqueKey"] not in existing_keys:
-            # mode 필드는 제외하고 추가
-            new_attr = {k: v for k, v in change.items() if k != "mode"}
-            attractions.append(new_attr)
-            existing_keys.add(change["uniqueKey"])
+    # 1. 추가 작업 (add)
+    for item in change_data["attractions"]:
+        if item.get("mode") == "add":
+            # 이미 uniqueKey가 있는지 확인 (중복 방지)
+            if not any(a["uniqueKey"] == item["uniqueKey"] for a in attractions):
+                # 삽입 위치 결정
+                insert_idx = None
+                for idx, a in enumerate(attractions):
+                    # 같은 날짜, 같은 attractionOrder의 기준 찾기
+                    if (
+                        a["date"] == item["date"]
+                        and abs(a["attractionOrder"] - (item["attractionOrder"] - 0.3))
+                        < 1e-6
+                    ):
+                        insert_idx = idx + 1  # 뒤에 추가
+                        break
+                    elif (
+                        a["date"] == item["date"]
+                        and abs(a["attractionOrder"] - (item["attractionOrder"] + 0.3))
+                        < 1e-6
+                    ):
+                        insert_idx = idx  # 앞에 추가
+                        break
+                # 삽입 위치에 추가, 없으면 끝에 추가
+                del item["mode"]
+                if insert_idx is not None:
+                    attractions.insert(insert_idx, item)
+                else:
+                    attractions.append(item)
 
-    # 3. 날짜별 attractionOrder 재정렬
-    attractions_by_date = defaultdict(list)
-    for attr in attractions:
-        attractions_by_date[attr["date"]].append(attr)
+    # 2. 삭제 작업 (delete)
+    for item in change_data["attractions"]:
+        if item.get("mode") == "delete":
+            attractions = [
+                a for a in attractions if a["uniqueKey"] != item["uniqueKey"]
+            ]
 
-    result_attractions = []
-    for date, attrs in attractions_by_date.items():
-        # 기존 attractionOrder 기준 정렬(혹시 순서가 섞여있을 수 있으므로)
-        attrs.sort(key=lambda x: x["attractionOrder"])
-        for i, attr in enumerate(attrs, start=1):
-            attr["attractionOrder"] = i
-            result_attractions.append(attr)
+    # 3. 날짜별로 attractionOrder 재정렬
+    date_dict = defaultdict(list)
+    for a in attractions:
+        date_dict[a['date']].append(a)
 
-    # date별로 묶인 결과를 다시 하나의 리스트로 합침
-    # (정렬: date, attractionOrder 순)
-    result_attractions.sort(key=lambda x: (x["date"], x["attractionOrder"]))
-
-    return {"attractions": result_attractions}
+    new_attractions = []
+    for date in sorted(date_dict.keys()):
+        # 날짜별로 attractionOrder 기준 정렬
+        sorted_list = sorted(date_dict[date], key=lambda x: x['attractionOrder'])
+        # 1, 2, 3... 순서로 재할당 및 uniqueKey 재생성
+        for i, a in enumerate(sorted_list, 1):
+            a['attractionOrder'] = i
+            a['uniqueKey'] = f"{date}_{i}_{a['attractionId']}"
+            new_attractions.append(a)
+    result["attractions"] = new_attractions
+    return result
