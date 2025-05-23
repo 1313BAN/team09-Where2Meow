@@ -34,7 +34,7 @@ def convert_to_documents(rows):
             restaurant_documents.append(
                 Document(page_content=page_content, metadata=metadata)
             )
-        else:
+        elif row.attraction_category_id in [12, 14, 15, 28, 38]:
             attraction_documents.append(
                 Document(page_content=page_content, metadata=metadata)
             )
