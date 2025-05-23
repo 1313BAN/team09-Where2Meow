@@ -2,7 +2,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 import os
 from dotenv import load_dotenv
-from app.rag.attraction_search import search_attraction
+from rag.attraction_search import search_attraction
 import json
 
 load_dotenv()

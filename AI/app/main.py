@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from app.rag.plan import rag_plan
+from rag.plan import rag_plan
 from pydantic import BaseModel
-from app.generator.create_rag import gen
+from generator.create_rag import gen
 from fastapi import HTTPException
 
 app = FastAPI()
