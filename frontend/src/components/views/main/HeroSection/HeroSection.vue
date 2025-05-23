@@ -1,6 +1,7 @@
+<!-- HeroBanner.vue - 업데이트된 버전 -->
 <template>
   <section
-    class="relative h-[550px] bg-cover bg-center text-white flex items-center overflow-hidden"
+    class="relative h-[500px] bg-cover bg-center text-white flex items-center overflow-hidden"
     :style="{ backgroundImage: `url(${bannerImage})` }"
   >
     <!-- 배경 오버레이 -->
@@ -13,9 +14,9 @@
           {{ mainTitle }}
         </h1>
 
-        <!-- 고양이 아이콘 -->
+        <!-- 고양이 -->
         <div class="flex items-center gap-2 mb-4">
-          <span class="text-[var(--accent-color)] text-lg">계획 세우는 걸 도와줄게, 냥!</span>
+          <span class="text-[var(--accent-color)] text-lg">복잡한 일정도, 가냥이가 척척!</span>
         </div>
 
         <!-- 부제목 -->
@@ -51,11 +52,14 @@
         </form>
 
         <!-- 타입라이터 효과 -->
-        <div class="typewriter-container mt-6 h-6 overflow-hidden">
-          <p class="typewriter-text text-sm text-white/80">
-            <i class="pi pi-info-circle mr-2 text-[var(--accent-color)]"></i>
-            <span>{{ currentTypewriterText }}</span>
-          </p>
+        <div class="mt-6 h-6 overflow-hidden">
+          <TypewriterText
+            :texts="typewriterTexts"
+            :typing-speed="100"
+            :deleting-speed="50"
+            :pause-duration="2000"
+            text-class="text-sm text-white/80"
+          />
         </div>
       </div>
     </div>
@@ -72,9 +76,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref } from 'vue'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import TypewriterText from './TypewriterText.vue'
 
 // Props 정의
 const props = defineProps({
@@ -89,62 +94,28 @@ const props = defineProps({
   },
   subtitle: {
     type: String,
-    default: '가냥이에게 물어보세요~',
+    default: '가냥이와 떠나는, 똑똑하고 귀여운 여행 준비',
   },
   searchPlaceholder: {
     type: String,
-    default: '예: 서울 2박 3일 여행 스케쥴 짜줘',
+    default: '예: 서울 2박 3일 여행 일정 짜줘',
   },
 })
 
 // 반응형 데이터
 const searchQuery = ref('')
 const isSearching = ref(false)
-const currentTypewriterText = ref('')
 
 // 타입라이터 텍스트 배열
 const typewriterTexts = [
-  '고양이와 함께 가는 여행, 어디가냥이 찾아드리겠습니다',
-  '"서울 2박 3일 고양이 동반 카페" 처럼 검색해보세요',
-  '가냥이가 추천하는 반려동물 동반 여행지 TOP 10',
-  '스페셜 프로모션: 유저 후기 작성 시 포인트 적립!',
+  '여행 계획, 어디서부터 시작할지 모르겠다면?',
+  '가냥이가 똑똑하게 일정을 짜드릴게요!',
+  '"제주 2박 3일 추천 코스"처럼 물어보세요',
+  '지역별 핫플, 교통, 맛집까지 한 번에!',
+  '가냥이와 함께 스마트한 여행 준비 시작해볼까요?',
+  '떠나고 싶은 도시를 입력해보세요!',
+  '혼자 떠나는 여행도, 친구랑 가는 여행도 OK!',
 ]
-
-// 타입라이터 효과 관련 변수
-let currentTextIndex = 0
-let charIndex = 0
-let isTyping = true
-let typingTimer
-
-// 타입라이터 효과 함수
-const typeWriter = () => {
-  const currentText = typewriterTexts[currentTextIndex]
-
-  if (isTyping) {
-    if (charIndex < currentText.length) {
-      currentTypewriterText.value = currentText.substring(0, charIndex + 1)
-      charIndex++
-    } else {
-      isTyping = false
-      // 2초 대기 후 삭제 시작
-      setTimeout(() => {
-        isTyping = false
-      }, 2000)
-    }
-  } else {
-    if (charIndex > 0) {
-      currentTypewriterText.value = currentText.substring(0, charIndex - 1)
-      charIndex--
-    } else {
-      isTyping = true
-      currentTextIndex = (currentTextIndex + 1) % typewriterTexts.length
-    }
-  }
-
-  // 타이머 속도 조정 (타이핑은 빠르게, 삭제는 조금 더 빠르게)
-  const timerDelay = isTyping ? 100 : 50
-  typingTimer = setTimeout(typeWriter, timerDelay)
-}
 
 // 스크롤 다운 함수
 const scrollDown = () => {
@@ -165,22 +136,11 @@ const handleSearch = async () => {
 
   try {
     emit('search', searchQuery.value.trim())
-    // 실제 검색 API 호출 로직
     console.log('검색어:', searchQuery.value)
   } finally {
     isSearching.value = false
   }
 }
-
-onMounted(() => {
-  // 타입라이터 효과 시작
-  typeWriter()
-})
-
-onBeforeUnmount(() => {
-  // 타이머 정리
-  clearTimeout(typingTimer)
-})
 </script>
 
 <style scoped>
@@ -205,46 +165,6 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 고양이 귀 효과 */
-.cat-ears {
-  position: relative;
-}
-
-.cat-ears:before,
-.cat-ears:after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 16px solid var(--accent-color);
-  top: -14px;
-  opacity: 0.6;
-  animation: earWiggle 3s infinite alternate;
-}
-
-.cat-ears:before {
-  left: 0;
-  transform: rotate(30deg);
-  animation-delay: 0.5s;
-}
-
-.cat-ears:after {
-  left: 10px;
-  transform: rotate(-10deg);
-}
-
-@keyframes earWiggle {
-  0%,
-  100% {
-    transform: rotate(30deg);
-  }
-  50% {
-    transform: rotate(20deg);
-  }
-}
-
 /* 텍스트 샤도우 효과 */
 .text-shadow-lg {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -252,25 +172,6 @@ onBeforeUnmount(() => {
 
 .text-shadow-sm {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* 고양이 발자국 패턴 */
-.cat-paw-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 16c-2.2 0-4 1.8-4 4 0 1.2.5 2.3 1.3 3-1.2 1-2 2.5-2 4.2 0 3 2.5 5.5 5.5 5.5s5.5-2.5 5.5-5.5c0-1.7-.8-3.2-2-4.2.8-.7 1.3-1.8 1.3-3 0-2.2-1.8-4-4-4zM15 26c-2.2 0-4 1.8-4 4 0 1.2.5 2.3 1.3 3-1.2 1-2 2.5-2 4.2 0 3 2.5 5.5 5.5 5.5s5.5-2.5 5.5-5.5c0-1.7-.8-3.2-2-4.2.8-.7 1.3-1.8 1.3-3 0-2.2-1.8-4-4-4zm30 0c-2.2 0-4 1.8-4 4 0 1.2.5 2.3 1.3 3-1.2 1-2 2.5-2 4.2 0 3 2.5 5.5 5.5 5.5s5.5-2.5 5.5-5.5c0-1.7-.8-3.2-2-4.2.8-.7 1.3-1.8 1.3-3 0-2.2-1.8-4-4-4z' fill='white' fill-opacity='.03'/%3E%3C/svg%3E");
-  opacity: 0.5;
-}
-
-/* 타입라이터 효과 */
-.typewriter-container {
-  border-left: 3px solid var(--primary-color);
-  padding-left: 10px;
-  opacity: 0.9;
-}
-
-.typewriter-text {
-  display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
 }
 
 /* 반응형 디자인 */
