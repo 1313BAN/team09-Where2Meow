@@ -49,11 +49,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import MainBanner from '@/components/main/MainBanner.vue'
-import SearchSection from '@/components/main/SearchSection.vue'
-import PopularSection from '@/components/main/PopularSection.vue'
-import RecommendationSection from '@/components/main/RecommendationSection.vue'
-import PromoBanner from '@/components/main/PromoBanner.vue'
+import MainBanner from '@/components/views/main/MainBanner.vue'
+import SearchSection from '@/components/views/main/SearchSection.vue'
+import PopularSection from '@/components/views/main/PopularSection.vue'
+import RecommendationSection from '@/components/views/main/RecommendationSection.vue'
+import PromoBanner from '@/components/views/main/PromoBanner.vue'
 
 const router = useRouter()
 
