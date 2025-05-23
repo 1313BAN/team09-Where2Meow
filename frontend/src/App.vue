@@ -18,9 +18,9 @@ export default {
 <template>
   <div id="app">
     <LayoutNavi />
-    <div id="content">
+    <main class="container mx-auto p-4 mt-4">
       <RouterView />
-    </div>
+    </main>
     <LayoutFooter />
   </div>
 </template>
