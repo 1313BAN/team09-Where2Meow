@@ -65,15 +65,16 @@
           icon="pi pi-search"
           :loading="isSearching"
           @click="handleSearch"
-          pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] active:scale-99 transition-all duration-200 ease-in-out rounded-xl px-6 py-2 shadow-md text-white border-none flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
+          class="w-full search-button"
+          pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] active:scale-95 transition-all duration-200 ease-in-out rounded-xl px-6 py-3 shadow-md text-white border-none flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
           pt:label="text-white font-semibold text-base tracking-wide"
           pt:icon="text-white"
         />
       </form>
 
       <!-- 카테고리 선택 -->
-      <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-4 text-gray-900">카테고리 선택</h3>
+      <div class="mb-6 px-2">
+        <h3 class="text-lg font-semibold mb-4 text-gray-900">카테고리</h3>
         <div class="grid grid-cols-4 md:grid-cols-8 gap-4 justify-items-center max-w-4xl mx-auto">
           <div
             v-for="category in categories"
@@ -107,7 +108,7 @@
               ></i>
             </div>
             <span
-              class="text-xs text-center transition-colors"
+              class="text-xs text-center group-hover:text-gray-900 transition-colors"
               :class="
                 selectedCategory === category.id
                   ? 'text-[var(--secondary-color)] font-semibold'
@@ -120,6 +121,15 @@
         </div>
       </div>
     </div>
+    <!-- 인기 장소 섹션 -->
+    <PopularAttractions
+      :attractions="attractions"
+      :is-loading="isSearching"
+      :has-searched="hasSearched"
+      :search-params="searchParams"
+      @attraction-click="handleAttractionClick"
+      @retry-search="handleRetrySearch"
+    />
   </section>
 </template>
 
@@ -128,6 +138,8 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import addressAPI from '@/api/address'
+import attractionAPI from '@/api/attraction'
+import PopularAttractions from './PopularAttractions.vue'
 
 const props = defineProps({
   title: {
@@ -142,6 +154,11 @@ const searchForm = reactive({
   state: null,
   city: null,
 })
+
+// 인기 장소 관련 상태
+const attractions = ref([])
+const hasSearched = ref(false)
+const searchParams = ref({})
 
 // 선택된 카테고리 (단일 선택)
 const selectedCategory = ref(null)
@@ -233,21 +250,119 @@ watch(
 
 const emit = defineEmits(['search', 'category-click'])
 
-const handleSearch = async () => {
+// 인기 장소 검색 함수
+const searchPopularAttractions = async () => {
   isSearching.value = true
+  hasSearched.value = true
+
   try {
-    const searchData = {
-      ...searchForm,
-      category: selectedCategory.value,
+    // 검색 파라미터 구성
+    const params = {
+      countryId: searchForm.country,
+      stateId: getStateIdFromCode(searchForm.state),
+      cityId: searchForm.city,
+      categoryId: selectedCategory.value,
+      page: 0,
+      size: 6,
+      sort: 'reviewCount,desc;attractionName,asc', // 리뷰 수 많은 순, 같으면 이름 순
     }
-    emit('search', searchData)
-    console.log('검색 조건:', searchData)
+
+    // 검색 파라미터 저장 (제목 생성용)
+    searchParams.value = {
+      stateName: getSelectedStateName(),
+      cityName: getSelectedCityName(),
+      categoryName: getSelectedCategoryName(),
+    }
+
+    // API 호출
+    attractionAPI.getAttractionListPaging(
+      params,
+      (response) => {
+        attractions.value = response.data.content || []
+        console.log('검색 결과:', attractions.value)
+      },
+      (error) => {
+        console.error('인기 장소 검색 실패:', error)
+        attractions.value = []
+      },
+    )
+  } catch (error) {
+    console.error('검색 중 오류:', error)
+    attractions.value = []
   } finally {
     isSearching.value = false
   }
 }
 
-// 하드코딩된 카테고리 목록
+// State 코드로부터 ID 가져오기
+const getStateIdFromCode = (stateCode) => {
+  if (!stateCode) return null
+  const state = stateSuggestions.value.find((s) => s.stateCode === stateCode)
+  return state ? state.stateId : null
+}
+
+// 선택된 지역명 가져오기
+const getSelectedStateName = () => {
+  if (!searchForm.state) return null
+  const state = stateSuggestions.value.find((s) => s.stateCode === searchForm.state)
+  return state ? state.stateName : null
+}
+
+// 선택된 도시명 가져오기
+const getSelectedCityName = () => {
+  if (!searchForm.city) return null
+  const city = citySuggestions.value.find((c) => c.cityId === searchForm.city)
+  return city ? city.cityName : null
+}
+
+// 선택된 카테고리명 가져오기
+const getSelectedCategoryName = () => {
+  if (!selectedCategory.value) return null
+  const category = categories.value.find((c) => c.id === selectedCategory.value)
+  return category ? category.name : null
+}
+
+const handleSearch = async () => {
+  await searchPopularAttractions()
+  const searchData = {
+    ...searchForm,
+    category: selectedCategory.value,
+  }
+  emit('search', searchData)
+  console.log('검색 조건:', searchData)
+}
+
+const handleCategoryClick = async (category) => {
+  if (selectedCategory.value === category.id) {
+    // 이미 선택된 카테고리면 선택 해제
+    selectedCategory.value = null
+  } else {
+    // 새로운 카테고리 선택
+    selectedCategory.value = category.id
+  }
+
+  // 카테고리 선택/해제 시 자동으로 검색 실행
+  await searchPopularAttractions()
+
+  emit('category-click', {
+    category,
+    selectedCategory: selectedCategory.value,
+  })
+  console.log('선택된 카테고리:', category, '현재 선택:', selectedCategory.value)
+}
+
+// 장소 클릭 핸들러
+const handleAttractionClick = (attraction) => {
+  console.log('장소 클릭:', attraction)
+  // 상세 페이지로 이동하거나 모달 표시 등의 로직 추가 가능
+}
+
+// 재검색 핸들러
+const handleRetrySearch = () => {
+  searchPopularAttractions()
+}
+
+// 하드코딩된 카테고리 목록 (8개)
 const categories = ref([
   {
     id: 12,
@@ -306,25 +421,15 @@ const categories = ref([
       'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=64&h=64&fit=crop&crop=center',
   },
 ])
-
-const handleCategoryClick = (category) => {
-  if (selectedCategory.value === category.id) {
-    // 이미 선택된 카테고리면 선택 해제
-    selectedCategory.value = null
-  } else {
-    // 새로운 카테고리 선택
-    selectedCategory.value = category.id
-  }
-
-  emit('category-click', {
-    category,
-    selectedCategory: selectedCategory.value,
-  })
-  console.log('선택된 카테고리:', category, '현재 선택:', selectedCategory.value)
-}
 </script>
 
 <style scoped>
+/* 검색 버튼 호버 효과 */
+.search-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .grid.grid-cols-1.md\:grid-cols-4 {

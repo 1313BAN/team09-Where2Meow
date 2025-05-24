@@ -6,14 +6,6 @@
     <!-- 검색 섹션 -->
     <SearchSection @search="handleDetailSearch" @category-click="handleCategoryClick" />
 
-    <!-- 인기 음식점 -->
-    <PopularSection
-      title="인기 음식점"
-      :items="popularRestaurants"
-      @item-click="handlePopularItemClick"
-      @load-more="handleLoadMorePopular"
-    />
-
     <!-- 인기 여행지 정보 -->
     <RecommendationSection
       title="인기 여행지 정보"
@@ -51,7 +43,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import HeroSection from '@/components/views/main/HeroSection/HeroSection.vue'
 import SearchSection from '@/components/views/main/SearchSection/SearchSection.vue'
-import PopularSection from '@/components/views/main/SearchSection/PopularSection.vue'
 import RecommendationSection from '@/components/views/main/RecommendationSection.vue'
 import PromoBanner from '@/components/views/main/PromoBanner.vue'
 
