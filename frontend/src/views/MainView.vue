@@ -10,7 +10,7 @@
     <RecommendationSection
       title="가냥이의 추천 일정"
       card-type="plan"
-      background-color="bg-gray-100"
+      background-color="bg-gray-50"
       section-icon="pi-sparkles"
       @item-click="handlePlanClick"
     />
@@ -20,12 +20,15 @@
       title="현재 HOT한 게시글"
       card-type="board"
       background-color="bg-white"
-      section-icon="pi-chart-line"
+      section-icon="pi-fire"
       @item-click="handleBoardClick"
     />
 
-    <!-- 트래블러 초이스 배너 -->
-    <PromoBanner @button-click="handlePromoClick" />
+    <!-- CTA 섹션 (여행 계획 시작 유도) -->
+    <CTASection 
+      @start-planning="handleStartPlanning"
+      @explore-plans="handleExplorePlans"
+    />
   </div>
 </template>
 
@@ -34,7 +37,7 @@ import { useRouter } from 'vue-router'
 import HeroSection from '@/components/views/main/HeroSection/HeroSection.vue'
 import SearchSection from '@/components/views/main/SearchSection/SearchSection.vue'
 import RecommendationSection from '@/components/views/main/RecommendationSection/RecommendationSection.vue'
-import PromoBanner from '@/components/views/main/PromoBanner.vue'
+import CTASection from '@/components/views/main/CTASection/CTASection.vue'
 
 const router = useRouter()
 
@@ -54,10 +57,7 @@ const handleDetailSearch = (searchForm) => {
 const handleCategoryClick = (category) => {
   console.log('카테고리 클릭:', category)
   // 카테고리별 목록 페이지로 이동
-  router.push({
-    name: 'category',
-    params: { id: category.category?.id || category.selectedCategory },
-  })
+  router.push({ name: 'category', params: { id: category.category?.id || category.selectedCategory } })
 }
 
 const handlePlanClick = (plan) => {
@@ -72,9 +72,17 @@ const handleBoardClick = (board) => {
   router.push({ name: 'board-detail', params: { id: board.id || board.boardId } })
 }
 
-const handlePromoClick = () => {
-  console.log('프로모 배너 클릭')
-  router.push({ name: 'awards' })
+// CTA 섹션 이벤트 핸들러들
+const handleStartPlanning = () => {
+  console.log('여행 계획 시작하기')
+  // 여행 계획 생성 페이지로 이동
+  router.push({ name: 'plan-create' })
+}
+
+const handleExplorePlans = () => {
+  console.log('인기 일정 둘러보기')
+  // 인기 여행 계획 목록 페이지로 이동
+  router.push({ name: 'plans', query: { sort: 'popular' } })
 }
 </script>
 
