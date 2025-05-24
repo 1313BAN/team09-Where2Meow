@@ -1,6 +1,6 @@
 <template>
-  <section class="py-12 px-4">
-    <div class="container max-w-7xl mx-auto">
+  <section class="py-8 px-4">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
       <!-- 섹션 제목 -->
       <h2 class="text-2xl font-bold mb-8 text-gray-900">{{ title }}</h2>
 
