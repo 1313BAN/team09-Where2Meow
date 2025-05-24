@@ -258,13 +258,13 @@ const searchPopularAttractions = async () => {
   try {
     // 검색 파라미터 구성
     const params = {
-      countryId: searchForm.country,
-      stateId: getStateIdFromCode(searchForm.state),
-      cityId: searchForm.city,
+      countryId: searchForm.country || 1, // 기본값 설정
+      stateId: searchForm.state, // stateCode 직접 사용
+      cityId: getCityCodeFromId(searchForm.city), // cityCode로 변환
       categoryId: selectedCategory.value,
       page: 0,
       size: 6,
-      sort: 'reviewCount,desc;attractionName,asc', // 리뷰 수 많은 순, 같으면 이름 순
+      sort: 'attractionName,asc', // 이름 순 정렬 (실제 존재하는 필드)
     }
 
     // 검색 파라미터 저장 (제목 생성용)
@@ -273,6 +273,8 @@ const searchPopularAttractions = async () => {
       cityName: getSelectedCityName(),
       categoryName: getSelectedCategoryName(),
     }
+
+    console.log('API 호출 파라미터:', params) // 디버깅용
 
     // API 호출
     attractionAPI.getAttractionListPaging(
@@ -294,7 +296,14 @@ const searchPopularAttractions = async () => {
   }
 }
 
-// State 코드로부터 ID 가져오기
+// cityId를 cityCode로 변환하는 함수
+const getCityCodeFromId = (cityId) => {
+  if (!cityId) return null
+  const city = citySuggestions.value.find((c) => c.cityId === cityId)
+  return city ? city.cityCode : null
+}
+
+// State 코드로부터 ID 가져오기 (사용하지 않지만 유지)
 const getStateIdFromCode = (stateCode) => {
   if (!stateCode) return null
   const state = stateSuggestions.value.find((s) => s.stateCode === stateCode)
