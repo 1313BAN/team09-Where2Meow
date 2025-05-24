@@ -1,16 +1,34 @@
 @import 'tailwindcss';
 
 :root {
-  /* 고양이 테마 색상 팔레트 */
-  --primary-color: #ff8c69; /* 살몬 핑크 (고양이 발바닥 색) */
-  --secondary-color: #5e2ca5; /* 보라색 (고양이 장난감 색) */
-  --accent-color: #ffd166; /* 노란색 (고양이 눈 색) */
-  --light-color: #fff1e6; /* 베이지 (고양이 털 색) */
-  --dark-color: #41393e; /* 다크 그레이 (고양이 발톱 색) */
-  --success-color: #4caf50; /* 초록색 */
-  --info-color: #2196f3; /* 파란색 */
-  --warning-color: #ff9800; /* 주황색 */
-  --danger-color: #f44336; /* 빨간색 */
+  /* 메인 브랜드 컬러 */
+  --primary-color: #00edb3; /* 터키즈 민트 */
+  --secondary-color: #6fbbff; /* 스카이 블루 */
+  --accent-color: #ffd900; /* 선샤인 옐로우 */
+  --highlight-color: #ff80cf; /* 코랄 핑크 */
+
+  /* 확장 컬러 (메인 컬러 기반) */
+  --primary-light: #66f4d0; /* 연한 터키즈 */
+  --primary-dark: #00b896; /* 진한 터키즈 */
+  --secondary-light: #a8d4ff; /* 연한 스카이 블루 */
+  --secondary-dark: #4a9ae1; /* 진한 스카이 블루 */
+
+  /* 기능별 컬러 */
+  --success-color: #00edb3; /* 성공 = Primary 재사용 */
+  --info-color: #6fbbff; /* 정보 = Secondary 재사용 */
+  --warning-color: #ffd900; /* 경고 = Accent 재사용 */
+  --danger-color: #ff6b6b; /* 위험 (코랄 레드) */
+
+  /* 그라데이션 */
+  --gradient-primary: linear-gradient(135deg, #00edb3 0%, #6fbbff 100%);
+  --gradient-sunset: linear-gradient(135deg, #ffd900 0%, #ff80cf 100%);
+  --gradient-ocean: linear-gradient(180deg, #6fbbff 0%, #00edb3 100%);
+
+  /* 투명도 버전 */
+  --primary-10: rgba(0, 237, 179, 0.1);
+  --primary-20: rgba(0, 237, 179, 0.2);
+  --secondary-10: rgba(111, 187, 255, 0.1);
+  --accent-10: rgba(255, 217, 0, 0.1);
 
   /* 폰트 크기 */
   --font-size-xs: 0.75rem;
@@ -22,16 +40,31 @@
   --font-size-3xl: 1.875rem;
   --font-size-4xl: 2.25rem;
 
+  /* border 스타일 */
+  --border-radius-sm: 3px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 9px;
+
+  --border-width-thin: 1px;
+  --border-width-tick: 2px;
+
   /* 애니메이션 */
   --transition-slow: 0.5s ease;
   --transition-normal: 0.3s ease;
   --transition-fast: 0.2s ease;
 }
 
+@font-face {
+  font-family: 'PretendardVariable';
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
+  font-weight: 45 920;
+  font-style: normal;
+}
+
 /* 글로벌 스타일 */
 body {
   font-family:
-    'Pretendard',
+    'PretendardVariable',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
@@ -41,59 +74,4 @@ body {
     sans-serif;
   color: var(--dark-color);
   background-color: #fafafa;
-}
-
-/* 버튼 호버 효과 */
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
-  transition: all var(--transition-normal);
-}
-
-.btn-primary:hover {
-  background-color: #ff7a54;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* 링크 스타일 */
-.link-cat {
-  color: var(--primary-color);
-  position: relative;
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-.link-cat::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: -2px;
-  left: 0;
-  background-color: var(--primary-color);
-  transition: width var(--transition-normal);
-}
-
-.link-cat:hover {
-  color: var(--secondary-color);
-}
-
-.link-cat:hover::after {
-  width: 100%;
-}
-
-/* 카드 스타일 */
-.cat-card {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
-  transition:
-    transform var(--transition-normal),
-    box-shadow var(--transition-normal);
-}
-
-.cat-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
 }

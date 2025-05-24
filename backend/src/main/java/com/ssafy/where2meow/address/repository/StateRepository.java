@@ -13,4 +13,9 @@ public interface StateRepository extends JpaRepository<State, Integer> {
    * 여러 주(state) 코드에 해당하는 State 객체 조회
    */
   List<State> findByStateCodeIn(List<Integer> stateCodes);
+
+  /**
+   * country_id에 해당하는 State 객체 조회
+  */
+  List<State> findByCountryId(Integer countryId);
 }
