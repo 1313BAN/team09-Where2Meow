@@ -50,8 +50,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import HeroSection from '@/components/views/main/HeroSection/HeroSection.vue'
-import SearchSection from '@/components/views/main/SearchSection.vue'
-import PopularSection from '@/components/views/main/PopularSection.vue'
+import SearchSection from '@/components/views/main/SearchSection/SearchSection.vue'
+import PopularSection from '@/components/views/main/SearchSection/PopularSection.vue'
 import RecommendationSection from '@/components/views/main/RecommendationSection.vue'
 import PromoBanner from '@/components/views/main/PromoBanner.vue'
 
