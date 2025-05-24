@@ -65,8 +65,7 @@
           icon="pi pi-search"
           :loading="isSearching"
           @click="handleSearch"
-          class="w-full search-button"
-          pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] active:scale-95 transition-all duration-200 ease-in-out rounded-xl px-6 py-3 shadow-md text-white border-none flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
+          pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] active:scale-99 transition-all duration-200 ease-in-out rounded-xl px-6 py-2 shadow-md text-white border-none flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
           pt:label="text-white font-semibold text-base tracking-wide"
           pt:icon="text-white"
         />
@@ -74,19 +73,21 @@
 
       <!-- 카테고리 선택 -->
       <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-4 text-gray-900">카테고리</h3>
-        <div class="grid grid-cols-3 md:grid-cols-9 gap-4 justify-items-center">
+        <h3 class="text-lg font-semibold mb-4 text-gray-900">카테고리 선택</h3>
+        <div class="grid grid-cols-4 md:grid-cols-8 gap-4 justify-items-center max-w-4xl mx-auto">
           <div
             v-for="category in categories"
             :key="category.id"
             class="flex flex-col items-center cursor-pointer group"
-            :class="{ 'selected-category': selectedCategories.includes(category.id) }"
+            :class="{ 'selected-category': selectedCategory === category.id }"
             @click="handleCategoryClick(category)"
           >
             <div
-              class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-2 overflow-hidden group-hover:bg-gray-200 transition-all duration-200"
+              class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-2 overflow-hidden group-hover:bg-gray-200 transition-all duration-200 group-hover:scale-105"
               :class="{
-                'bg-blue-100 border-2 border-blue-500': selectedCategories.includes(category.id),
+                'bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] border-2 border-[var(--secondary-color)] scale-105 shadow-[0_4px_12px_rgba(0,237,179,0.3)]':
+                  selectedCategory === category.id,
+                'group-hover:shadow-md': selectedCategory !== category.id,
               }"
             >
               <img
@@ -94,21 +95,22 @@
                 :src="category.image"
                 :alt="category.name"
                 class="w-full h-full object-cover"
+                :class="{ 'opacity-90': selectedCategory === category.id }"
               />
               <i
                 v-else
                 :class="[
                   category.icon,
                   'text-2xl',
-                  selectedCategories.includes(category.id) ? 'text-blue-600' : 'text-gray-600',
+                  selectedCategory === category.id ? 'text-white' : 'text-gray-600',
                 ]"
               ></i>
             </div>
             <span
-              class="text-xs text-center group-hover:text-gray-900 transition-colors"
+              class="text-xs text-center transition-colors"
               :class="
-                selectedCategories.includes(category.id)
-                  ? 'text-blue-700 font-semibold'
+                selectedCategory === category.id
+                  ? 'text-[var(--secondary-color)] font-semibold'
                   : 'text-gray-700'
               "
             >
@@ -141,8 +143,8 @@ const searchForm = reactive({
   city: null,
 })
 
-// 선택된 카테고리들
-const selectedCategories = ref([])
+// 선택된 카테고리 (단일 선택)
+const selectedCategory = ref(null)
 
 // 전체 데이터
 const countrySuggestions = ref([])
@@ -236,7 +238,7 @@ const handleSearch = async () => {
   try {
     const searchData = {
       ...searchForm,
-      categories: selectedCategories.value.length > 0 ? selectedCategories.value : null,
+      category: selectedCategory.value,
     }
     emit('search', searchData)
     console.log('검색 조건:', searchData)
@@ -248,75 +250,86 @@ const handleSearch = async () => {
 // 하드코딩된 카테고리 목록
 const categories = ref([
   {
-    id: 1,
-    name: '숙박',
-    icon: 'pi pi-home',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=60&h=60&fit=crop',
-  },
-  {
-    id: 2,
+    id: 12,
     name: '관광지',
     icon: 'pi pi-map-marker',
-    image: 'https://images.unsplash.com/photo-1539650116574-75c0c6d0c39?w=60&h=60&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=64&h=64&fit=crop&crop=center',
   },
   {
-    id: 3,
-    name: '음식점',
-    icon: 'pi pi-shopping-bag',
-    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=60&h=60&fit=crop',
-  },
-  {
-    id: 4,
-    name: '카페',
-    icon: 'pi pi-coffee',
-    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=60&h=60&fit=crop',
-  },
-  {
-    id: 5,
+    id: 14,
     name: '문화시설',
     icon: 'pi pi-building',
-    image: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=60&h=60&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=64&h=64&fit=crop&crop=center',
   },
   {
-    id: 6,
-    name: '축제',
+    id: 15,
+    name: '축제공연행사',
     icon: 'pi pi-calendar',
-    image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=60&h=60&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=64&h=64&fit=crop&crop=center',
   },
   {
-    id: 7,
-    name: '산/계곡',
-    icon: 'pi pi-image',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=60&h=60&fit=crop',
+    id: 25,
+    name: '여행코스',
+    icon: 'pi pi-coffee',
+    image:
+      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=64&h=64&fit=crop&crop=center',
   },
   {
-    id: 8,
-    name: '바다/해변',
-    icon: 'pi pi-sun',
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=60&h=60&fit=crop',
+    id: 28,
+    name: '레저/스포츠',
+    icon: 'pi pi-bolt',
+    image:
+      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=64&h=64&fit=crop&crop=center',
   },
   {
-    id: 9,
+    id: 32,
+    name: '숙박',
+    icon: 'pi pi-home',
+    image:
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=64&h=64&fit=crop&crop=center',
+  },
+  {
+    id: 38,
     name: '쇼핑',
     icon: 'pi pi-shopping-cart',
-    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=60&h=60&fit=crop',
+    image:
+      'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=64&h=64&fit=crop&crop=center',
+  },
+  {
+    id: 39,
+    name: '음식점',
+    icon: 'pi pi-utensils',
+    image:
+      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=64&h=64&fit=crop&crop=center',
   },
 ])
 
 const handleCategoryClick = (category) => {
-  const index = selectedCategories.value.indexOf(category.id)
-  if (index > -1) {
-    // 이미 선택된 카테고리면 제거
-    selectedCategories.value.splice(index, 1)
+  if (selectedCategory.value === category.id) {
+    // 이미 선택된 카테고리면 선택 해제
+    selectedCategory.value = null
   } else {
-    // 선택되지 않은 카테고리면 추가
-    selectedCategories.value.push(category.id)
+    // 새로운 카테고리 선택
+    selectedCategory.value = category.id
   }
 
   emit('category-click', {
     category,
-    selectedCategories: selectedCategories.value,
+    selectedCategory: selectedCategory.value,
   })
-  console.log('선택된 카테고리:', category, '전체 선택된 카테고리:', selectedCategories.value)
+  console.log('선택된 카테고리:', category, '현재 선택:', selectedCategory.value)
 }
 </script>
+
+<style scoped>
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .grid.grid-cols-1.md\:grid-cols-4 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+</style>
