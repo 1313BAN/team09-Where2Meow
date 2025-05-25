@@ -140,11 +140,7 @@ export default {
           const response = await planService.getUserPlans();
           this.plans = response.data;
         } else if (this.activeTab === 'bookmarks') {
-          // 북마크된 일정 가져오기 (임시로 필터링, 실제로는 별도 API 필요)
-          // const response = await planService.getUserPlans();
-          // this.plans = response.data.filter(plan => plan.bookmarked);
-          
-          // 또는 별도의 북마크 API가 있다면:
+          // 북마크된 일정 가져오기
           const response = await planService.getBookmarkedPlans();
           this.plans = response.data;
         }
