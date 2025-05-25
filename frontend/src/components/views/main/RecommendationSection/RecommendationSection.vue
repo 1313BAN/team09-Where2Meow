@@ -322,7 +322,18 @@ const loadBoards = async () => {
   return new Promise((resolve, reject) => {
     boardAPI.getPopularBoards(
       (response) => {
+        console.log('Board API response:', response) // 디버깅용
+        
         const boards = response.data?.boards || []
+        
+        // boards가 배열인지 확인
+        if (!Array.isArray(boards)) {
+          console.error('Boards is not an array:', boards)
+          items.value = []
+          resolve()
+          return
+        }
+        
         // Board 데이터를 카드 형식에 맞게 변환
         items.value = boards.map((board) => ({
           ...board,
@@ -333,7 +344,8 @@ const loadBoards = async () => {
       },
       (error) => {
         console.error('Board 데이터 로드 실패:', error)
-        reject(error)
+        items.value = [] // 에러 시 빈 배열
+        resolve() // 에러에도 resolve로 처리하여 로딩 상태 종료
       },
     )
   })

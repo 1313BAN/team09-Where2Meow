@@ -25,10 +25,7 @@
     />
 
     <!-- CTA 섹션 (여행 계획 시작 유도) -->
-    <CTASection 
-      @start-planning="handleStartPlanning"
-      @explore-plans="handleExplorePlans"
-    />
+    <CTASection @start-planning="handleStartPlanning" @explore-plans="handleExplorePlans" />
   </div>
 </template>
 
@@ -57,7 +54,10 @@ const handleDetailSearch = (searchForm) => {
 const handleCategoryClick = (category) => {
   console.log('카테고리 클릭:', category)
   // 카테고리별 목록 페이지로 이동
-  router.push({ name: 'category', params: { id: category.category?.id || category.selectedCategory } })
+  router.push({
+    name: 'category',
+    params: { id: category.category?.id || category.selectedCategory },
+  })
 }
 
 const handlePlanClick = (plan) => {

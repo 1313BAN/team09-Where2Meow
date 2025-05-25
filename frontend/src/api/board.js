@@ -1,80 +1,226 @@
 import { localAxios } from '@/utils/http-commons'
 
-const boardAPI = localAxios()
+const api = localAxios()
 
-// 게시글 리스트 조회 (좋아요 순으로 정렬)
-const getPopularBoards = (success, fail) =>
-  boardAPI.get('/api/board', {
-    params: {
-      sort: 'likeCount',
-      direction: 'desc',
-      size: 12
-    }
-  }).then(success).catch(fail)
+// 게시글 리스트 조회
+export const getBoards = async (params = {}) => {
+  try {
+    console.log('Fetching boards with params:', params) // 디버깅
+    const response = await api.get('/api/board', { params })
+    console.log('Boards API response:', response.data) // 디버깅
+    return response.data
+  } catch (error) {
+    console.error('Boards API error:', error) // 디버깅
+    throw error
+  }
+}
+
+// 내가 쓴 게시글 리스트 조회
+export const getUserBoards = async (params = {}) => {
+  try {
+    const response = await api.get('/api/board/user', { params })
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// 북마크한 게시글 리스트 조회
+export const getBookmarkedBoards = async (params = {}) => {
+  try {
+    const response = await api.get('/api/board', { 
+      params: { ...params, bookmarked: true } 
+    })
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 상세 조회
-const getBoardDetail = (boardId, success, fail) =>
-  boardAPI.get(`/api/board/${boardId}`).then(success).catch(fail)
-
-// 사용자 게시글 리스트 조회
-const getUserBoards = (success, fail) =>
-  boardAPI.get('/api/board/user').then(success).catch(fail)
+export const getBoardDetail = async (boardId) => {
+  try {
+    const response = await api.get(`/api/board/${boardId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 검색
-const searchBoards = (keyword, sort = 'likeCount', direction = 'desc', page = 0, size = 12, success, fail) =>
-  boardAPI.get('/api/board/search', {
-    params: {
-      keyword,
-      sort,
-      direction,
-      page,
-      size
-    }
-  }).then(success).catch(fail)
+export const searchBoards = async (keyword, params = {}) => {
+  try {
+    const response = await api.get('/api/board/search', { 
+      params: { keyword, ...params }
+    })
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 생성
-const createBoard = (boardData, success, fail) =>
-  boardAPI.post('/api/board', boardData).then(success).catch(fail)
+export const createBoard = async (boardData) => {
+  try {
+    const response = await api.post('/api/board', boardData)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 수정
-const updateBoard = (boardId, boardData, success, fail) =>
-  boardAPI.put(`/api/board/${boardId}`, boardData).then(success).catch(fail)
+export const updateBoard = async (boardId, boardData) => {
+  try {
+    const response = await api.put(`/api/board/${boardId}`, boardData)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 삭제
-const deleteBoard = (boardId, success, fail) =>
-  boardAPI.delete(`/api/board/${boardId}`).then(success).catch(fail)
+export const deleteBoard = async (boardId) => {
+  try {
+    const response = await api.delete(`/api/board/${boardId}`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 좋아요 추가
-const likeBoard = (boardId, success, fail) =>
-  boardAPI.post(`/api/board/${boardId}/like`).then(success).catch(fail)
+export const addBoardLike = async (boardId) => {
+  try {
+    const response = await api.post(`/api/board/${boardId}/like`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 좋아요 삭제
-const unlikeBoard = (boardId, success, fail) =>
-  boardAPI.delete(`/api/board/${boardId}/like`).then(success).catch(fail)
+export const removeBoardLike = async (boardId) => {
+  try {
+    const response = await api.delete(`/api/board/${boardId}/like`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 북마크 추가
-const bookmarkBoard = (boardId, success, fail) =>
-  boardAPI.post(`/api/board/${boardId}/bookmark`).then(success).catch(fail)
+export const addBoardBookmark = async (boardId) => {
+  try {
+    const response = await api.post(`/api/board/${boardId}/bookmark`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
 // 게시글 북마크 삭제
-const unbookmarkBoard = (boardId, success, fail) =>
-  boardAPI.delete(`/api/board/${boardId}/bookmark`).then(success).catch(fail)
+export const removeBoardBookmark = async (boardId) => {
+  try {
+    const response = await api.delete(`/api/board/${boardId}/bookmark`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
-// 게시글 댓글 조회
-const getBoardComments = (boardId, success, fail) =>
-  boardAPI.get(`/api/board/${boardId}/comment`).then(success).catch(fail)
+// 게시글 댓글 목록 조회
+export const getBoardComments = async (boardId) => {
+  try {
+    const response = await api.get(`/api/board/${boardId}/comment`)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
 
-export default {
-  getPopularBoards,
+// 인기 게시글 조회 (RecommendationSection용)
+export const getPopularBoards = (successCallback, errorCallback) => {
+  getBoards({ sort: 'likeCount', direction: 'desc', size: 12 })
+    .then(response => {
+      console.log('Popular boards response:', response) // 디버깅용
+      
+      // 응답 구조 확인 및 안전한 처리
+      let boards = []
+      
+      if (response && Array.isArray(response)) {
+        boards = response
+      } else if (response && response.content && Array.isArray(response.content)) {
+        boards = response.content
+      } else if (response && response.data && Array.isArray(response.data)) {
+        boards = response.data
+      } else if (response && response.boards && Array.isArray(response.boards)) {
+        boards = response.boards
+      } else {
+        console.warn('Unexpected response structure:', response)
+        boards = [] // 빈 배열로 폴백
+      }
+      
+      if (successCallback) {
+        successCallback({ data: { boards } })
+      }
+    })
+    .catch(error => {
+      console.error('Popular boards fetch error:', error)
+      
+      // 백엔드 연결 실패 시 모킹 데이터 사용 (개발 중에만)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Using mock data for boards...')
+        const mockBoards = [
+          {
+            boardId: 1,
+            title: '서울 여행 추천 코스',
+            content: '서울의 아름다운 여행 코스를 소개합니다.',
+            categoryName: '여행',
+            likeCount: 15,
+            viewCount: 234,
+            createdAt: new Date().toISOString(),
+            authorName: '여행자'
+          },
+          {
+            boardId: 2,
+            title: '맛집 추천',
+            content: '지역별 맛집을 추천해드립니다.',
+            categoryName: '맛집',
+            likeCount: 23,
+            viewCount: 456,
+            createdAt: new Date().toISOString(),
+            authorName: '맛집헌터'
+          }
+        ]
+        
+        if (successCallback) {
+          successCallback({ data: { boards: mockBoards } })
+        }
+      } else {
+        if (errorCallback) {
+          errorCallback(error)
+        }
+      }
+    })
+}
+
+// Default export (하위 호환성을 위해)
+const boardAPI = {
+  getBoards,
+  getUserBoards, 
+  getBookmarkedBoards,
   getBoardDetail,
-  getUserBoards,
   searchBoards,
   createBoard,
   updateBoard,
   deleteBoard,
-  likeBoard,
-  unlikeBoard,
-  bookmarkBoard,
-  unbookmarkBoard,
+  addBoardLike,
+  removeBoardLike,
+  addBoardBookmark,
+  removeBoardBookmark,
   getBoardComments,
+  getPopularBoards
 }
+
+export default boardAPI

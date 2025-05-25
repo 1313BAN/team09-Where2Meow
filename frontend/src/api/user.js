@@ -12,18 +12,6 @@ export const signup = async (signupData) => {
   }
 }
 
-// 사용자 정보 조회
-export const getUser = async (uuid) => {
-  try {
-    const response = await api.get('/api/user', { 
-      params: { uuid } // GET 요청은 params 사용
-    })
-    return response.data
-  } catch (error) {
-    throw error
-  }
-}
-
 // 사용자 정보 수정
 export const updateUser = async (userData) => {
   try {
@@ -40,6 +28,16 @@ export const deleteUser = async (uuid) => {
     const response = await api.delete('/api/user', { 
       data: { uuid } // DELETE 요청에 body 데이터 전송
     })
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
+// 현재 사용자 정보 조회 (토큰 기반)
+export const getCurrentUser = async () => {
+  try {
+    const response = await api.get('/api/user/me')
     return response.data
   } catch (error) {
     throw error

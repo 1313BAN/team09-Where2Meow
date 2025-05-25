@@ -24,7 +24,10 @@ export const useAuthStore = defineStore('auth', () => {
         uuid: response.uuid,
         name: response.name,
         email: response.email,
-        role: response.role
+        role: response.role,
+        nickname: response.nickname || response.name, // 닉네임이 없으면 이름 사용
+        phone: response.phone || '',
+        image: response.image || ''
       }
 
       // localStorage에 저장
