@@ -10,6 +10,20 @@ const router = createRouter({
       children: [
         { path: '', name: 'main', component: () => import('@/views/MainView.vue') },
         { path: 'login', name: 'login', component: () => import('@/views/LoginView.vue') },
+        { 
+          path: 'plan', 
+          children: [{
+            path: 'dashboard',
+            name: 'plan-dashboard',
+            component: () => import('@/views/PlanDashboardView.vue')
+          },
+          {
+            path: 'create',
+            name: 'plan-create',
+            component: () => import('@/views/PlanView.vue')
+          }
+          ]
+        },
       ],
     },
   ],

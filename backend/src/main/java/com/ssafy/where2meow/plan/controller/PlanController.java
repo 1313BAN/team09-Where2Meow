@@ -7,10 +7,12 @@ import com.ssafy.where2meow.plan.dto.PlanResponse;
 import com.ssafy.where2meow.plan.service.PlanBookmarkService;
 import com.ssafy.where2meow.plan.service.PlanLikeService;
 import com.ssafy.where2meow.plan.service.PlanService;
+import com.ssafy.where2meow.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,7 @@ public class PlanController {
     private final PlanService planService;
     private final PlanLikeService planLikeService;
     private final PlanBookmarkService planBookmarkService;
+    private final UserService userService;
 
     private final UuidUserUtil uuidUserUtil;
 
@@ -179,6 +182,18 @@ public class PlanController {
 
         planBookmarkService.deleteBookmarkByUuid(planId, uuid);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/bookmarks")
+    public ResponseEntity<List<PlanResponse>> getBookmarkedPlans() {
+        try {
+            UUID uuid = uuidUserUtil.getCurrentUserUuid();
+            int userId = userService.getUserIdByUuid(uuid);
+            List<PlanResponse> bookmarkedPlans = planService.getBookmarkedPlans(userId);
+            return ResponseEntity.ok(bookmarkedPlans);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 }

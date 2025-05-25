@@ -17,6 +17,8 @@ import com.ssafy.where2meow.plan.repository.PlanRepository;
 import com.ssafy.where2meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -286,6 +288,53 @@ public class PlanService {
         if (plan.getUserId() != userId) {
             throw new ForbiddenAccessException("이 여행 계획에 대한 권한이 없습니다.");
         }
+    }
+
+    @Transactional
+    public List<PlanResponse> getBookmarkedPlans(int userId) {
+        List<Plan> bookmarkedPlans = planRepository.findBookmarkedPlansByUserId(userId);
+
+        return bookmarkedPlans.stream()
+            .map(plan -> {
+                PlanResponse dto = convertToPlanResponse(plan);
+                // 북마크된 계획이므로 bookmarked = true
+                dto.setBookmarked(true);
+                // 좋아요 여부 확인
+                dto.setLiked(planLikeRepository.existsByPlanIdAndUserId(plan.getPlanId(), userId));
+                return dto;
+            })
+            .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public Page<PlanResponse> getBookmarkedPlans(int userId, Pageable pageable) {
+        Page<Plan> bookmarkedPlans = planRepository.findBookmarkedPlansByUserId(userId, pageable);
+
+        return bookmarkedPlans.map(plan -> {
+            PlanResponse dto = convertToPlanResponse(plan);
+            dto.setBookmarked(true);
+            dto.setLiked(planLikeRepository.existsByPlanIdAndUserId(plan.getPlanId(), userId));
+            return dto;
+        });
+    }
+
+    /**
+     * Plan 엔티티를 PlanResponseDto로 변환
+     */
+    private PlanResponse convertToPlanResponse(Plan plan) {
+        return PlanResponse.builder()
+            .planId(plan.getPlanId())
+            .userId(plan.getUserId())
+            .title(plan.getTitle())
+            .content(plan.getContent())
+            .createdAt(plan.getCreatedAt())
+            .updatedAt(plan.getUpdatedAt())
+            .startDate(plan.getStartDate())
+            .endDate(plan.getEndDate())
+            .viewCount(plan.getViewCount())
+            .likeCount(planLikeRepository.countByPlanId(plan.getPlanId()))
+            .isPublic(plan.isPublic())
+            .build();
     }
 
 }
