@@ -4,7 +4,7 @@
       <h1 class="text-3xl font-bold text-gray-900 mb-6">마이페이지</h1>
       <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex items-center gap-4 mb-6">
-          <div class="w-16 h-16 rounded-full bg-orange-400 flex items-center justify-center">
+          <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background: var(--gradient-primary)">
             <span class="text-white text-2xl font-bold">{{ userName.charAt(0) }}</span>
           </div>
           <div>
@@ -31,7 +31,7 @@
         <div class="mt-6 pt-6 border-t border-gray-200">
           <button
             @click="handleLogout"
-            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors cursor-pointer"
           >
             로그아웃
           </button>
