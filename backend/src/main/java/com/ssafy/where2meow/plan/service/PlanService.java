@@ -17,6 +17,7 @@ import com.ssafy.where2meow.plan.repository.PlanRepository;
 import com.ssafy.where2meow.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlanService {
@@ -249,39 +251,29 @@ public class PlanService {
             return new ArrayList<>();
         }
 
-        // planId 리스트 생성
-        List<Integer> planIds = plans.stream()
-                .map(Plan::getPlanId)
-                .toList();
-
-        // 좋아요 수 조회
-        Map<Integer, Integer> likeCounts = planLikeRepository.countByPlanIdIn(planIds);
-
-        // 사용자별 좋아요/북마크 상태 set 초기화
-        Set<Integer> likedPlanIds;
-        Set<Integer> bookmarkedPlanIds;
-
-        if(userId != null) {
-            likedPlanIds = planLikeRepository.findByPlanIdInAndUserId(planIds, userId).stream().
-                    map(PlanLike::getPlanId)
-                    .collect(Collectors.toSet());
-            bookmarkedPlanIds = planBookmarkRepository.findByPlanIdInAndUserId(planIds, userId).stream().
-                    map(PlanBookmark::getPlanId)
-                    .collect(Collectors.toSet());
-        } else {
-            likedPlanIds = new HashSet<>();
-            bookmarkedPlanIds = new HashSet<>();
-        }
-
         return plans.stream().map(plan -> {
-            int planId = plan.getPlanId();
-            int likeCount = likeCounts.getOrDefault(planId, 0);
-            boolean isLiked = likedPlanIds.contains(planId);
-            boolean isBookmarked = bookmarkedPlanIds.contains(planId);
+            try {
+                int planId = plan.getPlanId();
 
-            return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
+                // 개별적으로 좋아요 수 조회 (성능은 떨어지지만 안전)
+                int likeCount = planLikeRepository.countByPlanId(planId);
+
+                boolean isLiked = false;
+                boolean isBookmarked = false;
+
+                if (userId != null) {
+                    isLiked = planLikeRepository.existsByPlanIdAndUserId(planId, userId);
+                    isBookmarked = planBookmarkRepository.existsByPlanIdAndUserId(planId, userId);
+                }
+
+                return PlanResponse.fromPlan(plan, likeCount, isLiked, isBookmarked);
+            } catch (Exception e) {
+                log.error("Error converting plan {}: {}", plan.getPlanId(), e.getMessage());
+                throw e;
+            }
         }).toList();
     }
+
 
     // plan에 대한 사용자 권한 확인
     private void checkPlanOwnership(Plan plan, Integer userId) {
