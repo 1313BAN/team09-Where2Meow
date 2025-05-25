@@ -26,35 +26,21 @@ public class AiController {
   @PostMapping("/create")
   public ResponseEntity<String> create(@RequestBody @Valid CreateRequest request) {
     log.info("plan create request: {}", request.getQuery());
-    try {
-      String url = aiServiceBaseUrl + "/ai/create";
-
-      HttpHeaders headers = new HttpHeaders();
-      headers.setContentType(MediaType.APPLICATION_JSON);
-      HttpEntity<CreateRequest> entity = new HttpEntity<>(request, headers);
-      RestTemplate restTemplate = new RestTemplate();
-      ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-
-      return ResponseEntity
-          .status(response.getStatusCode())
-          .headers(response.getHeaders())
-          .body(response.getBody());
-    } catch (RestClientException e) {
-      log.error("AI 서비스 호출 실패: {}", e.getMessage());
-      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-          .body("{\"error\":\"AI 서비스에 연결할 수 없습니다.\"}");
-    }
+    return callAiService("/ai/create", request);
   }
 
   @PostMapping("/update")
   public ResponseEntity<String> update(@RequestBody @Valid UpdateRequest request) {
     log.info("plan update request: {}", request.getQuery());
-    try {
-      String url = aiServiceBaseUrl + "/ai/update";
+    return callAiService("/ai/update", request);
+  }
 
+  private ResponseEntity<String> callAiService(String endpoint, Object request) {
+    try {
+      String url = aiServiceBaseUrl + endpoint;
       HttpHeaders headers = new HttpHeaders();
       headers.setContentType(MediaType.APPLICATION_JSON);
-      HttpEntity<UpdateRequest> entity = new HttpEntity<>(request, headers);
+      HttpEntity<Object> entity = new HttpEntity<>(request, headers);
       RestTemplate restTemplate = new RestTemplate();
       ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
 
@@ -62,7 +48,6 @@ public class AiController {
           .status(response.getStatusCode())
           .headers(response.getHeaders())
           .body(response.getBody());
-
     } catch (RestClientException e) {
       log.error("AI 서비스 호출 실패: {}", e.getMessage());
       return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
