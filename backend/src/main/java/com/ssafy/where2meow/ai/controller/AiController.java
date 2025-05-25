@@ -25,7 +25,7 @@ public class AiController {
 
   @PostMapping("/create")
   public ResponseEntity<String> create(@RequestBody @Valid CreateRequest request) {
-    log.info("plan create request\n{}", request.getQuery());
+    log.info("plan create request: {}", request.getQuery());
     try {
       String url = aiServiceBaseUrl + "/ai/create";
 
@@ -48,7 +48,7 @@ public class AiController {
 
   @PostMapping("/update")
   public ResponseEntity<String> update(@RequestBody @Valid UpdateRequest request) {
-    log.info("plan update request");
+    log.info("plan update request: {}", request.getQuery());
     try {
       String url = aiServiceBaseUrl + "/ai/update";
 
