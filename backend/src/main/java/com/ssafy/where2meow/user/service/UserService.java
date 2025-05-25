@@ -73,6 +73,13 @@ public class UserService {
     return UserResponse.fromEntity(user);
   }
 
+  public int getUserIdByUuid(UUID uuid) {
+    User user = userRepository.findByUuidAndIsActiveTrue(uuid)
+        .orElseThrow(() -> new UserNotFoundException(uuid));
+
+    return user.getUserId();
+  }
+
   /**
    * 사용자 정보 수정
    *

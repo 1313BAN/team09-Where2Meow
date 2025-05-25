@@ -4,12 +4,14 @@ import com.ssafy.where2meow.exception.EntityNotFoundException;
 import com.ssafy.where2meow.user.entity.User;
 import com.ssafy.where2meow.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class UuidUserUtil {
