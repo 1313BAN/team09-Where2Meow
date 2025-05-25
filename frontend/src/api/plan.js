@@ -23,7 +23,12 @@ planAPiClient.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       // 인증 실패 시 로그인 페이지로 리다이렉트
       localStorage.removeItem('accessToken')
-      window.location.href = '/login'
+      // Vue Router를 사용한 안전한 네비게이션
+      if (window.app && window.app.$router) {
+        window.app.$router.push('/login')
+      } else {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
