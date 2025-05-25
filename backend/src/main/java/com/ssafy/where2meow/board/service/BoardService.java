@@ -44,22 +44,20 @@ public class BoardService {
     public BoardListResponse getAllBoards(UUID uuid, Integer categoryId, String sort, String direction, int page, int size, boolean bookmarked) {
         Integer userId = uuidUserUtil.getOptionalUserId(uuid);
 
-        // 정렬 기준 설정
-        Sort sortOption = createSort(sort, direction);
-
         // 페이징 설정
-        Pageable pageable = PageRequest.of(page, size, sortOption);
+        Pageable pageable;
+        
+        // likeCount 정렬인 경우 별도 처리
+        if ("likeCount".equals(sort)) {
+            pageable = PageRequest.of(page, size);
+        } else {
+            // 정렬 기준 설정
+            Sort sortOption = createSort(sort, direction);
+            pageable = PageRequest.of(page, size, sortOption);
+        }
 
         // 게시글 리스트 조회
-        Page<Board> boards;
-
-        if(bookmarked && userId != null) {
-            boards = getBoardsBookmarkedByUser(userId, categoryId, pageable);
-        } else if (categoryId != null) {
-            boards = boardRepository.findAllByCategoryId(categoryId, pageable);
-        } else {
-            boards = boardRepository.findAll(pageable);
-        }
+        Page<Board> boards = getBoardsWithSorting(userId, categoryId, sort, direction, pageable, bookmarked);
 
         List<BoardResponse> boardResponses = boards.getContent().stream()
                 .map(board -> convertToBoardResponse(board, userId))
@@ -79,9 +77,17 @@ public class BoardService {
     public BoardListResponse getUserBoards(UUID uuid, String sort, String direction, int page, int size) {
         Integer userId = uuidUserUtil.getRequiredUserId(uuid);
 
-        Sort sortOption = createSort(sort, direction);
-        Pageable pageable = PageRequest.of(page, size, sortOption);
-        Page<Board> boards = boardRepository.findAllByUserId(userId, pageable);
+        // 페이징 설정
+        Pageable pageable;
+        
+        if ("likeCount".equals(sort)) {
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort sortOption = createSort(sort, direction);
+            pageable = PageRequest.of(page, size, sortOption);
+        }
+        
+        Page<Board> boards = getUserBoardsWithSorting(userId, sort, direction, pageable);
 
         List<BoardResponse> boardResponses = boards.stream()
                 .map(board -> convertToBoardResponse(board, userId))
@@ -99,10 +105,17 @@ public class BoardService {
 
     // 게시글 검색
     public BoardListResponse searchBoards(String keyword, String sort, String direction, int page, int size) {
-        Sort sortOption = createSort(sort, direction);
-        Pageable pageable = PageRequest.of(page, size, sortOption);
+        // 페이징 설정
+        Pageable pageable;
+        
+        if ("likeCount".equals(sort)) {
+            pageable = PageRequest.of(page, size);
+        } else {
+            Sort sortOption = createSort(sort, direction);
+            pageable = PageRequest.of(page, size, sortOption);
+        }
 
-        Page<Board> boards = boardRepository.searchByKeyword(keyword, pageable);
+        Page<Board> boards = getSearchBoardsWithSorting(keyword, sort, direction, pageable);
 
         List<BoardResponse> boardResponses = boards.getContent().stream()
                 .map(board -> convertToBoardResponse(board, null))
@@ -209,6 +222,28 @@ public class BoardService {
         }
     }
 
+    private Page<Board> getUserBoardsWithSorting(int userId, String sort, String direction, Pageable pageable) {
+        if ("likeCount".equals(sort)) {
+            boolean isDesc = "desc".equalsIgnoreCase(direction);
+            return isDesc ?
+                boardRepository.findAllByUserIdOrderByLikeCountDesc(userId, pageable) :
+                boardRepository.findAllByUserIdOrderByLikeCountAsc(userId, pageable);
+        } else {
+            return boardRepository.findAllByUserId(userId, pageable);
+        }
+    }
+
+    private Page<Board> getSearchBoardsWithSorting(String keyword, String sort, String direction, Pageable pageable) {
+        if ("likeCount".equals(sort)) {
+            boolean isDesc = "desc".equalsIgnoreCase(direction);
+            return isDesc ?
+                boardRepository.searchByKeywordOrderByLikeCountDesc(keyword, pageable) :
+                boardRepository.searchByKeywordOrderByLikeCountAsc(keyword, pageable);
+        } else {
+            return boardRepository.searchByKeyword(keyword, pageable);
+        }
+    }
+
     private Sort createSort(String sort, String direction) {
         if (sort == null || direction == null) {
             throw new IllegalArgumentException("sort와 direction은 필수 파라미터입니다.");
@@ -226,6 +261,36 @@ public class BoardService {
 
     private Page<Board> getBoardsBookmarkedByUser(int userId, Integer categoryId, Pageable pageable) {
         return boardRepository.findBookmarkedBoardsByUserIdAndCategoryId(userId, categoryId, pageable);
+    }
+
+    private Page<Board> getBoardsWithSorting(Integer userId, Integer categoryId, String sort, String direction, Pageable pageable, boolean bookmarked) {
+        boolean isDesc = "desc".equalsIgnoreCase(direction);
+        
+        if ("likeCount".equals(sort)) {
+            // 좋아요 수 기준 정렬
+            if (bookmarked && userId != null) {
+                return isDesc ? 
+                    boardRepository.findBookmarkedBoardsByUserIdAndCategoryIdOrderByLikeCountDesc(userId, categoryId, pageable) :
+                    boardRepository.findBookmarkedBoardsByUserIdAndCategoryIdOrderByLikeCountAsc(userId, categoryId, pageable);
+            } else if (categoryId != null) {
+                return isDesc ?
+                    boardRepository.findAllByCategoryIdOrderByLikeCountDesc(categoryId, pageable) :
+                    boardRepository.findAllByCategoryIdOrderByLikeCountAsc(categoryId, pageable);
+            } else {
+                return isDesc ?
+                    boardRepository.findAllOrderByLikeCountDesc(pageable) :
+                    boardRepository.findAllOrderByLikeCountAsc(pageable);
+            }
+        } else {
+            // 기본 정렬 (createdAt, updatedAt, viewCount)
+            if (bookmarked && userId != null) {
+                return getBoardsBookmarkedByUser(userId, categoryId, pageable);
+            } else if (categoryId != null) {
+                return boardRepository.findAllByCategoryId(categoryId, pageable);
+            } else {
+                return boardRepository.findAll(pageable);
+            }
+        }
     }
 
     private BoardResponse convertToBoardResponse(Board board, Integer userId) {
