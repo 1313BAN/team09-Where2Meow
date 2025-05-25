@@ -25,6 +25,7 @@
           v-for="item in menuItems"
           :key="item.path"
           :to="item.path"
+          v-show="!item.requireAuth || (item.requireAuth && isLoggedIn)"
           class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-70 font-semibold"
         >
           <i :class="[item.icon, 'text-[var(--primary-color)]']"></i>
@@ -38,6 +39,7 @@
         <div v-if="!isLoggedIn" class="hidden md:block">
           <Button
             label="로그인"
+            @click="handleLoginClick"
             pt:root="bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] active:scale-95 transition-all duration-200 ease-in-out rounded-xl px-6 py-2 shadow-md text-white border-none flex items-center gap-2 cursor-pointer"
             pt:label="text-white font-semibold text-base tracking-wide"
           />
@@ -45,8 +47,12 @@
 
         <!-- 로그인된 경우 프로필 -->
         <div v-else class="hidden md:block">
-          <button class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center">
-            <span class="text-white text-sm font-medium">사</span>
+          <button 
+            @click="handleProfileClick"
+            class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center hover:bg-orange-500 transition-colors"
+            :title="`${userName}님`"
+          >
+            <span class="text-white text-sm font-medium">{{ userName.charAt(0) }}</span>
           </button>
         </div>
 
@@ -63,13 +69,16 @@
         <div class="md:hidden">
           <button
             v-if="isLoggedIn"
-            class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center"
+            @click="handleProfileClick"
+            class="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center hover:bg-orange-500 transition-colors"
+            :title="`${userName}님`"
           >
-            <span class="text-white text-sm font-medium">사</span>
+            <span class="text-white text-sm font-medium">{{ userName.charAt(0) }}</span>
           </button>
           <button
             v-else
-            class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center"
+            @click="handleLoginClick"
+            class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
           >
             <i class="pi pi-user text-gray-600"></i>
           </button>
@@ -89,6 +98,7 @@
             v-for="item in menuItems"
             :key="item.path"
             :to="item.path"
+            v-show="!item.requireAuth || (item.requireAuth && isLoggedIn)"
             class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg font-semibold"
             @click="mobileMenuOpen = false"
           >
@@ -100,8 +110,21 @@
         <div v-if="!isLoggedIn" class="mt-4 pt-4 border-t border-gray-100">
           <Button
             label="로그인"
+            @click="handleLoginClick"
             class="w-full cursor-pointer text-white border-none rounded-full py-2 font-medium shadow-sm hover:shadow-md"
             style="background-image: var(--gradient-primary)"
+          />
+        </div>
+
+        <!-- 모바일 로그아웃 버튼 (로그인된 경우) -->
+        <div v-else class="mt-4 pt-4 border-t border-gray-100 space-y-2">
+          <div class="text-center text-sm text-gray-600 mb-2">
+            {{ userName }}님 환영합니다
+          </div>
+          <Button
+            label="로그아웃"
+            @click="handleLogout"
+            class="w-full cursor-pointer text-gray-700 border border-gray-300 rounded-full py-2 font-medium hover:bg-gray-50"
           />
         </div>
       </div>
@@ -114,17 +137,27 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import Button from 'primevue/button'
+import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const scrolled = ref(false)
 const mobileMenuOpen = ref(false)
+
+// 인증 상태 가져오기
+const { isLoggedIn, userName } = storeToRefs(authStore)
 
 // 메뉴 항목 정의
 const menuItems = ref([
   { label: '일정', path: '/plan', icon: 'pi pi-calendar' },
   { label: '여행지', path: '/attraction', icon: 'pi pi-map-marker' },
   { label: '게시판', path: '/board', icon: 'pi pi-users' },
+  { label: '마이페이지', path: '/mypage', icon: 'pi pi-user', requireAuth: true },
 ])
 
 // 스크롤 이벤트 처리
@@ -139,10 +172,36 @@ function handleResize() {
   }
 }
 
+// 로그인 버튼 클릭
+const handleLoginClick = () => {
+  router.push('/login')
+}
+
+// 로그아웃 처리
+const handleLogout = async () => {
+  try {
+    await authStore.logout()
+    toast.success('로그아웃되었습니다')
+    router.push('/')
+  } catch (error) {
+    console.error('로그아웃 실패:', error)
+    toast.error('로그아웃 중 오류가 발생했습니다')
+  }
+}
+
+// 프로필 클릭 (임시 - 추후 프로필 페이지 구현)
+const handleProfileClick = () => {
+  // 임시로 로그아웃 처리
+  handleLogout()
+}
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   window.addEventListener('resize', handleResize)
   handleScroll()
+  
+  // 인증 상태 확인
+  authStore.checkAuthStatus()
 })
 
 onBeforeUnmount(() => {
