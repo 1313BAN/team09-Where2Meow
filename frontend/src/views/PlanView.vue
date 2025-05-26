@@ -12,9 +12,11 @@
       :totalDays="totalDays"
       :currentDaySchedule="currentDaySchedule"
       :searchQuery="searchQuery"
-      :selectedCategories="selectedCategories"
-      :categories="categories"
-      :filteredSearchResults="filteredSearchResults"
+      :selectedCategoryIds="selectedCategoryIds"
+      :availableCategories="availableCategories"
+      :searchResults="searchResults"
+      :isSearching="isSearching"
+      :hasMoreResults="hasMoreResults"
       :isSaving="isSaving"
       @update:activeTab="activeTab = $event"
       @update:tripTitle="tripTitle = $event"
@@ -23,13 +25,14 @@
       @update:endDate="endDate = $event"
       @update:isPublic="isPublic = $event"
       @update:selectedDay="selectedDay = $event"
-      @update:searchQuery="searchQuery = $event"
-      @update:selectedCategories="selectedCategories = $event"
+      @update:searchQuery="handleSearchQuery"
+      @update:selectedCategoryIds="handleCategoryFilter"
       @selectScheduleItem="selectScheduleItem"
       @addScheduleItem="addScheduleItem"
       @selectPlace="selectPlace"
       @addToSchedule="addToSchedule"
       @savePlan="savePlan"
+      @loadMoreResults="loadMoreResults"
     />
 
     <!-- 중앙 지도 영역 -->
@@ -52,12 +55,12 @@
 </template>
 
 <script setup>
-// 기존 script 내용 동일
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import LeftPanel from '@/components/views/plan/LeftPanel.vue'
 import CenterPanel from '@/components/views/plan/CenterPanel.vue'
 import RightPanel from '@/components/views/plan/RightPanel.vue'
 import { planService } from '@/api/plan'
+import { attractionApi } from '@/api/attraction'
 import { transformPlanDataForAPI } from '@/utils/planDataTransformer'
 
 // 반응형 데이터
@@ -69,12 +72,17 @@ const endDate = ref('2024-06-03')
 const isPublic = ref(false)
 const selectedDay = ref(1)
 const searchQuery = ref('')
-const selectedCategories = ref([])
+const selectedCategoryIds = ref([]) // 선택된 카테고리 ID 목록
+const availableCategories = ref([]) // 백엔드에서 받아온 카테고리 목록
 const selectedPlace = ref(null)
 const newMessage = ref('')
 const isSaving = ref(false)
+const isSearching = ref(false)
+const searchResults = ref([])
+const currentPage = ref(0)
+const hasMoreResults = ref(true)
 
-// 계산된 속성들과 메서드들은 기존과 동일
+// 계산된 속성들
 const totalDays = computed(() => {
   if (!startDate.value || !endDate.value) return 1
   const start = new Date(startDate.value)
@@ -88,27 +96,7 @@ const currentDaySchedule = computed(() => {
   return scheduleData.value[selectedDay.value] || []
 })
 
-const filteredSearchResults = computed(() => {
-  let results = searchResults.value
-  
-  if (searchQuery.value) {
-    results = results.filter(place => 
-      place.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    )
-  }
-  
-  if (selectedCategories.value.length > 0) {
-    results = results.filter(place => 
-      selectedCategories.value.includes(place.category)
-    )
-  }
-  
-  return results
-})
-
-// 데이터와 메서드들은 기존과 동일
-const categories = ref(['관광지', '음식점', '카페', '숙소', '쇼핑'])
-
+// 데이터
 const scheduleData = ref({
   1: [
     {
@@ -121,19 +109,6 @@ const scheduleData = ref({
   ]
 })
 
-const searchResults = ref([
-  {
-    id: 1,
-    attractionId: 4,
-    name: 'Kyoboshi Sembikiya',
-    category: '카페',
-    rating: 3.8,
-    reviews: 381,
-    image: 'https://via.placeholder.com/150',
-    description: '¥2,000~3,000 · 카페'
-  }
-])
-
 const chatMessages = ref([
   {
     id: 1,
@@ -143,7 +118,125 @@ const chatMessages = ref([
   }
 ])
 
-// 메서드들은 기존과 동일
+// 컴포넌트 마운트 시 카테고리 목록 로드
+onMounted(async () => {
+  try {
+    // 백엔드에서 카테고리 목록을 받아올 API가 있다면 사용
+    // const response = await attractionApi.getAllCategories()
+    // availableCategories.value = response.data
+    
+    // 임시로 하드코딩된 카테고리 (실제로는 백엔드에서 받아와야 함)
+    availableCategories.value = [
+      { categoryId: 12, categoryName: '관광지' },
+      { categoryId: 14, categoryName: '문화시설' },
+      { categoryId: 15, categoryName: '축제공연행사' },
+      { categoryId: 25, categoryName: '여행코스' },
+      { categoryId: 28, categoryName: '레포츠' },
+      { categoryId: 32, categoryName: '숙박' },
+      { categoryId: 38, categoryName: '쇼핑' },
+      { categoryId: 39, categoryName: '음식점' }
+    ]
+  } catch (error) {
+    console.error('카테고리 로드 실패:', error)
+  }
+})
+
+// 검색 관련 메서드
+const handleSearchQuery = async (query) => {
+  searchQuery.value = query
+  await performSearch()
+}
+
+const handleCategoryFilter = async (categoryIds) => {
+  selectedCategoryIds.value = categoryIds
+  await performSearch()
+}
+
+// 검색 관련 메서드 수정
+const performSearch = async () => {
+  const hasKeyword = searchQuery.value && searchQuery.value.trim()
+  const hasCategory = selectedCategoryIds.value.length > 0
+  
+  if (!hasKeyword && !hasCategory) {
+    searchResults.value = []
+    hasMoreResults.value = true
+    currentPage.value = 0
+    return
+  }
+  
+  try {
+    isSearching.value = true
+    currentPage.value = 0
+    
+    const searchParams = {
+      page: 0,
+      size: 10
+    }
+    
+    if (hasKeyword) {
+      searchParams.keyword = searchQuery.value.trim()
+    }
+    
+    if (hasCategory) {
+      // 단일 카테고리 ID 전송 (첫 번째 요소만 사용)
+      searchParams.categoryId = selectedCategoryIds.value[0]
+    }
+    
+    const response = await attractionApi.searchAttractions(searchParams)
+    
+    searchResults.value = response.data.content
+    hasMoreResults.value = !response.data.last
+    
+  } catch (error) {
+    console.error('검색 실패:', error)
+    searchResults.value = []
+    hasMoreResults.value = false
+  } finally {
+    isSearching.value = false
+  }
+}
+
+const loadMoreResults = async () => {
+  if (!hasMoreResults.value || isSearching.value) return
+  
+  const hasKeyword = searchQuery.value && searchQuery.value.trim()
+  const hasCategory = selectedCategoryIds.value.length > 0
+  
+  if (!hasKeyword && !hasCategory) return
+  
+  try {
+    isSearching.value = true
+    const nextPage = currentPage.value + 1
+    
+    const searchParams = {
+      page: nextPage,
+      size: 10
+    }
+    
+    if (hasKeyword) {
+      searchParams.keyword = searchQuery.value.trim()
+    }
+    
+    if (hasCategory) {
+      // 단일 카테고리 ID 전송
+      searchParams.categoryId = selectedCategoryIds.value[0]
+    }
+    
+    const response = await attractionApi.searchAttractions(searchParams)
+    
+    searchResults.value = [...searchResults.value, ...response.data.content]
+    hasMoreResults.value = !response.data.last
+    currentPage.value = nextPage
+    
+  } catch (error) {
+    console.error('추가 로딩 실패:', error)
+  } finally {
+    isSearching.value = false
+  }
+}
+
+
+// 기존 메서드들
 const selectScheduleItem = (item) => {
   selectedPlace.value = {
     ...item,
@@ -159,7 +252,15 @@ const addScheduleItem = () => {
 }
 
 const selectPlace = (place) => {
-  selectedPlace.value = place
+  selectedPlace.value = {
+    ...place,
+    name: place.attractionName,
+    location: `${place.stateName} ${place.cityName}`,
+    rating: place.reviewAvgScore || 0,
+    reviews: place.reviewCount || 0,
+    description: place.attractionName,
+    image: place.image || 'https://via.placeholder.com/150'
+  }
 }
 
 const addToSchedule = (place) => {
@@ -167,14 +268,15 @@ const addToSchedule = (place) => {
     scheduleData.value[selectedDay.value] = []
   }
   
-  scheduleData.value[selectedDay.value].push({
-    attractionId: place.attractionId || place.id,
-    name: place.name,
-    location: place.category,
+  const newItem = {
+    attractionId: place.attractionId,
+    name: place.attractionName || place.name,
+    location: place.stateName && place.cityName ? `${place.stateName} ${place.cityName}` : (place.location || '위치 정보 없음'),
     duration: '시간 미정',
-    content: place.description || place.name
-  })
+    content: place.attractionName || place.name
+  }
   
+  scheduleData.value[selectedDay.value].push(newItem)
   selectedPlace.value = null
 }
 
@@ -248,7 +350,7 @@ const savePlan = async () => {
 <style scoped>
 .plan-container {
   display: flex;
-  height: calc(100vh - 56px); /* 헤더바 56px 제외 */
+  height: calc(100vh - 56px);
   width: 100vw;
   overflow: hidden;
 }

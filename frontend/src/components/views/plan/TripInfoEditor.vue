@@ -17,7 +17,7 @@
         @input="$emit('update:content', $event.target.value)"
         class="form-textarea"
         placeholder="여행에 대한 설명을 입력하세요"
-        rows="3"
+        rows="10"
       />
     </div>
     
@@ -75,7 +75,6 @@ defineEmits([
 <style scoped>
 .trip-info-editor {
   padding: 20px;
-  background-color: #f7f7f7;
   flex-shrink: 0;
 }
 

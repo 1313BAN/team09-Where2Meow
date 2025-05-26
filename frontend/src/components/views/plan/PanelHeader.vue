@@ -69,7 +69,7 @@ defineEmits(['update:activeTab'])
 }
 
 .tab.active {
-  background-color: #00EDB3;
+  background-color: #6FBBFF;
   color: #fff;
 }
 

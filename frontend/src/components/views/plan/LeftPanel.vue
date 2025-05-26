@@ -40,12 +40,15 @@
     <SearchTab
       v-if="activeTab === 'search'"
       :searchQuery="searchQuery"
-      :selectedCategories="selectedCategories"
-      :categories="categories"
-      :filteredSearchResults="filteredSearchResults"
+      :selectedCategoryIds="selectedCategoryIds"
+      :availableCategories="availableCategories"
+      :searchResults="searchResults"
+      :isSearching="isSearching"
+      :hasMoreResults="hasMoreResults"
       @update:searchQuery="$emit('update:searchQuery', $event)"
-      @update:selectedCategories="$emit('update:selectedCategories', $event)"
+      @update:selectedCategoryIds="$emit('update:selectedCategoryIds', $event)"
       @selectPlace="$emit('selectPlace', $event)"
+      @loadMoreResults="$emit('loadMoreResults')"
     />
   </div>
 </template>
@@ -67,9 +70,11 @@ defineProps({
   totalDays: Number,
   currentDaySchedule: Array,
   searchQuery: String,
-  selectedCategories: Array,
-  categories: Array,
-  filteredSearchResults: Array,
+  selectedCategoryIds: Array,
+  availableCategories: Array,
+  searchResults: Array,
+  isSearching: Boolean,
+  hasMoreResults: Boolean,
   isSaving: Boolean
 })
 
@@ -82,22 +87,23 @@ defineEmits([
   'update:isPublic',
   'update:selectedDay',
   'update:searchQuery',
-  'update:selectedCategories',
+  'update:selectedCategoryIds',
   'selectScheduleItem',
   'addScheduleItem',
   'selectPlace',
-  'savePlan'
+  'savePlan',
+  'loadMoreResults'
 ])
 </script>
 
 <style scoped>
 .left-panel {
-  width: 300px;
+  width: 350px;
   background-color: #fff;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  height: 100%; /* 100vh에서 100%로 변경 */
+  height: 100%;
   overflow: hidden;
 }
 </style>

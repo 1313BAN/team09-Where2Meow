@@ -1,50 +1,52 @@
 <template>
   <div class="category-filters">
-    <button
-      v-for="category in categories"
-      :key="category"
-      @click="toggleCategory(category)"
-      :class="[
-        'filter-button',
-        selectedCategories.includes(category) ? 'active' : ''
-      ]"
-    >
-      {{ category }}
-    </button>
+    <div class="filter-buttons">
+      <button
+        v-for="category in availableCategories"
+        :key="category.categoryId"
+        @click="selectCategory(category.categoryId)"
+        :class="[
+          'filter-button',
+          selectedCategoryIds.includes(category.categoryId) ? 'active' : ''
+        ]"
+      >
+        {{ category.categoryName }}
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
 const props = defineProps({
-  categories: Array,
-  selectedCategories: Array
+  availableCategories: Array,
+  selectedCategoryIds: Array
 })
 
-const emit = defineEmits(['update:selectedCategories'])
+const emit = defineEmits(['update:selectedCategoryIds'])
 
-const toggleCategory = (category) => {
-  const newCategories = [...props.selectedCategories]
-  const index = newCategories.indexOf(category)
-  
-  if (index > -1) {
-    newCategories.splice(index, 1)
+const selectCategory = (categoryId) => {
+  // 이미 선택된 카테고리를 다시 누르면 선택 해제
+  if (props.selectedCategoryIds.includes(categoryId)) {
+    emit('update:selectedCategoryIds', [])
   } else {
-    newCategories.push(category)
+    // 새로운 카테고리 선택 (기존 선택 취소하고 새로 선택)
+    emit('update:selectedCategoryIds', [categoryId])
   }
-  
-  emit('update:selectedCategories', newCategories)
 }
 </script>
 
 <style scoped>
 .category-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 15px;
   border-bottom: 1px solid #eee;
   background-color: #f7f7f7;
   flex-shrink: 0;
+}
+
+.filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 15px;
 }
 
 .filter-button {
@@ -53,22 +55,20 @@ const toggleCategory = (category) => {
   border: none;
   border-radius: 20px;
   padding: 8px 15px;
-  font-size: 0.9em;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .filter-button.active {
   background-color: #FF80CF;
   color: #fff;
+  box-shadow: 0 2px 8px rgba(255, 128, 207, 0.3);
 }
 
-.filter-button:hover {
+.filter-button:hover:not(.active) {
   background-color: #d0d0d0;
-}
-
-.filter-button.active:hover {
-  background-color: #e66bb8;
 }
 </style>

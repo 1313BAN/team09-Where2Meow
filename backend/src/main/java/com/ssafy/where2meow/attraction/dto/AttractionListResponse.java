@@ -17,4 +17,6 @@ public class AttractionListResponse {
   private Double reviewAvgScore;
   private String stateName;
   private String cityName;
+  private Integer categoryId;
+  private String categoryName;
 }

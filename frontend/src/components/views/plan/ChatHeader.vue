@@ -5,7 +5,19 @@
       <div class="status-indicator online">온라인</div>
     </div>
     <button class="more-options">
-      <span class="material-icons">more_vert</span>
+      <span class="material-icons"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          fill="currentColor"
+        >
+          <circle cx="12" cy="6" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="12" cy="18" r="2" />
+        </svg>
+      </span>
     </button>
   </div>
 </template>
@@ -17,7 +29,7 @@
   align-items: center;
   padding: 15px;
   border-bottom: 1px solid #eee;
-  background-color: #6FBBFF;
+  background-color: #6fbbff;
   flex-shrink: 0;
   color: white;
 }

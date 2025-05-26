@@ -68,7 +68,7 @@ defineEmits([
 .save-button {
   width: 100%;
   padding: 12px 20px;
-  background-color: #00EDB3;
+  background-color: #6FBBFF;
   color: white;
   border: none;
   border-radius: 8px;
@@ -79,7 +79,7 @@ defineEmits([
 }
 
 .save-button:hover:not(:disabled) {
-  background-color: #00c49a;
+  background-color: #6493bb;
 }
 
 .save-button:disabled {

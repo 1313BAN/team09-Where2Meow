@@ -1,11 +1,13 @@
 <template>
   <div class="map-info-component">
     <div class="info-card">
-      <img 
-        :src="selectedPlace.image" 
-        :alt="selectedPlace.name"
-        class="info-image"
-      />
+      <div class="info-image-container">
+        <AttractionImage 
+          :imageUrl="selectedPlace.image" 
+          :alt="selectedPlace.name"
+          class="info-image"
+        />
+      </div>
       <div class="info-details">
         <div class="info-title">{{ selectedPlace.name }}</div>
         <div class="info-description">{{ selectedPlace.description }}</div>
@@ -32,6 +34,8 @@
 </template>
 
 <script setup>
+import AttractionImage from '@/components/common/AttractionImage.vue'
+
 defineProps({
   selectedPlace: Object
 })
@@ -60,17 +64,23 @@ defineEmits(['closePlace', 'addToSchedule'])
 .info-card {
   display: flex;
   width: 100%;
+  min-height: 150px;
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
-.info-image {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
+.info-image-container {
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
   flex-shrink: 0;
+}
+
+.info-image {
+  width: 100%;
+  height: 100%;
 }
 
 .info-details {

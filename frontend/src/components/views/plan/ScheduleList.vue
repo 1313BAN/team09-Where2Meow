@@ -2,7 +2,7 @@
   <div class="schedule-item-list">
     <div class="day-header">
       <span class="day-title">day{{ selectedDay }}</span>
-      <span class="add-button" @click="$emit('addScheduleItem')">add</span>
+      <!-- <span class="add-button" @click="$emit('addScheduleItem')">add</span> -->
     </div>
     
     <div class="schedule-items">

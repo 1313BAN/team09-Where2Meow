@@ -1,23 +1,27 @@
 <template>
-  <div class="tab-content active">
+  <div class="search-tab">
     <div class="search-panel-content">
       <!-- 검색바 -->
       <SearchBar
         :searchQuery="searchQuery"
+        :isSearching="isSearching"
         @update:searchQuery="$emit('update:searchQuery', $event)"
       />
 
       <!-- 카테고리 필터 -->
       <CategoryFilter
-        :categories="categories"
-        :selectedCategories="selectedCategories"
-        @update:selectedCategories="$emit('update:selectedCategories', $event)"
+        :availableCategories="availableCategories"
+        :selectedCategoryIds="selectedCategoryIds"
+        @update:selectedCategoryIds="$emit('update:selectedCategoryIds', $event)"
       />
 
       <!-- 검색 결과 -->
       <SearchResults
-        :filteredSearchResults="filteredSearchResults"
+        :searchResults="searchResults"
+        :isSearching="isSearching"
+        :hasMoreResults="hasMoreResults"
         @selectPlace="$emit('selectPlace', $event)"
+        @loadMoreResults="$emit('loadMoreResults')"
       />
     </div>
   </div>
@@ -30,28 +34,27 @@ import SearchResults from './SearchResults.vue'
 
 defineProps({
   searchQuery: String,
-  selectedCategories: Array,
-  categories: Array,
-  filteredSearchResults: Array
+  selectedCategoryIds: Array,
+  availableCategories: Array,
+  searchResults: Array,
+  isSearching: Boolean,
+  hasMoreResults: Boolean
 })
 
 defineEmits([
   'update:searchQuery',
-  'update:selectedCategories',
-  'selectPlace'
+  'update:selectedCategoryIds',
+  'selectPlace',
+  'loadMoreResults'
 ])
 </script>
 
 <style scoped>
-.tab-content {
+.search-tab {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
-  overflow-y: auto;
-}
-
-.tab-content.active {
-  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 .search-panel-content {
