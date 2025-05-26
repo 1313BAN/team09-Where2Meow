@@ -186,7 +186,7 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   justify-content: center;
   width: 32px;
   height: 32px;
-  background-color: #00EDB3;
+  background-color: #ffd900;
   color: white;
   border-radius: 50%;
   font-weight: bold;
@@ -244,7 +244,7 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   position: absolute;
   top: 0;
   right: 0;
-  background-color: #00EDB3;
+  background-color: #6fbbff;
   color: white;
   font-size: 10px;
   font-weight: 600;

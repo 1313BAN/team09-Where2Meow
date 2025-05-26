@@ -22,6 +22,7 @@
               ? getSelectedMarkerIcon(index + 1)
               : getMarkerIcon(place, index + 1)
           "
+          :zIndex="selectedPlace?.attractionId === place.attractionId ? 1000 : 100 + index"
           @click="selectPlace(place, index + 1)"
         />
       </GMapMap>
@@ -30,6 +31,8 @@
     <PlaceDetailCard
       v-if="selectedPlace"
       :selectedPlace="selectedPlace"
+      :planStartDate="planStartDate"
+      :planEndDate="planEndDate"
       @closePlace="$emit('closePlace')"
       @addToSchedule="$emit('addToSchedule', $event)"
     />
@@ -45,6 +48,8 @@ const props = defineProps({
   selectedPlace: Object,
   mapCenter: Object,
   mapZoom: Number,
+  planStartDate: String,
+  planEndDate: String,
 })
 
 const emit = defineEmits(['selectPlace', 'closePlace', 'addToSchedule'])
@@ -58,7 +63,67 @@ const mapOptions = ref({
   streetViewControl: true,
   rotateControl: true,
   fullscreenControl: true,
+  gestureHandling: 'cooperative', // 스크롤 동작 우선순위 설정
+  scrollwheel: true,               // 마우스 휠 스크롤 활성화
+  navigationControl: true,        // 네비게이션 컨트롤 활성화
+  animatedZoom: true,            // 준 애니메이션 활성화
+  clickableIcons: false,          // 구글 맵의 기본 POI 아이콘 클릭 비활성화
 })
+
+// 부드럽게 이동하기 위한 사용자 정의 함수
+const smoothlyAnimateTo = (map, targetLocation, targetZoom) => {
+  if (!map || !targetLocation) return
+  
+  // 현재 위치
+  const currentLat = map.getCenter().lat()
+  const currentLng = map.getCenter().lng()
+  
+  // 목표 위치
+  const targetLat = targetLocation.lat
+  const targetLng = targetLocation.lng
+  
+  // 애니메이션 기본 설정
+  const frames = 60  // 애니메이션 프레임 수
+  const duration = 800  // 애니메이션 시간 (ms)
+  
+  // 애니메이션 구현
+  let start = null
+  
+  const animate = (timestamp) => {
+    if (!start) start = timestamp
+    const progress = Math.min((timestamp - start) / duration, 1)
+    
+    // 이지함수를 통한 부드러운 이동 공식
+    const easedProgress = easeInOutCubic(progress)
+    
+    // 현재 위치에서 목표 위치로 점진적 이동
+    const nextLat = currentLat + (targetLat - currentLat) * easedProgress
+    const nextLng = currentLng + (targetLng - currentLng) * easedProgress
+    
+    // 지도 이동
+    map.setCenter({ lat: nextLat, lng: nextLng })
+    
+    // 애니메이션 진행 중
+    if (progress < 1) {
+      window.requestAnimationFrame(animate)
+    } else {
+      // 애니메이션 완료 후 확대/축소 적용
+      if (targetZoom && map.getZoom() !== targetZoom) {
+        map.setZoom(targetZoom)
+      }
+    }
+  }
+  
+  // 애니메이션 시작
+  window.requestAnimationFrame(animate)
+}
+
+// 이진함수 - 부드러운 애니메이션 효과를 위한 함수
+const easeInOutCubic = (t) => {
+  return t < 0.5 
+    ? 4 * t * t * t 
+    : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
+}
 
 // ✅ 마커 아이콘 설정
 // 숫자가 포함된 더 큰 마커 아이콘
@@ -79,7 +144,7 @@ const getMarkerIcon = (place, index) => {
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
       <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="20" cy="20" r="18" fill="${color}" stroke="white" stroke-width="3"/>
+        <circle cx="20" cy="20" r="18" fill="#ffd900" stroke="white" stroke-width="3"/>
         <text x="20" y="26" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="Arial, sans-serif">
           ${index}
         </text>
@@ -96,7 +161,6 @@ const getSelectedMarkerIcon = (index) => {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
       <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
         <circle cx="25" cy="25" r="22" fill="#FF6B6B" stroke="white" stroke-width="4"/>
-        <circle cx="25" cy="25" r="15" fill="white" opacity="0.3"/>
         <text x="25" y="31" text-anchor="middle" fill="white" font-size="16" font-weight="bold" font-family="Arial, sans-serif">
           ${index}
         </text>
@@ -109,6 +173,19 @@ const getSelectedMarkerIcon = (index) => {
 
 const selectPlace = (place) => {
   emit('selectPlace', place)
+  
+  // 선택된 마커를 지도 중앙에 부드럽게 표시
+  if (mapRef.value && mapRef.value.$mapObject) {
+    // 사용자 정의 애니메이션 함수 호출
+    smoothlyAnimateTo(
+      mapRef.value.$mapObject,
+      {
+        lat: parseFloat(place.latitude),
+        lng: parseFloat(place.longitude)
+      },
+      props.mapZoom // 현재 zoom 유지
+    )
+  }
 }
 
 // ✅ mapCenter와 mapZoom 변경 감지
@@ -117,10 +194,13 @@ watch(
   ([newCenter, newZoom]) => {
     if (mapRef.value && mapRef.value.$mapObject) {
       if (newCenter) {
-        mapRef.value.$mapObject.setCenter(newCenter)
-      }
-      if (newZoom !== undefined && newZoom !== null) {
-        mapRef.value.$mapObject.setZoom(newZoom)
+        // 사용자 정의 애니메이션 함수를 사용하여 부드럽게 이동
+        smoothlyAnimateTo(mapRef.value.$mapObject, newCenter, newZoom)
+      } else if (newZoom !== undefined && newZoom !== null && !newCenter) {
+        // 중앙 이동 없이 zoom만 변경할 경우
+        if (mapRef.value.$mapObject.getZoom() !== newZoom) {
+          mapRef.value.$mapObject.setZoom(newZoom)
+        }
       }
     }
   },
@@ -132,11 +212,27 @@ const onMapLoaded = (map) => {
     if (window.google && window.google.maps) {
       setTimeout(() => {
         window.google.maps.event.trigger(map, 'resize')
-        if (props.mapCenter) {
-          map.setCenter(props.mapCenter)
+        
+        // 맵 고급 애니메이션 설정 추가
+        if (map.setOptions) {
+          map.setOptions({
+            gestureHandling: 'cooperative',
+            scrollwheel: true,
+            navigationControl: true,
+            animatedZoom: true,
+            disableDefaultUI: false,
+            zoomAnimation: true,
+            panAnimation: true
+          })
         }
-        if (props.mapZoom) {
-          map.setZoom(props.mapZoom)
+        
+        if (props.mapCenter) {
+          if (props.mapZoom) {
+            // 처음 지도 로드시 부드럽게 이동
+            smoothlyAnimateTo(map, props.mapCenter, props.mapZoom)
+          } else {
+            smoothlyAnimateTo(map, props.mapCenter, map.getZoom())
+          }
         }
       }, 100)
     }

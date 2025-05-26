@@ -43,6 +43,8 @@
         :selectedPlace="selectedPlace"
         :mapCenter="mapCenter"
         :mapZoom="mapZoom"
+        :planStartDate="startDate"
+        :planEndDate="endDate"
         @selectPlace="selectPlace"
         @closePlace="closePlace"
         @addToSchedule="addToSchedule"
@@ -298,6 +300,7 @@ const loadMoreResults = async () => {
 const selectScheduleItem = (item) => {
   selectedPlace.value = {
     ...item,
+    attractionName: item.name,
     rating: 4.5,
     reviews: 100,
     image: 'https://via.placeholder.com/150',
@@ -309,9 +312,16 @@ const addScheduleItem = () => {
   console.log('일정 추가')
 }
 
-const addToSchedule = (place) => {
-  if (!scheduleData.value[selectedDay.value]) {
-    scheduleData.value[selectedDay.value] = []
+const addToSchedule = (addData) => {
+  const { place, date, memo } = addData
+  
+  // 날짜를 기반으로 몇일차인지 계산
+  const startDateObj = new Date(startDate.value)
+  const scheduleDateObj = new Date(date)
+  const dayDiff = Math.floor((scheduleDateObj - startDateObj) / (1000 * 60 * 60 * 24)) + 1
+  
+  if (!scheduleData.value[dayDiff]) {
+    scheduleData.value[dayDiff] = []
   }
 
   const newItem = {
@@ -322,11 +332,14 @@ const addToSchedule = (place) => {
         ? `${place.stateName} ${place.cityName}`
         : place.location || '위치 정보 없음',
     duration: '시간 미정',
-    content: place.attractionName || place.name,
+    content: memo || place.attractionName || place.name,
+    date: date
   }
 
-  scheduleData.value[selectedDay.value].push(newItem)
+  scheduleData.value[dayDiff].push(newItem)
   selectedPlace.value = null
+  
+  console.log(`${dayDiff}일차(${date})에 일정 추가:`, newItem)
 }
 
 const sendMessage = () => {
