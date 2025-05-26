@@ -5,20 +5,21 @@ import { login as loginApi, logout as logoutApi } from '@/api/auth'
 export const useAuthStore = defineStore('auth', () => {
   // 상태
   const accessToken = ref(localStorage.getItem('accessToken') || '')
-  const user = ref(() => {
+  const user = ref((() => {
     try {
       return JSON.parse(localStorage.getItem('user') || 'null')
     } catch (error) {
       console.error('사용자 정보 파싱 오류:', error)
       return null
     }
-  })
+  })())
 
   // getters
   const isLoggedIn = computed(() => !!accessToken.value && !!user.value)
   const userName = computed(() => user.value?.name || '')
   const userEmail = computed(() => user.value?.email || '')
   const userUuid = computed(() => user.value?.uuid || '')
+  const userId = computed(() => user.value?.id || null)
 
   // actions
   const login = async (loginData) => {
@@ -28,6 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
       // 로그인 성공 시 토큰과 사용자 정보 저장
       accessToken.value = response.token
       user.value = {
+        id: response.id,
         uuid: response.uuid,
         name: response.name,
         email: response.email,
@@ -88,6 +90,7 @@ export const useAuthStore = defineStore('auth', () => {
     userName,
     userEmail,
     userUuid,
+    userId,
     // actions
     login,
     logout,

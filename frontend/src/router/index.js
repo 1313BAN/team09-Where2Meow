@@ -12,6 +12,7 @@ const router = createRouter({
         { path: '', name: 'main', component: () => import('@/views/MainView.vue') },
         { path: 'login', name: 'login', component: () => import('@/views/LoginView.vue') },
         { path: 'signup', name: 'signup', component: () => import('@/views/SignupView.vue') },
+        { path: 'board', name: 'board', component: () => import('@/views/BoardView.vue') },
         { path: 'board/:boardId', name: 'boardDetail', component: () => import('@/views/BoardDetailView.vue') },
         // 로그인이 필요한 페이지들
         { 
