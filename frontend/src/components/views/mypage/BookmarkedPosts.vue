@@ -39,36 +39,36 @@
               >
                 {{ post.categoryName || '일반' }}
               </span>
-              <span class="text-sm text-gray-500"> by {{ post.authorName }} </span>
+              <span class="text-sm text-gray-500"> by {{ post.authorName || '익명' }} </span>
             </div>
 
             <!-- 제목 -->
             <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
-              {{ post.title }}
+              {{ post.title || '제목 없음' }}
             </h3>
 
             <!-- 내용 미리보기 -->
             <p class="text-gray-600 text-sm mb-3 line-clamp-2">
-              {{ post.content }}
+              {{ post.content || '내용 미리보기가 없습니다.' }}
             </p>
 
             <!-- 메타 정보 -->
             <div class="flex items-center gap-4 text-sm text-gray-500">
               <span class="flex items-center gap-1">
                 <i class="pi pi-clock"></i>
-                {{ formatRelativeTime(post.createdAt) }}
+                {{ post.createdAt ? formatRelativeTime(post.createdAt) : '날짜 정보 없음' }}
               </span>
               <span class="flex items-center gap-1">
                 <i class="pi pi-eye"></i>
-                {{ post.viewCount }}
+                {{ post.viewCount || 0 }}
               </span>
               <span class="flex items-center gap-1">
                 <i class="pi pi-heart"></i>
-                {{ post.likeCount }}
+                {{ post.likeCount || 0 }}
               </span>
               <span class="flex items-center gap-1">
                 <i class="pi pi-comment"></i>
-                {{ post.commentCount }}
+                {{ post.commentCount || 0 }}
               </span>
             </div>
           </div>
@@ -139,7 +139,21 @@ const loadBookmarkedPosts = async (page = 0, append = false) => {
       direction: 'desc',
     })
 
-    const postsWithState = response.content.map((post) => ({
+    console.log('Bookmarked posts response:', response) // 디버깅용
+
+    // API 응답 구조에 따른 안전한 데이터 추출
+    const responseData = response?.boards || response?.content || response || []
+    
+    if (!Array.isArray(responseData)) {
+      console.error('북마크한 게시글 응답이 배열이 아닙니다:', response)
+      if (!append) {
+        bookmarkedPosts.value = []
+      }
+      hasMore.value = false
+      return
+    }
+
+    const postsWithState = responseData.map((post) => ({
       ...post,
       isRemoving: false,
     }))
@@ -150,11 +164,38 @@ const loadBookmarkedPosts = async (page = 0, append = false) => {
       bookmarkedPosts.value = postsWithState
     }
 
-    hasMore.value = !response.last
+    // 페이징 정보 처리
+    hasMore.value = response?.last === false
     currentPage.value = page
   } catch (error) {
     console.error('북마크한 게시글 로드 실패:', error)
-    toast.error('북마크한 게시글을 불러오는데 실패했습니다')
+    
+    // 에러 시에도 빈 배열로 초기화
+    if (!append) {
+      bookmarkedPosts.value = []
+    }
+    
+    // 개발 환경에서 모킹 데이터 사용 (선택사항)
+    if (process.env.NODE_ENV === 'development' && !append) {
+      console.log('Using mock data for bookmarked posts...')
+      bookmarkedPosts.value = [
+        {
+          boardId: 1,
+          title: '북마크한 처음 게시글',
+          content: '이것은 모킹 데이터입니다.',
+          categoryName: '자유',
+          authorName: '테스트유저',
+          viewCount: 10,
+          likeCount: 3,
+          commentCount: 1,
+          createdAt: new Date().toISOString(),
+          isRemoving: false
+        }
+      ]
+      hasMore.value = false
+    } else {
+      toast.error('북마크한 게시글을 불러오는데 실패했습니다')
+    }
   } finally {
     isLoading.value = false
     isLoadingMore.value = false
