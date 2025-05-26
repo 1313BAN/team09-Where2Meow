@@ -94,22 +94,7 @@ export const attractionApi = {
     return attractionApiClient.get('/attraction/categories')
   },
   
-  /**
-   * 관광지 검색 (단일 카테고리 필터)
-   */
-  searchAttractions(params = {}) {
-    const searchParams = new URLSearchParams()
-    
-    if (params.countryId) searchParams.append('countryId', params.countryId)
-    if (params.stateId) searchParams.append('stateId', params.stateId)
-    if (params.cityId) searchParams.append('cityId', params.cityId)
-    if (params.categoryId) searchParams.append('categoryId', params.categoryId) // 단일 카테고리
-    if (params.keyword) searchParams.append('keyword', params.keyword)
-    if (params.page !== undefined) searchParams.append('page', params.page)
-    if (params.size) searchParams.append('size', params.size)
-    
-    return attractionApiClient.get(`/attraction?${searchParams.toString()}`)
-  },
+
 }
 
 export default attractionApi

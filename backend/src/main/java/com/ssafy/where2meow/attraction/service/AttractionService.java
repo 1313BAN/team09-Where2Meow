@@ -151,23 +151,24 @@ public class AttractionService {
     return attractions.map(attraction -> {
       String cityKey = attraction.getStateCode() + "_" + attraction.getCityCode();
       AttractionCategory category = categoryMap.get(attraction.getAttractionCategoryId());
-
-      // 고화질 이미지 URL 가져오기 (크기 파라미터 제거)
       String highQualityImageUrl = hybridImageService.getBestImageUrl(attraction);
-      log.info("=== 이미지 URL 생성 완료 === attractionId={}", attraction.getAttractionId());
 
       return AttractionListResponse.builder()
           .attractionId(attraction.getAttractionId())
           .attractionName(attraction.getAttractionName())
-          .image(highQualityImageUrl) // 고화질 이미지 URL
+          .image(highQualityImageUrl)
           .reviewCount(reviewCountMap.getOrDefault(attraction.getAttractionId(), 0L))
           .reviewAvgScore(reviewScoreMap.getOrDefault(attraction.getAttractionId(), 0.0))
           .stateName(stateMap.getOrDefault(attraction.getStateCode(), new State()).getStateName())
           .cityName(cityMap.getOrDefault(cityKey, new City()).getCityName())
           .categoryId(attraction.getAttractionCategoryId())
           .categoryName(category != null ? category.getAttractionCategoryName() : "기타")
+          // ✅ 위도/경도 추가
+          .latitude(attraction.getLatitude())
+          .longitude(attraction.getLongitude())
           .build();
     });
+
   }
 
   /**
@@ -201,7 +202,11 @@ public class AttractionService {
         .cityName(city.getCityName())
         .categoryId(attraction.getAttractionCategoryId())
         .categoryName(category != null ? category.getAttractionCategoryName() : "기타")
+        // ✅ 위도/경도 추가
+        .latitude(attraction.getLatitude())
+        .longitude(attraction.getLongitude())
         .build();
+
   }
 
   /**
@@ -258,6 +263,7 @@ public class AttractionService {
 
   /**
    * 하위 호환성을 위한 메서드 (크기 파라미터는 무시)
+   *
    * @deprecated 고화질 이미지를 사용하므로 크기 파라미터가 불필요합니다. getAttractionImageUrl(Integer)을 사용하세요.
    */
   @Deprecated
@@ -268,6 +274,7 @@ public class AttractionService {
 
   /**
    * 하위 호환성을 위한 메서드 (크기 파라미터는 무시)
+   *
    * @deprecated 고화질 이미지를 사용하므로 크기 파라미터가 불필요합니다. getAttractionImageUrls(List)을 사용하세요.
    */
   @Deprecated

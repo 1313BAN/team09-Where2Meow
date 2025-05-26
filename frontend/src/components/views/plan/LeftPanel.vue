@@ -45,6 +45,7 @@
       :searchResults="searchResults"
       :isSearching="isSearching"
       :hasMoreResults="hasMoreResults"
+      :selectedPlace="selectedPlace"
       @update:searchQuery="$emit('update:searchQuery', $event)"
       @update:selectedCategoryIds="$emit('update:selectedCategoryIds', $event)"
       @selectPlace="$emit('selectPlace', $event)"
@@ -75,7 +76,8 @@ defineProps({
   searchResults: Array,
   isSearching: Boolean,
   hasMoreResults: Boolean,
-  isSaving: Boolean
+  isSaving: Boolean,
+  selectedPlace: Object
 })
 
 defineEmits([

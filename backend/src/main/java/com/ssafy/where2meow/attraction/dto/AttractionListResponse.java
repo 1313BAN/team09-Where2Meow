@@ -19,4 +19,6 @@ public class AttractionListResponse {
   private String cityName;
   private Integer categoryId;
   private String categoryName;
+  private Double latitude;
+  private Double longitude;
 }

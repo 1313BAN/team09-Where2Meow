@@ -4,15 +4,16 @@
       <div class="info-image-container">
         <AttractionImage 
           :imageUrl="selectedPlace.image" 
-          :alt="selectedPlace.name"
+          :alt="selectedPlace.attractionName"
           class="info-image"
         />
       </div>
       <div class="info-details">
-        <div class="info-title">{{ selectedPlace.name }}</div>
-        <div class="info-description">{{ selectedPlace.description }}</div>
-        <div class="info-rating">
-          ⭐️ {{ selectedPlace.rating }} ({{ selectedPlace.reviews }})
+        <div class="info-title">{{ selectedPlace.attractionName }}</div>
+        <div class="info-address">{{ selectedPlace.stateName }} {{ selectedPlace.cityName }}</div>
+        <div class="info-category">{{ selectedPlace.categoryName }}</div>
+        <div class="info-rating" v-if="selectedPlace.reviewAvgScore > 0">
+          ⭐️ {{ selectedPlace.reviewAvgScore.toFixed(1) }} ({{ selectedPlace.reviewCount }}개 리뷰)
         </div>
         <div class="flex gap-2 mt-3">
           <button 
@@ -32,6 +33,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup>
 import AttractionImage from '@/components/common/AttractionImage.vue'

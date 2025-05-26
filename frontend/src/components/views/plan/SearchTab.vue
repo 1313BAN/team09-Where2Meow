@@ -20,6 +20,8 @@
         :searchResults="searchResults"
         :isSearching="isSearching"
         :hasMoreResults="hasMoreResults"
+        :searchQuery="searchQuery"
+        :selectedPlace="selectedPlace"
         @selectPlace="$emit('selectPlace', $event)"
         @loadMoreResults="$emit('loadMoreResults')"
       />
@@ -38,15 +40,11 @@ defineProps({
   availableCategories: Array,
   searchResults: Array,
   isSearching: Boolean,
-  hasMoreResults: Boolean
+  hasMoreResults: Boolean,
+  selectedPlace: Object
 })
 
-defineEmits([
-  'update:searchQuery',
-  'update:selectedCategoryIds',
-  'selectPlace',
-  'loadMoreResults'
-])
+defineEmits(['update:searchQuery', 'update:selectedCategoryIds', 'selectPlace', 'loadMoreResults'])
 </script>
 
 <style scoped>

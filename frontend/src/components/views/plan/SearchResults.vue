@@ -9,11 +9,15 @@
 
     <!-- 검색 결과 목록 -->
     <div 
-      v-for="attraction in searchResults" 
+      v-for="(attraction, index) in searchResults" 
       :key="attraction.attractionId"
-      @click="$emit('selectPlace', attraction)"
+      @click="$emit('selectPlace', attraction, index + 1)"
       class="result-item"
+      :class="{ 'selected': selectedPlace?.attractionId === attraction.attractionId }"
     >
+      <!-- ✅ 순번 표시 추가 -->
+      <div class="item-number">{{ index + 1 }}</div>
+      
       <div class="item-image-container">
         <!-- AttractionImage 컴포넌트 사용 -->
         <AttractionImage 
@@ -81,7 +85,8 @@ import AttractionImage from '@/components/common/AttractionImage.vue'
 const props = defineProps({
   searchResults: Array,
   isSearching: Boolean,
-  hasMoreResults: Boolean
+  hasMoreResults: Boolean,
+  selectedPlace: Object  // ✅ 추가
 })
 
 const emit = defineEmits(['selectPlace', 'loadMoreResults'])
@@ -154,7 +159,7 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid #f0f0f0;
-  position: relative; /* 카테고리 배지 위치 제어를 위해 추가 */
+  position: relative;
 }
 
 .result-item:hover {
@@ -163,8 +168,39 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   border-color: #00EDB3;
 }
 
+/* ✅ 선택된 아이템 스타일 추가 */
+.result-item.selected {
+  background-color: #e8f5e8;
+  border-color: #00EDB3;
+  border-width: 2px;
+}
+
 .result-item:last-child {
   margin-bottom: 0;
+}
+
+/* ✅ 순번 스타일 추가 */
+.item-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: #00EDB3;
+  color: white;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 14px;
+  margin-right: 12px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+/* ✅ 선택된 아이템의 순번 스타일 */
+.result-item.selected .item-number {
+  background-color: #FF6B6B;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
 }
 
 /* 이미지 컨테이너 */
@@ -172,9 +208,9 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   position: relative;
   margin-right: 15px;
   flex-shrink: 0;
-  width: 88px; /* 패딩 포함 크기 */
-  height: 88px; /* 패딩 포함 크기 */
-  padding: 8px 8px 0 0; /* 카테고리 배지 공간 확보 */
+  width: 88px;
+  height: 88px;
+  padding: 8px 8px 0 0;
 }
 
 .item-thumbnail {
@@ -217,10 +253,10 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   white-space: nowrap;
   box-shadow: 0 2px 6px rgba(0, 237, 179, 0.3);
   z-index: 10;
-  max-width: 70px; /* 최대 너비 제한 */
+  max-width: 70px;
   overflow: hidden;
   text-overflow: ellipsis;
-  transform: translate(2px, -2px); /* 배지를 살짝 바깥쪽으로 이동 */
+  transform: translate(2px, -2px);
 }
 
 /* 아이템 상세 정보 */
@@ -240,7 +276,6 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   line-height: 1.3;
   word-break: break-word;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -376,10 +411,17 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
     padding: 12px;
   }
   
+  .item-number {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    margin-right: 10px;
+  }
+  
   .item-image-container {
-    width: 66px; /* 모바일 패딩 포함 크기 */
-    height: 66px; /* 모바일 패딩 포함 크기 */
-    padding: 6px 6px 0 0; /* 모바일에서 카테고리 배지 공간 조정 */
+    width: 66px;
+    height: 66px;
+    padding: 6px 6px 0 0;
   }
   
   .item-thumbnail,
@@ -391,7 +433,7 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   .category-badge {
     font-size: 9px;
     padding: 2px 5px;
-    max-width: 50px; /* 모바일에서 더 작은 너비 */
+    max-width: 50px;
     border-radius: 8px;
   }
   
