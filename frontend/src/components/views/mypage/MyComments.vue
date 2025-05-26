@@ -43,7 +43,7 @@
               <span class="text-sm text-gray-500">{{ comment.boardAuthor }}</span>
             </div>
             <span class="text-sm text-gray-500">
-              {{ formatDate(comment.createdAt) }}
+              {{ formatRelativeTime(comment.createdAt) }}
             </span>
           </div>
         </div>
@@ -107,10 +107,7 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click="showEditModal = false"
     >
-      <div
-        class="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-        @click.stop
-      >
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" @click.stop>
         <h3 class="text-lg font-semibold text-gray-900 mb-4">댓글 수정</h3>
         <textarea
           v-model="editingComment.content"
@@ -147,17 +144,16 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click="showDeleteModal = false"
     >
-      <div
-        class="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-        @click.stop
-      >
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" @click.stop>
         <div class="text-center">
-          <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+          <div
+            class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4"
+          >
             <i class="pi pi-exclamation-triangle text-red-500 text-2xl"></i>
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">댓글 삭제</h3>
           <p class="text-gray-600 mb-6">
-            이 댓글을 삭제하시겠습니까?<br>
+            이 댓글을 삭제하시겠습니까?<br />
             삭제된 댓글은 복구할 수 없습니다.
           </p>
           <div class="flex gap-3">
@@ -190,6 +186,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserComments, updateComment, deleteComment as deleteCommentApi } from '@/api/comment'
 import { toast } from 'vue-sonner'
+import { formatRelativeTime } from '@/utils/formatters'
 
 const router = useRouter()
 
@@ -205,7 +202,7 @@ const pageSize = 10
 const showEditModal = ref(false)
 const editingComment = reactive({
   commentId: null,
-  content: ''
+  content: '',
 })
 const isUpdating = ref(false)
 
@@ -225,7 +222,7 @@ const loadComments = async (page = 0, append = false) => {
 
     const response = await getUserComments({
       page,
-      size: pageSize
+      size: pageSize,
     })
 
     if (append) {
@@ -237,7 +234,6 @@ const loadComments = async (page = 0, append = false) => {
     // 페이지네이션 처리 (백엔드 응답 구조에 따라 조정 필요)
     hasMore.value = response.length === pageSize
     currentPage.value = page
-
   } catch (error) {
     console.error('댓글 로드 실패:', error)
     toast.error('댓글을 불러오는데 실패했습니다')
@@ -274,19 +270,18 @@ const confirmEdit = async () => {
 
   try {
     await updateComment(editingComment.commentId, {
-      content: editingComment.content.trim()
+      content: editingComment.content.trim(),
     })
-    
+
     // 리스트에서 업데이트
-    const index = comments.value.findIndex(c => c.commentId === editingComment.commentId)
+    const index = comments.value.findIndex((c) => c.commentId === editingComment.commentId)
     if (index !== -1) {
       comments.value[index].content = editingComment.content.trim()
       comments.value[index].updatedAt = new Date().toISOString()
     }
-    
+
     toast.success('댓글이 수정되었습니다')
     showEditModal.value = false
-    
   } catch (error) {
     console.error('댓글 수정 실패:', error)
     toast.error('댓글 수정에 실패했습니다')
@@ -309,36 +304,19 @@ const confirmDelete = async () => {
 
   try {
     await deleteCommentApi(selectedComment.value.commentId)
-    
+
     // 리스트에서 제거
-    comments.value = comments.value.filter(c => c.commentId !== selectedComment.value.commentId)
-    
+    comments.value = comments.value.filter((c) => c.commentId !== selectedComment.value.commentId)
+
     toast.success('댓글이 삭제되었습니다')
     showDeleteModal.value = false
     selectedComment.value = null
-    
   } catch (error) {
     console.error('댓글 삭제 실패:', error)
     toast.error('댓글 삭제에 실패했습니다')
   } finally {
     isDeleting.value = false
   }
-}
-
-// 날짜 포맷팅
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now - date
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return '방금 전'
-  if (diffMins < 60) return `${diffMins}분 전`
-  if (diffHours < 24) return `${diffHours}시간 전`
-  if (diffDays < 7) return `${diffDays}일 전`
-  return date.toLocaleDateString()
 }
 
 onMounted(() => {

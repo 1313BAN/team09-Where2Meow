@@ -319,7 +319,6 @@ const handleSignup = async () => {
       nickname: signupForm.nickname.trim(),
       email: signupForm.email.trim(),
       password: signupForm.password,
-      confirmPassword: signupForm.confirmPassword,
       phone: signupForm.phone.trim(),
       image: signupForm.image,
     }
@@ -328,7 +327,7 @@ const handleSignup = async () => {
     toast.success('회원가입이 완료되었습니다! 로그인해주세요.')
     router.push('/login')
   } catch (error) {
-    console.error('회원가입 실패:', error)
+    console.error('회원가입 실패:', error.message || '알 수 없는 오류')
 
     if (error.response?.status === 409) {
       generalError.value = '이미 존재하는 이메일입니다'

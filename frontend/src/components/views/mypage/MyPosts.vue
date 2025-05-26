@@ -212,7 +212,12 @@ const loadPosts = async (page = 0, append = false) => {
     hasMore.value = response?.last === false
     currentPage.value = page
   } catch (error) {
-    // ... 나머지 에러 처리 코드는 동일
+    console.error('게시글 로드 실패:', error)
+    toast.error('게시글을 불러오는 데 실패했습니다')
+    if (!append) {
+      posts.value = []
+    }
+    hasMore.value = false
   } finally {
     isLoading.value = false
     isLoadingMore.value = false

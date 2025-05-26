@@ -5,7 +5,14 @@ import { login as loginApi, logout as logoutApi } from '@/api/auth'
 export const useAuthStore = defineStore('auth', () => {
   // 상태
   const accessToken = ref(localStorage.getItem('accessToken') || '')
-  const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
+  const user = ref(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null')
+    } catch (error) {
+      console.error('사용자 정보 파싱 오류:', error)
+      return null
+    }
+  })
 
   // getters
   const isLoggedIn = computed(() => !!accessToken.value && !!user.value)
@@ -17,7 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
   const login = async (loginData) => {
     try {
       const response = await loginApi(loginData)
-      
+
       // 로그인 성공 시 토큰과 사용자 정보 저장
       accessToken.value = response.token
       user.value = {
@@ -27,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
         role: response.role,
         nickname: response.nickname || response.name, // 닉네임이 없으면 이름 사용
         phone: response.phone || '',
-        image: response.image || ''
+        image: response.image || '',
       }
 
       // localStorage에 저장
@@ -58,10 +65,17 @@ export const useAuthStore = defineStore('auth', () => {
   const checkAuthStatus = () => {
     const token = localStorage.getItem('accessToken')
     const userData = localStorage.getItem('user')
-    
+
     if (token && userData) {
-      accessToken.value = token
-      user.value = JSON.parse(userData)
+      try {
+        accessToken.value = token
+        user.value = JSON.parse(userData)
+      } catch (error) {
+        console.error('localStorage의 사용자 데이터 파싱 오류:', error)
+        // 파싱 실패 시 localStorage 정리
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('user')
+      }
     }
   }
 
@@ -77,6 +91,6 @@ export const useAuthStore = defineStore('auth', () => {
     // actions
     login,
     logout,
-    checkAuthStatus
+    checkAuthStatus,
   }
 })

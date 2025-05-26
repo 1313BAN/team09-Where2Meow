@@ -15,8 +15,13 @@
               <!-- 프로필 섹션 -->
               <div class="p-6 border-b border-gray-200">
                 <div class="flex items-center gap-3">
-                  <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background: var(--gradient-primary)">
-                    <span class="text-white text-lg font-bold">{{ userName.charAt(0) }}</span>
+                  <div
+                    class="w-12 h-12 rounded-full flex items-center justify-center"
+                    style="background: var(--gradient-primary)"
+                  >
+                    <span class="text-white text-lg font-bold">{{
+                      userName.charAt(0) || '?'
+                    }}</span>
                   </div>
                   <div>
                     <h3 class="font-semibold text-gray-900">{{ userName }}</h3>
@@ -36,10 +41,15 @@
                       'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors cursor-pointer',
                       activeMenu === item.key
                         ? 'bg-[var(--primary-10)] text-[var(--primary-color)] font-semibold'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        : 'text-gray-700 hover:bg-gray-50',
                     ]"
                   >
-                    <i :class="[item.icon, activeMenu === item.key ? 'text-[var(--primary-color)]' : 'text-gray-400']"></i>
+                    <i
+                      :class="[
+                        item.icon,
+                        activeMenu === item.key ? 'text-[var(--primary-color)]' : 'text-gray-400',
+                      ]"
+                    ></i>
                     <span>{{ item.label }}</span>
                   </button>
                 </div>
@@ -85,17 +95,16 @@
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       @click="showDeleteAccountModal = false"
     >
-      <div
-        class="bg-white rounded-lg p-6 max-w-md w-full mx-4"
-        @click.stop
-      >
+      <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" @click.stop>
         <div class="text-center">
-          <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+          <div
+            class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4"
+          >
             <i class="pi pi-exclamation-triangle text-red-500 text-2xl"></i>
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">회원탈퇴</h3>
           <p class="text-gray-600 mb-6">
-            정말로 회원탈퇴를 하시겠습니까?<br>
+            정말로 회원탈퇴를 하시겠습니까?<br />
             탈퇴 후에는 모든 데이터가 삭제되며 복구할 수 없습니다.
           </p>
           <div class="flex gap-3">
@@ -199,11 +208,4 @@ const handleDeleteAccount = async () => {
     showDeleteAccountModal.value = false
   }
 }
-
-onMounted(() => {
-  // 인증 상태 확인
-  if (!authStore.isLoggedIn) {
-    router.push('/login')
-  }
-})
 </script>

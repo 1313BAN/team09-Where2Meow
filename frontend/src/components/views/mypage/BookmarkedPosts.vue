@@ -34,12 +34,12 @@
           <div class="flex-1">
             <!-- 카테고리와 작성자 -->
             <div class="mb-2 flex items-center gap-2">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary-10)] text-[var(--primary-color)]">
+              <span
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary-10)] text-[var(--primary-color)]"
+              >
                 {{ post.categoryName || '일반' }}
               </span>
-              <span class="text-sm text-gray-500">
-                by {{ post.authorName }}
-              </span>
+              <span class="text-sm text-gray-500"> by {{ post.authorName }} </span>
             </div>
 
             <!-- 제목 -->
@@ -56,7 +56,7 @@
             <div class="flex items-center gap-4 text-sm text-gray-500">
               <span class="flex items-center gap-1">
                 <i class="pi pi-clock"></i>
-                {{ formatDate(post.createdAt) }}
+                {{ formatRelativeTime(post.createdAt) }}
               </span>
               <span class="flex items-center gap-1">
                 <i class="pi pi-eye"></i>
@@ -111,6 +111,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getBookmarkedBoards, removeBoardBookmark } from '@/api/board'
 import { toast } from 'vue-sonner'
+import { formatRelativeTime } from '@/utils/formatters'
 
 const router = useRouter()
 
@@ -135,12 +136,12 @@ const loadBookmarkedPosts = async (page = 0, append = false) => {
       page,
       size: pageSize,
       sort: 'createdAt',
-      direction: 'desc'
+      direction: 'desc',
     })
 
-    const postsWithState = response.content.map(post => ({
+    const postsWithState = response.content.map((post) => ({
       ...post,
-      isRemoving: false
+      isRemoving: false,
     }))
 
     if (append) {
@@ -151,7 +152,6 @@ const loadBookmarkedPosts = async (page = 0, append = false) => {
 
     hasMore.value = !response.last
     currentPage.value = page
-
   } catch (error) {
     console.error('북마크한 게시글 로드 실패:', error)
     toast.error('북마크한 게시글을 불러오는데 실패했습니다')
@@ -175,7 +175,7 @@ const goToBoardDetail = (boardId) => {
 
 // 북마크 해제
 const removeBookmark = async (post) => {
-  const index = bookmarkedPosts.value.findIndex(p => p.boardId === post.boardId)
+  const index = bookmarkedPosts.value.findIndex((p) => p.boardId === post.boardId)
   if (index === -1) return
 
   // 로딩 상태 표시
@@ -183,37 +183,20 @@ const removeBookmark = async (post) => {
 
   try {
     await removeBoardBookmark(post.boardId)
-    
+
     // 리스트에서 제거
-    bookmarkedPosts.value = bookmarkedPosts.value.filter(p => p.boardId !== post.boardId)
-    
+    bookmarkedPosts.value = bookmarkedPosts.value.filter((p) => p.boardId !== post.boardId)
+
     toast.success('북마크가 해제되었습니다')
-    
   } catch (error) {
     console.error('북마크 해제 실패:', error)
     toast.error('북마크 해제에 실패했습니다')
-    
+
     // 실패 시 로딩 상태 해제
     if (bookmarkedPosts.value[index]) {
       bookmarkedPosts.value[index].isRemoving = false
     }
   }
-}
-
-// 날짜 포맷팅
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now - date
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return '방금 전'
-  if (diffMins < 60) return `${diffMins}분 전`
-  if (diffHours < 24) return `${diffHours}시간 전`
-  if (diffDays < 7) return `${diffDays}일 전`
-  return date.toLocaleDateString()
 }
 
 onMounted(() => {

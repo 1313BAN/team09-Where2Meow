@@ -8,7 +8,10 @@
     <form @submit.prevent="handleUpdateProfile" class="space-y-6">
       <!-- 프로필 이미지 -->
       <div class="flex items-center gap-6">
-        <div class="w-20 h-20 rounded-full flex items-center justify-center" style="background: var(--gradient-primary)">
+        <div
+          class="w-20 h-20 rounded-full flex items-center justify-center"
+          style="background: var(--gradient-primary)"
+        >
           <span class="text-white text-2xl font-bold">{{ profileForm.name.charAt(0) }}</span>
         </div>
         <div>
@@ -127,7 +130,7 @@ const profileForm = reactive({
   nickname: '',
   email: '',
   phone: '',
-  image: ''
+  image: '',
 })
 
 // 상태 관리
@@ -136,7 +139,7 @@ const errors = reactive({
   name: '',
   nickname: '',
   email: '',
-  phone: ''
+  phone: '',
 })
 const generalError = ref('')
 const successMessage = ref('')
@@ -144,9 +147,9 @@ const successMessage = ref('')
 // 폼 검증
 const validateForm = () => {
   let isValid = true
-  
+
   // 모든 에러 초기화
-  Object.keys(errors).forEach(key => {
+  Object.keys(errors).forEach((key) => {
     errors[key] = ''
   })
 
@@ -175,7 +178,7 @@ const validateForm = () => {
   if (!profileForm.phone.trim()) {
     errors.phone = '휴대폰 번호를 입력해주세요'
     isValid = false
-  } else if (!/^01([0|1|6|7|8|9])-?([0-9]{3,4})-?([0-9]{4})$/.test(profileForm.phone)) {
+  } else if (!/^01([0|1|6|7|8|9])[-\s]?([0-9]{3,4})[-\s]?([0-9]{4})$/.test(profileForm.phone)) {
     errors.phone = '올바른 휴대폰 번호 형식이 아닙니다'
     isValid = false
   }
@@ -198,32 +201,31 @@ const handleUpdateProfile = async () => {
       nickname: profileForm.nickname.trim(),
       email: profileForm.email.trim(),
       phone: profileForm.phone.trim(),
-      image: profileForm.image
+      image: profileForm.image,
     }
 
     const updatedUser = await updateUser(updateData)
-    
+
     // 스토어 상태 업데이트
     authStore.user = {
       ...authStore.user,
       name: updatedUser.name,
-      email: updatedUser.email
+      email: updatedUser.email,
     }
-    
+
     // localStorage 업데이트
     localStorage.setItem('user', JSON.stringify(authStore.user))
-    
+
     successMessage.value = '프로필이 성공적으로 업데이트되었습니다'
     toast.success('프로필이 업데이트되었습니다')
-    
+
     // 성공 메시지 3초 후 자동 제거
     setTimeout(() => {
       successMessage.value = ''
     }, 3000)
-    
   } catch (error) {
     console.error('프로필 업데이트 실패:', error)
-    
+
     if (error.response?.status === 409) {
       generalError.value = '이미 사용 중인 이메일입니다'
     } else if (error.response?.status === 400) {
@@ -231,7 +233,7 @@ const handleUpdateProfile = async () => {
     } else {
       generalError.value = '프로필 업데이트 중 오류가 발생했습니다'
     }
-    
+
     toast.error(generalError.value)
   } finally {
     isLoading.value = false

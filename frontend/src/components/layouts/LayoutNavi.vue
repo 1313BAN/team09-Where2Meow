@@ -49,7 +49,7 @@
           </div>
 
           <!-- 로그인된 경우 프로필 -->
-          <div v-else class="hidden md:block relative">
+          <div v-else class="hidden md:block relative" data-dropdown="profile">
             <button
               @click="profileDropdownOpen = !profileDropdownOpen"
               class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
@@ -65,24 +65,26 @@
               class="absolute right-0 top-full mt-3 w-44 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-50 dropdown-bubble"
             >
               <!-- 화살표 -->
-              <div class="absolute -top-2 right-3 w-4 h-4 bg-white border-l border-t border-gray-100 transform rotate-45"></div>
-              
+              <div
+                class="absolute -top-2 right-3 w-4 h-4 bg-white border-l border-t border-gray-100 transform rotate-45"
+              ></div>
+
               <RouterLink
                 to="/mypage"
                 @click="profileDropdownOpen = false"
                 class="flex items-center gap-3 px-4 py-3 text-gray-800 hover:bg-gray-50 transition-colors cursor-pointer font-semibold"
-                style="font-family: 'PretendardVariable', sans-serif;"
+                style="font-family: 'PretendardVariable', sans-serif"
               >
                 <i class="pi pi-user text-[var(--primary-color)] text-sm"></i>
                 <span class="text-sm">마이페이지</span>
               </RouterLink>
-              
+
               <hr class="my-1 border-gray-100" />
-              
+
               <button
                 @click="handleLogout"
                 class="w-full flex items-center gap-3 px-4 py-3 text-gray-800 hover:bg-gray-50 transition-colors cursor-pointer font-semibold"
-                style="font-family: 'PretendardVariable', sans-serif;"
+                style="font-family: 'PretendardVariable', sans-serif"
               >
                 <i class="pi pi-sign-out text-[var(--danger-color)] text-sm"></i>
                 <span class="text-sm">로그아웃</span>
@@ -153,10 +155,8 @@
 
         <!-- 모바일 사용자 메뉴 (로그인된 경우) -->
         <div v-else class="mt-4 pt-4 border-t border-gray-100 space-y-3">
-          <div class="text-center text-sm text-gray-600 mb-3">
-            {{ userName }}님 환영합니다
-          </div>
-          
+          <div class="text-center text-sm text-gray-600 mb-3">{{ userName }}님 환영합니다</div>
+
           <!-- 모바일 로그아웃 버튼 - 디자인 개선 -->
           <Button
             label="로그아웃"
@@ -213,7 +213,8 @@ function handleResize() {
 
 // 드롭다운 외부 클릭 처리
 function handleClickOutside(event) {
-  if (profileDropdownOpen.value && !event.target.closest('.relative')) {
+  const dropdown = document.querySelector('[data-dropdown="profile"]')
+  if (profileDropdownOpen.value && dropdown && !dropdown.contains(event.target)) {
     profileDropdownOpen.value = false
   }
 }
@@ -270,6 +271,8 @@ onBeforeUnmount(() => {
 }
 
 .dropdown-bubble {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 </style>

@@ -28,8 +28,8 @@ export const getUserBoards = async (params = {}) => {
 // 북마크한 게시글 리스트 조회
 export const getBookmarkedBoards = async (params = {}) => {
   try {
-    const response = await api.get('/api/board', { 
-      params: { ...params, bookmarked: true } 
+    const response = await api.get('/api/board', {
+      params: { ...params, bookmarked: true },
     })
     return response.data
   } catch (error) {
@@ -50,8 +50,8 @@ export const getBoardDetail = async (boardId) => {
 // 게시글 검색
 export const searchBoards = async (keyword, params = {}) => {
   try {
-    const response = await api.get('/api/board/search', { 
-      params: { keyword, ...params }
+    const response = await api.get('/api/board/search', {
+      params: { keyword, ...params },
     })
     return response.data
   } catch (error) {
@@ -140,75 +140,20 @@ export const getBoardComments = async (boardId) => {
 }
 
 // 인기 게시글 조회 (RecommendationSection용)
-export const getPopularBoards = (successCallback, errorCallback) => {
-  getBoards({ sort: 'likeCount', direction: 'desc', size: 12 })
-    .then(response => {
-      console.log('Popular boards response:', response) // 디버깅용
-      
-      // 응답 구조 확인 및 안전한 처리
-      let boards = []
-      
-      if (response && Array.isArray(response)) {
-        boards = response
-      } else if (response && response.content && Array.isArray(response.content)) {
-        boards = response.content
-      } else if (response && response.data && Array.isArray(response.data)) {
-        boards = response.data
-      } else if (response && response.boards && Array.isArray(response.boards)) {
-        boards = response.boards
-      } else {
-        console.warn('Unexpected response structure:', response)
-        boards = [] // 빈 배열로 폴백
-      }
-      
-      if (successCallback) {
-        successCallback({ data: { boards } })
-      }
-    })
-    .catch(error => {
-      console.error('Popular boards fetch error:', error)
-      
-      // 백엔드 연결 실패 시 모킹 데이터 사용 (개발 중에만)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Using mock data for boards...')
-        const mockBoards = [
-          {
-            boardId: 1,
-            title: '서울 여행 추천 코스',
-            content: '서울의 아름다운 여행 코스를 소개합니다.',
-            categoryName: '여행',
-            likeCount: 15,
-            viewCount: 234,
-            createdAt: new Date().toISOString(),
-            authorName: '여행자'
-          },
-          {
-            boardId: 2,
-            title: '맛집 추천',
-            content: '지역별 맛집을 추천해드립니다.',
-            categoryName: '맛집',
-            likeCount: 23,
-            viewCount: 456,
-            createdAt: new Date().toISOString(),
-            authorName: '맛집헌터'
-          }
-        ]
-        
-        if (successCallback) {
-          successCallback({ data: { boards: mockBoards } })
-        }
-      } else {
-        if (errorCallback) {
-          errorCallback(error)
-        }
-      }
-    })
+export const getPopularBoards = async (params = {}) => {
+  const defaultParams = { sort: 'likeCount', direction: 'desc', size: 12, ...params }
+  const response = await getBoards(defaultParams)
+
+  // 응답 구조 정규화
+  const boards = response?.content || response?.data || response?.boards || response || []
+
+  return Array.isArray(boards) ? boards : []
 }
 
 // Default export (하위 호환성을 위해)
 const boardAPI = {
   getBoards,
-  getUserBoards, 
+  getUserBoards,
   getBookmarkedBoards,
   getBoardDetail,
   searchBoards,
@@ -220,7 +165,7 @@ const boardAPI = {
   addBoardBookmark,
   removeBoardBookmark,
   getBoardComments,
-  getPopularBoards
+  getPopularBoards,
 }
 
 export default boardAPI
