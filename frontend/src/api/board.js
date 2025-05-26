@@ -140,17 +140,40 @@ export const getBoardComments = async (boardId) => {
 }
 
 // 인기 게시글 조회 (RecommendationSection용)
-export const getPopularBoards = async (params = {}) => {
-  const defaultParams = { sort: 'likeCount', direction: 'desc', size: 12, ...params }
-  const response = await getBoards(defaultParams)
+export const getPopularBoards = (successCallback, errorCallback) => {
+  getBoards({ sort: 'likeCount', direction: 'desc', size: 12 })
+    .then((response) => {
+      console.log('Popular boards response:', response) // 디버깅용
 
-  // 응답 구조 정규화
-  const boards = response?.content || response?.data || response?.boards || response || []
+      // 응답 구조 확인 및 안전한 처리
+      let boards = []
 
-  return Array.isArray(boards) ? boards : []
+      if (response && Array.isArray(response)) {
+        boards = response
+      } else if (response && response.content && Array.isArray(response.content)) {
+        boards = response.content
+      } else if (response && response.data && Array.isArray(response.data)) {
+        boards = response.data
+      } else if (response && response.boards && Array.isArray(response.boards)) {
+        boards = response.boards
+      } else {
+        console.warn('Unexpected response structure:', response)
+        boards = [] // 빈 배열로 폴백
+      }
+
+      if (successCallback) {
+        successCallback({ data: { boards } })
+      }
+    })
+    .catch((error) => {
+      console.error('Popular boards fetch error:', error)
+
+      if (errorCallback) {
+        errorCallback(error)
+      }
+    })
 }
 
-// Default export (하위 호환성을 위해)
 const boardAPI = {
   getBoards,
   getUserBoards,
