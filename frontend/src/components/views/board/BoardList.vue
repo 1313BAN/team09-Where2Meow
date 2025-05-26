@@ -1,7 +1,7 @@
 <template>
   <div class="p-6">
     <!-- 헤더 섹션 -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
       <div class="flex items-center gap-4">
         <h2 class="text-xl font-semibold text-gray-900">
           {{ currentCategoryName }}
@@ -12,7 +12,7 @@
       </div>
 
       <!-- 정렬 및 검색 -->
-      <div class="flex items-center gap-3">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <!-- 정렬 선택 -->
         <div class="relative">
           <select
@@ -30,33 +30,35 @@
           ></i>
         </div>
 
-        <!-- 검색 -->
-        <div class="relative">
-          <input
-            v-model="searchKeyword"
-            @keypress.enter="handleSearch"
-            type="text"
-            placeholder="게시글 검색..."
-            class="w-64 min-h-[40px] border border-gray-300 rounded-xl hover:border-gray-400 focus:border-[var(--secondary-color)] focus:outline-none bg-white transition-all duration-200 pl-10 pr-4 py-2 text-sm"
-          />
-          <i
-            class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-          ></i>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <!-- 검색 -->
+          <div class="relative flex-1 sm:flex-initial">
+            <input
+              v-model="searchKeyword"
+              @keypress.enter="handleSearch"
+              type="text"
+              placeholder="게시글 검색..."
+              class="w-full sm:w-64 min-h-[40px] border border-gray-300 rounded-xl hover:border-gray-400 focus:border-[var(--secondary-color)] focus:outline-none bg-white transition-all duration-200 pl-10 pr-4 py-2 text-sm"
+            />
+            <i
+              class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            ></i>
+            <button
+              v-if="searchKeyword"
+              @click="clearSearch"
+              class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+
           <button
-            v-if="searchKeyword"
-            @click="clearSearch"
-            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            @click="handleSearch"
+            class="min-h-[40px] px-4 py-2 bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] text-white rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 ease-in-out cursor-pointer whitespace-nowrap"
           >
-            <i class="pi pi-times"></i>
+            검색
           </button>
         </div>
-
-        <button
-          @click="handleSearch"
-          class="min-h-[40px] px-4 py-2 bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] text-white rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 ease-in-out cursor-pointer"
-        >
-          검색
-        </button>
       </div>
     </div>
 
@@ -213,7 +215,7 @@
           <button
             @click="changePage(currentPage - 1)"
             :disabled="currentPage === 0"
-            class="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            class="cursor-pointer p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
           >
             <i class="pi pi-angle-left"></i>
           </button>
@@ -223,7 +225,7 @@
             :key="page"
             @click="changePage(page)"
             :class="[
-              'px-3 py-2 rounded-lg border transition-colors',
+              'cursor-pointer px-3 py-2 rounded-lg border transition-colors',
               currentPage === page
                 ? 'border-[var(--primary-color)] bg-[var(--primary-color)] text-white'
                 : 'border-gray-300 hover:bg-gray-50',
@@ -235,7 +237,7 @@
           <button
             @click="changePage(currentPage + 1)"
             :disabled="currentPage === totalPages - 1"
-            class="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            class="cursor-pointer p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
           >
             <i class="pi pi-angle-right"></i>
           </button>
@@ -296,7 +298,7 @@ import { toast } from 'vue-sonner'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { userId } = storeToRefs(authStore)
+const { userId, isLoggedIn } = storeToRefs(authStore)
 
 const props = defineProps({
   categoryId: {
@@ -472,6 +474,12 @@ const goToBoardDetail = (boardId) => {
 
 // 글쓰기 모드로 변경
 const handleWritePost = () => {
+  if (!isLoggedIn.value) {
+    toast.error('로그인이 필요합니다')
+    router.push('/login')
+    return
+  }
+
   if (boardNavigation) {
     boardNavigation.changeToWriteMode()
   }

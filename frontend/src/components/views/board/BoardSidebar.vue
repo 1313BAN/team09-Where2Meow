@@ -55,6 +55,10 @@
 
 <script setup>
 import { ref, inject } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
+import { toast } from 'vue-sonner'
 
 const props = defineProps({
   activeCategory: {
@@ -67,6 +71,9 @@ defineEmits(['category-change'])
 
 // 게시판 네비게이션 inject
 const boardNavigation = inject('boardNavigation')
+const router = useRouter()
+const authStore = useAuthStore()
+const { isLoggedIn } = storeToRefs(authStore)
 
 // 카테고리 목록 (백엔드 스키마에 따라 1,2,3,4가 실제 카테고리, 0은 전체)
 const categories = ref([
@@ -79,6 +86,12 @@ const categories = ref([
 
 // 글쓰기 모드로 변경
 const handleWritePost = () => {
+  if (!isLoggedIn.value) {
+    toast.error('로그인이 필요합니다')
+    router.push('/login')
+    return
+  }
+  
   if (boardNavigation) {
     boardNavigation.changeToWriteMode()
   }
