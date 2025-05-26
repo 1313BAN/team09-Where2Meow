@@ -26,6 +26,14 @@
           </div>
         </div>
         
+        <!-- 메모 표시 (일정에 있는 장소인 경우) -->
+        <div v-if="isInSchedule && selectedPlace.content" class="memo-display">
+          <svg class="memo-icon" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+          </svg>
+          <p class="memo-text">{{ selectedPlace.content }}</p>
+        </div>
+        
         <!-- 평점 정보 -->
         <div class="rating-section" v-if="selectedPlace.reviewAvgScore > 0">
           <div class="rating-stars">
@@ -38,6 +46,7 @@
         <!-- 액션 버튼들 -->
         <div class="action-buttons">
           <button 
+            v-if="!isInSchedule"
             @click="showAddToScheduleModal = true"
             class="btn btn-primary"
           >
@@ -45,6 +54,28 @@
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
             </svg>
             일정에 추가
+          </button>
+          
+          <button 
+            v-if="isInSchedule"
+            @click="removeFromSchedule"
+            class="btn btn-danger"
+          >
+            <svg class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            삭제
+          </button>
+          
+          <button 
+            v-if="isInSchedule"
+            @click="showEditMemoModal = true"
+            class="btn btn-memo"
+          >
+            <svg class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
+            메모
           </button>
           
           <button 
@@ -137,6 +168,58 @@
         </div>
       </div>
     </div>
+    
+    <!-- 메모 수정 모달 -->
+    <div v-if="showEditMemoModal" class="modal-overlay" @click="closeEditMemoModal">
+      <div class="modal-container" @click.stop>
+        <div class="modal-header">
+          <h3 class="modal-title">메모 수정</h3>
+          <button @click="closeEditMemoModal" class="modal-close-btn">
+            <svg fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="selected-place-info">
+            <div class="place-thumbnail">
+              <AttractionImage 
+                :imageUrl="selectedPlace.image" 
+                :alt="selectedPlace.attractionName"
+                class="thumbnail-image"
+              />
+            </div>
+            <div class="place-details">
+              <h4 class="place-name">{{ selectedPlace.attractionName }}</h4>
+              <p class="place-location">{{ selectedPlace.stateName }} {{ selectedPlace.cityName }}</p>
+            </div>
+          </div>
+          
+          <div class="memo-section">
+            <label class="selection-label">메모 수정:</label>
+            <textarea 
+              v-model="editedMemo"
+              placeholder="이 장소에 대한 메모를 작성해보세요..."
+              class="memo-textarea"
+              rows="5"
+            ></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button @click="closeEditMemoModal" class="btn btn-cancel">
+            취소
+          </button>
+          <button 
+            @click="updateMemo"
+            class="btn btn-confirm"
+          >
+            저장
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -148,15 +231,21 @@ import { ref, computed } from 'vue'
 const props = defineProps({
   selectedPlace: Object,
   planStartDate: String,
-  planEndDate: String
+  planEndDate: String,
+  isInSchedule: {
+    type: Boolean,
+    default: false
+  }
 })
 
-const emit = defineEmits(['closePlace', 'addToSchedule', 'viewDetail'])
+const emit = defineEmits(['closePlace', 'addToSchedule', 'viewDetail', 'removeFromSchedule', 'updateMemo'])
 
 // 모달 상태
 const showAddToScheduleModal = ref(false)
+const showEditMemoModal = ref(false)
 const selectedDay = ref(null)
 const memo = ref('')
+const editedMemo = ref('')
 
 // 사용 가능한 날짜들 계산
 const availableDays = computed(() => {
@@ -202,6 +291,12 @@ const closeModal = () => {
   memo.value = ''
 }
 
+// 메모 수정 모달 닫기
+const closeEditMemoModal = () => {
+  showEditMemoModal.value = false
+  editedMemo.value = ''
+}
+
 // 일정에 추가
 const addToSchedule = () => {
   if (!selectedDay.value) return
@@ -213,6 +308,27 @@ const addToSchedule = () => {
   })
   
   closeModal()
+}
+
+// 일정에서 삭제
+const removeFromSchedule = () => {
+  emit('removeFromSchedule', props.selectedPlace)
+}
+
+// 메모 수정 모달 열기
+const showEditMemo = () => {
+  editedMemo.value = props.selectedPlace.content || ''
+  showEditMemoModal.value = true
+}
+
+// 메모 업데이트
+const updateMemo = () => {
+  emit('updateMemo', {
+    place: props.selectedPlace,
+    memo: editedMemo.value
+  })
+  
+  closeEditMemoModal()
 }
 </script>
 
@@ -298,6 +414,33 @@ const addToSchedule = () => {
   color: #ef4444;
 }
 
+/* 메모 표시 */
+.memo-display {
+  margin: 10px 0 16px 0;
+  padding: 10px 12px;
+  background-color: #f1f5f9;
+  border-radius: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.memo-icon {
+  width: 18px;
+  height: 18px;
+  color: #6fbbff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.memo-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
 /* 평점 섹션 */
 .rating-section {
   display: flex;
@@ -336,6 +479,7 @@ const addToSchedule = () => {
 .action-buttons {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
   align-items: center;
 }
 
@@ -414,45 +558,26 @@ const addToSchedule = () => {
   box-shadow: 0 8px 20px rgba(255, 128, 207, 0.4);
 }
 
-/* 반응형 디자인 */
-/* 반응형 디자인 - 카드 */
-@media (max-width: 640px) {
-  .place-detail-card {
-    width: calc(100vw - 20px);
-    left: 10px;
-    bottom: 10px;
-  }
-  
-  .card-container {
-    border-radius: 16px;
-  }
-  
-  .content-section {
-    padding: 12px;
-  }
-  
-  .attraction-title {
-    font-size: 1.1rem;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-    gap: 6px;
-  }
-  
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .btn-close {
-    width: 100%;
-  }
-  
-  .image-section {
-    height: 120px;
-  }
+.btn-danger {
+  background: linear-gradient(135deg, #ff6b6b 0%, #e53e3e 100%);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(229, 62, 62, 0.4);
+}
+
+.btn-memo {
+  background: linear-gradient(135deg, #a3bffa 0%, #7f9cf5 100%);
+  color: white;
+}
+
+.btn-memo:hover {
+  background: linear-gradient(135deg, #7f9cf5 0%, #667eea 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(127, 156, 245, 0.4);
 }
 
 /* 모달 스타일 */
@@ -766,6 +891,48 @@ const addToSchedule = () => {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* 반응형 - 카드 */
+@media (max-width: 640px) {
+  .place-detail-card {
+    width: calc(100vw - 20px);
+    left: 10px;
+    bottom: 10px;
+  }
+  
+  .card-container {
+    border-radius: 16px;
+  }
+  
+  .content-section {
+    padding: 12px;
+  }
+  
+  .attraction-title {
+    font-size: 1.1rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-memo {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .btn-close {
+    width: 100%;
+  }
+  
+  .image-section {
+    height: 120px;
   }
 }
 

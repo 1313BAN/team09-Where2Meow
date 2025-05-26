@@ -45,9 +45,14 @@
         :mapZoom="mapZoom"
         :planStartDate="startDate"
         :planEndDate="endDate"
+        :currentDaySchedule="currentDaySchedule"
+        :isInSchedule="isPlaceInCurrentSchedule"
         @selectPlace="selectPlace"
         @closePlace="closePlace"
         @addToSchedule="addToSchedule"
+        @removeFromSchedule="removeFromSchedule"
+        @updateMemo="updateMemo"
+        @selectScheduleItem="selectScheduleItem"
       />
     </div>
 
@@ -62,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import LeftPanel from '@/components/views/plan/LeftPanel.vue'
 import CenterPanel from '@/components/views/plan/CenterPanel.vue'
 import RightPanel from '@/components/views/plan/RightPanel.vue'
@@ -71,7 +76,7 @@ import { attractionApi } from '@/api/attraction'
 import { transformPlanDataForAPI } from '@/utils/planDataTransformer'
 
 // 반응형 데이터
-const activeTab = ref('info')
+const activeTab = ref('schedule')
 const tripTitle = ref('제주도 여행')
 const content = ref('')
 const startDate = ref('2024-06-01')
@@ -94,6 +99,56 @@ const selectedPlaceIndex = ref(null)
 const mapCenter = ref({ lat: 37.5665, lng: 126.978 })
 const mapZoom = ref(10)
 
+// 일정에 따라 지도 재조정
+const adjustMapToSchedule = () => {
+  if (currentDaySchedule.value && currentDaySchedule.value.length > 0) {
+    // 현재 일정에 좌표가 있는지 확인
+    const hasValidCoordinates = currentDaySchedule.value.some(
+      item => item.latitude && item.longitude
+    );
+
+    if (hasValidCoordinates) {
+      // 첫번째 유효한 좌표가 있는 일정 아이템 찾기
+      const firstValidItem = currentDaySchedule.value.find(
+        item => item.latitude && item.longitude
+      );
+
+      if (firstValidItem) {
+        mapCenter.value = {
+          lat: parseFloat(firstValidItem.latitude),
+          lng: parseFloat(firstValidItem.longitude)
+        };
+        mapZoom.value = 14; // 적절한 줌 레벨로 설정
+      }
+    }
+  }
+};
+
+// activeTab 변경 감지
+watch(
+  () => activeTab.value,
+  (newTab) => {
+    // 일정 탭으로 변경될 때
+    if (newTab === 'schedule') {
+      // 검색 결과 마커를 지우기 위해 검색 결과 초기화
+      searchResults.value = [];
+      // 일정에 따라 지도 중심 재조정
+      adjustMapToSchedule();
+    }
+  }
+);
+
+// selectedDay 변경 시 지도 재조정
+watch(
+  () => selectedDay.value,
+  () => {
+    // 일정 탭일 때만 적용
+    if (activeTab.value === 'schedule') {
+      adjustMapToSchedule();
+    }
+  }
+);
+
 // ✅ 장소 선택 함수
 const selectPlace = (place, index) => {
   console.log('selectPlace 호출됨:', place, index) // 디버깅용
@@ -111,15 +166,11 @@ const selectPlace = (place, index) => {
   }
 }
 
-
-
 // ✅ 장소 상세정보 닫기
 const closePlace = () => {
   selectedPlace.value = null
   selectedPlaceIndex.value = null  // ✅ 추가
 }
-
-
 
 // 계산된 속성들
 const totalDays = computed(() => {
@@ -140,12 +191,43 @@ const scheduleData = ref({
   1: [
     {
       attractionId: 1,
-      name: '도톤보리 맛집',
-      location: '오사카',
-      duration: '09:00 - 10:00',
-      content: '도톤보리 맛집 방문',
+      name: '경복궁',
+      location: '서울 종로구',
+      duration: '09:00 - 11:00',
+      content: '경복궁 관광',
+      latitude: 37.579617,
+      longitude: 126.977041
     },
+    {
+      attractionId: 2,
+      name: '경복궁 별주안',
+      location: '서울 종로구',
+      duration: '11:30 - 12:30',
+      content: '별주안 관광',
+      latitude: 37.582664,
+      longitude: 126.975330
+    },
+    {
+      attractionId: 3,
+      name: '팀모이 골복',
+      location: '서울 종로구',
+      duration: '13:00 - 14:30',
+      content: '골복에서 점심 먹기',
+      latitude: 37.574547,
+      longitude: 126.973106
+    }
   ],
+  2: [
+    {
+      attractionId: 4,
+      name: '경복궁 밸워하우스',
+      location: '서울 종로구',
+      duration: '09:00 - 11:00',
+      content: '블로그 컨텐츠 제작',
+      latitude: 37.576723,
+      longitude: 126.986298
+    }
+  ]
 })
 
 const chatMessages = ref([
@@ -190,6 +272,46 @@ const handleCategoryFilter = async (categoryIds) => {
   selectedCategoryIds.value = categoryIds
   await performSearch()
 }
+
+// 현재 선택된 장소가 일정에 있는지 확인하는 계산된 속성
+const isPlaceInCurrentSchedule = computed(() => {
+  if (!selectedPlace.value || !currentDaySchedule.value) return false;
+  
+  return currentDaySchedule.value.some(item => 
+    item.attractionId === selectedPlace.value.attractionId
+  );
+});
+
+// 일정에서 장소 삭제
+const removeFromSchedule = (place) => {
+  if (!place || !currentDaySchedule.value) return;
+  
+  scheduleData.value[selectedDay.value] = currentDaySchedule.value.filter(
+    item => item.attractionId !== place.attractionId
+  );
+  
+  console.log(`${selectedDay.value}일차에서 일정 삭제:`, place);
+  // 상세 카드 닫기
+  closePlace();
+};
+
+// 메모 업데이트
+const updateMemo = (data) => {
+  const { place, memo } = data;
+  
+  if (!place || !currentDaySchedule.value) return;
+  
+  const itemIndex = currentDaySchedule.value.findIndex(
+    item => item.attractionId === place.attractionId
+  );
+  
+  if (itemIndex === -1) return;
+  
+  // 메모 업데이트
+  scheduleData.value[selectedDay.value][itemIndex].content = memo;
+  
+  console.log(`${selectedDay.value}일차 일정 메모 업데이트:`, place, memo);
+};
 
 // 검색 관련 메서드 수정
 const performSearch = async () => {
@@ -333,11 +455,23 @@ const addToSchedule = (addData) => {
         : place.location || '위치 정보 없음',
     duration: '시간 미정',
     content: memo || place.attractionName || place.name,
-    date: date
+    date: date,
+    // 위도, 경도 정보 추가
+    latitude: place.latitude,
+    longitude: place.longitude
   }
 
   scheduleData.value[dayDiff].push(newItem)
   selectedPlace.value = null
+  
+  // 검색 탭에서 일정을 추가하면 일정 탭으로 자동 전환
+  if (activeTab.value === 'search') {
+    activeTab.value = 'schedule'
+    // 선택한 일차로 이동
+    selectedDay.value = dayDiff
+    // 검색 결과 초기화
+    searchResults.value = []
+  }
   
   console.log(`${dayDiff}일차(${date})에 일정 추가:`, newItem)
 }

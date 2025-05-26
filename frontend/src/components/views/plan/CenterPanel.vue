@@ -10,21 +10,49 @@
         @loaded="onMapLoaded"
       >
         <!-- 검색 결과 마커들 -->
-        <GMapMarker
-          v-for="(place, index) in searchResults"
-          :key="place.attractionId"
-          :position="{
-            lat: parseFloat(place.latitude),
-            lng: parseFloat(place.longitude),
-          }"
-          :icon="
-            selectedPlace?.attractionId === place.attractionId
-              ? getSelectedMarkerIcon(index + 1)
-              : getMarkerIcon(place, index + 1)
-          "
-          :zIndex="selectedPlace?.attractionId === place.attractionId ? 1000 : 100 + index"
-          @click="selectPlace(place, index + 1)"
-        />
+        <template v-if="showSearchMarkers">
+          <GMapMarker
+            v-for="(place, index) in searchResults"
+            :key="`search-${place.attractionId}`"
+            :position="{
+              lat: parseFloat(place.latitude),
+              lng: parseFloat(place.longitude),
+            }"
+            :icon="
+              selectedPlace?.attractionId === place.attractionId
+                ? getSelectedMarkerIcon(index + 1)
+                : getMarkerIcon(place, index + 1)
+            "
+            :zIndex="selectedPlace?.attractionId === place.attractionId ? 1000 : 100 + index"
+            @click="selectPlace(place, index + 1)"
+          />
+        </template>
+
+        <!-- 일정 마커들 -->
+        <template v-if="showScheduleMarkers">
+          <GMapMarker
+            v-for="(scheduleItem, index) in scheduleItems"
+            :key="`schedule-${scheduleItem.attractionId}-${index}`"
+            :position="{
+              lat: parseFloat(scheduleItem.latitude),
+              lng: parseFloat(scheduleItem.longitude),
+            }"
+            :icon="getScheduleMarkerIcon(index + 1)"
+            :zIndex="200 + index"
+            @click="$emit('selectScheduleItem', scheduleItem)"
+          />
+
+          <!-- 일정 경로 선 -->
+          <GMapPolyline
+            v-if="scheduleItems.length > 1"
+            :path="schedulePath"
+            :options="{
+              strokeColor: '#6FBBFF',
+              strokeOpacity: 0.8,
+              strokeWeight: 4
+            }"
+          />
+        </template>
       </GMapMap>
     </div>
 
@@ -33,15 +61,19 @@
       :selectedPlace="selectedPlace"
       :planStartDate="planStartDate"
       :planEndDate="planEndDate"
+      :isInSchedule="isInSchedule"
       @closePlace="$emit('closePlace')"
       @addToSchedule="$emit('addToSchedule', $event)"
+      @removeFromSchedule="$emit('removeFromSchedule', $event)"
+      @updateMemo="$emit('updateMemo', $event)"
+      @viewDetail="viewPlaceDetail"
     />
   </div>
 </template>
 
 <script setup>
 import PlaceDetailCard from './PlaceDetailCard.vue'
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, nextTick, watch, computed } from 'vue'
 
 const props = defineProps({
   searchResults: Array,
@@ -50,9 +82,19 @@ const props = defineProps({
   mapZoom: Number,
   planStartDate: String,
   planEndDate: String,
+  // 추가: 현재 일차의 일정 아이템들
+  currentDaySchedule: {
+    type: Array,
+    default: () => []
+  },
+  // 현재 선택된 장소가 일정에 있는지 여부
+  isInSchedule: {
+    type: Boolean,
+    default: false
+  }
 })
 
-const emit = defineEmits(['selectPlace', 'closePlace', 'addToSchedule'])
+const emit = defineEmits(['selectPlace', 'closePlace', 'addToSchedule', 'selectScheduleItem', 'removeFromSchedule', 'updateMemo'])
 
 const mapRef = ref(null)
 
@@ -69,6 +111,57 @@ const mapOptions = ref({
   animatedZoom: true,            // 준 애니메이션 활성화
   clickableIcons: false,          // 구글 맵의 기본 POI 아이콘 클릭 비활성화
 })
+
+// 검색 결과와 일정 마커 보이기/숨기기 설정
+const showScheduleMarkers = computed(() => {
+  // currentDaySchedule이 있을 때만 일정 마커 표시
+  return props.currentDaySchedule && props.currentDaySchedule.length > 0;
+});
+
+const showSearchMarkers = computed(() => {
+  // searchResults가 있을 때만 검색 마커 표시
+  return props.searchResults && props.searchResults.length > 0;
+});
+
+// 일정 아이템들의 좌표 계산
+const scheduleItems = computed(() => {
+  if (!props.currentDaySchedule || props.currentDaySchedule.length === 0) {
+    return [];
+  }
+  
+  return props.currentDaySchedule.map(item => {
+    // 기존 일정 아이템에 latitude, longitude가 없을 경우를 대비한 처리
+    return {
+      ...item,
+      latitude: item.latitude || 0,
+      longitude: item.longitude || 0
+    }
+  }).filter(item => item.latitude && item.longitude); // 유효한 좌표가 있는 아이템만 필터링
+});
+
+// 일정 경로를 위한 좌표 배열
+const schedulePath = computed(() => {
+  return scheduleItems.value.map(item => ({
+    lat: parseFloat(item.latitude),
+    lng: parseFloat(item.longitude)
+  }));
+});
+
+// 일정 마커 아이콘
+const getScheduleMarkerIcon = (index) => {
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="18" fill="#6FBBFF" stroke="white" stroke-width="3"/>
+        <text x="20" y="26" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="Arial, sans-serif">
+          ${index}
+        </text>
+      </svg>
+    `)}`,
+    scaledSize: { width: 40, height: 40 },
+    anchor: { x: 20, y: 20 },
+  }
+}
 
 // 부드럽게 이동하기 위한 사용자 정의 함수
 const smoothlyAnimateTo = (map, targetLocation, targetZoom) => {
@@ -125,22 +218,13 @@ const easeInOutCubic = (t) => {
     : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
 }
 
-// ✅ 마커 아이콘 설정
-// 숫자가 포함된 더 큰 마커 아이콘
+// 장소 상세 보기
+const viewPlaceDetail = (place) => {
+  // 여기에서 장소 상세 보기 기능을 구현할 수 있습니다.
+  // 예를 들어, 모달이나 별도의 페이지로 이동 등
+  console.log('장소 상세 보기:', place);
+};
 const getMarkerIcon = (place, index) => {
-  const categoryColors = {
-    12: '#FF6B6B', // 관광지
-    14: '#4ECDC4', // 문화시설
-    15: '#45B7D1', // 축제공연행사
-    25: '#96CEB4', // 여행코스
-    28: '#FFEAA7', // 레포츠
-    32: '#DDA0DD', // 숙박
-    38: '#FFB347', // 쇼핑
-    39: '#F8BBD9', // 음식점
-  }
-
-  const color = categoryColors[place.categoryId] || '#999999'
-
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
       <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
@@ -188,6 +272,40 @@ const selectPlace = (place) => {
   }
 }
 
+// 일정 변경 감지 시 지도 중심 및 줌 조정
+watch(
+  () => props.currentDaySchedule,
+  (newSchedule) => {
+    if (newSchedule && newSchedule.length > 0 && mapRef.value && mapRef.value.$mapObject) {
+      // 모든 일정 마커가 화면에 보이도록 자동 맞춤
+      fitMapToSchedule();
+    }
+  },
+  { deep: true }
+);
+
+// 모든 일정 마커가 화면에 보이도록 지도 맞춤
+const fitMapToSchedule = () => {
+  if (!mapRef.value || !mapRef.value.$mapObject || schedulePath.value.length === 0) return;
+  
+  const map = mapRef.value.$mapObject;
+  const bounds = new window.google.maps.LatLngBounds();
+  
+  // 모든 일정 좌표를 범위에 추가
+  schedulePath.value.forEach(point => {
+    bounds.extend(new window.google.maps.LatLng(point.lat, point.lng));
+  });
+  
+  // 지도를 범위에 맞춤
+  map.fitBounds(bounds);
+  
+  // 줌 레벨이 너무 가깝거나 멀지 않도록 조정
+  const listener = window.google.maps.event.addListener(map, 'idle', () => {
+    if (map.getZoom() > 16) map.setZoom(16);
+    window.google.maps.event.removeListener(listener);
+  });
+}
+
 // ✅ mapCenter와 mapZoom 변경 감지
 watch(
   [() => props.mapCenter, () => props.mapZoom],
@@ -226,7 +344,10 @@ const onMapLoaded = (map) => {
           })
         }
         
-        if (props.mapCenter) {
+        if (props.currentDaySchedule && props.currentDaySchedule.length > 0) {
+          // 일정이 있으면 그에 맞춰 지도 조정
+          fitMapToSchedule();
+        } else if (props.mapCenter) {
           if (props.mapZoom) {
             // 처음 지도 로드시 부드럽게 이동
             smoothlyAnimateTo(map, props.mapCenter, props.mapZoom)

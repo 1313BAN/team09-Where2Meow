@@ -1,51 +1,58 @@
 <template>
   <div class="search-results">
     <!-- 검색 결과가 없을 때 -->
-    <div v-if="!isSearching && searchResults.length === 0" class="no-results">
+    <div v-if="!isSearching && items.length === 0" class="no-results">
       <div class="no-results-icon">🔍</div>
-      <p class="no-results-text">검색 결과가 없습니다.</p>
-      <p class="no-results-subtext">다른 키워드로 검색해보세요.</p>
+      <p class="no-results-text">{{ mode === 'schedule' ? '일정이 없습니다.' : '검색 결과가 없습니다.' }}</p>
+      <p class="no-results-subtext">{{ mode === 'schedule' ? '검색 탭에서 장소를 검색하고 추가해보세요.' : '다른 키워드로 검색해보세요.' }}</p>
     </div>
 
-    <!-- 검색 결과 목록 -->
+    <!-- 아이템 목록 (검색 결과 또는 일정) -->
     <div 
-      v-for="(attraction, index) in searchResults" 
-      :key="attraction.attractionId"
-      @click="$emit('selectPlace', attraction, index + 1)"
+      v-for="(item, index) in items" 
+      :key="item.attractionId"
+      @click="$emit('selectItem', item, index + 1)"
       class="result-item"
-      :class="{ 'selected': selectedPlace?.attractionId === attraction.attractionId }"
+      :class="{ 'selected': selectedItem?.attractionId === item.attractionId, 'schedule-mode': mode === 'schedule' }"
     >
-      <!-- ✅ 순번 표시 추가 -->
+      <!-- 순번 표시 -->
       <div class="item-number">{{ index + 1 }}</div>
       
       <div class="item-image-container">
         <!-- AttractionImage 컴포넌트 사용 -->
         <AttractionImage 
-          :imageUrl="attraction.image" 
+          :imageUrl="item.image" 
           class="item-thumbnail"
-          :alt="attraction.attractionName"
+          :alt="item.attractionName"
         />
-        <div v-if="attraction.categoryName" class="category-badge">
-          {{ attraction.categoryName }}
+        <div v-if="item.categoryName" class="category-badge">
+          {{ item.categoryName }}
         </div>
       </div>
       
       <div class="item-details">
-        <div class="item-title">{{ attraction.attractionName }}</div>
+        <div class="item-title">{{ item.attractionName }}</div>
         <div class="item-location">
           <svg class="location-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
-          {{ attraction.stateName }} {{ attraction.cityName }}
+          {{ item.stateName }} {{ item.cityName }}
         </div>
         
-        <div class="item-rating" v-if="attraction.reviewCount > 0">
+        <div v-if="mode === 'schedule' && item.content" class="item-memo">
+          <svg class="memo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          {{ item.content }}
+        </div>
+        
+        <div v-else-if="item.reviewCount > 0" class="item-rating">
           <div class="rating-stars">
             <span class="star">⭐</span>
-            <span class="rating-score">{{ attraction.reviewAvgScore.toFixed(1) }}</span>
+            <span class="rating-score">{{ item.reviewAvgScore.toFixed(1) }}</span>
           </div>
-          <span class="review-count">({{ attraction.reviewCount }}개 리뷰)</span>
+          <span class="review-count">({{ item.reviewCount }}개 리뷰)</span>
         </div>
         <div v-else class="item-rating">
           <span class="no-review">리뷰 없음</span>
@@ -61,8 +68,8 @@
       <p class="loading-text">검색 중...</p>
     </div>
 
-    <!-- 더보기 버튼 -->
-    <div v-if="hasMoreResults && !isSearching && searchResults.length > 0" class="load-more-container">
+    <!-- 더보기 버튼 (검색 모드에서만 표시) -->
+    <div v-if="mode === 'search' && hasMoreResults && !isSearching && items.length > 0" class="load-more-container">
       <button @click="$emit('loadMoreResults')" class="load-more-button">
         <svg class="load-more-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -71,25 +78,50 @@
       </button>
     </div>
 
-    <!-- 결과 끝 표시 -->
-    <div v-if="!hasMoreResults && !isSearching && searchResults.length > 0" class="end-of-results">
+    <!-- 결과 끝 표시 (검색 모드에서만 표시) -->
+    <div v-if="mode === 'search' && !hasMoreResults && !isSearching && items.length > 0" class="end-of-results">
       <p>모든 검색 결과를 확인했습니다.</p>
     </div>
+    
+    <!-- 일정 추가 버튼 (일정 모드에서만 표시) -->
+    <!-- 장소 추가하기 버튼 삭제 -->
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import AttractionImage from '@/components/common/AttractionImage.vue'
 
 const props = defineProps({
+  // 검색 모드 관련 props
   searchResults: Array,
   isSearching: Boolean,
   hasMoreResults: Boolean,
-  selectedPlace: Object  // ✅ 추가
+  selectedPlace: Object,
+  
+  // 일정 모드 관련 props
+  scheduleItems: Array,
+  selectedScheduleItem: Object,
+  
+  // 모드 선택
+  mode: {
+    type: String,
+    default: 'search',
+    validator: (value) => ['search', 'schedule'].includes(value)
+  }
 })
 
-const emit = defineEmits(['selectPlace', 'loadMoreResults'])
+// 모드에 따라 적절한 아이템 배열 선택
+const items = computed(() => {
+  return props.mode === 'search' ? props.searchResults || [] : props.scheduleItems || []
+})
+
+// 모드에 따라 적절한 선택된 아이템 반환
+const selectedItem = computed(() => {
+  return props.mode === 'search' ? props.selectedPlace : props.selectedScheduleItem
+})
+
+const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
 </script>
 
 <style scoped>
@@ -118,7 +150,7 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   background: #a1a1a1;
 }
 
-/* 검색 결과 없음 스타일 */
+/* 결과 없음 스타일 */
 .no-results {
   display: flex;
   flex-direction: column;
@@ -175,11 +207,24 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   border-width: 2px;
 }
 
+.result-item.schedule-mode {
+  border-color: #6FBBFF;
+}
+
+.result-item.schedule-mode:hover {
+  border-color: #6FBBFF;
+}
+
+.result-item.schedule-mode.selected {
+  background-color: #e8f5ee;
+  border-color: #6FBBFF;
+}
+
 .result-item:last-child {
   margin-bottom: 0;
 }
 
-/* ✅ 순번 스타일 추가 */
+/* 순번 스타일 */
 .item-number {
   display: flex;
   align-items: center;
@@ -197,10 +242,20 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   margin-top: 4px;
 }
 
-/* ✅ 선택된 아이템의 순번 스타일 */
+/* 선택된 아이템의 순번 스타일 */
 .result-item.selected .item-number {
   background-color: #FF6B6B;
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+/* 일정 모드의 순번 스타일 */
+.result-item.schedule-mode .item-number {
+  background-color: #6FBBFF;
+}
+
+.result-item.schedule-mode.selected .item-number {
+  background-color: #467eb3;
+  box-shadow: 0 2px 8px rgba(111, 187, 255, 0.3);
 }
 
 /* 이미지 컨테이너 */
@@ -295,6 +350,7 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   color: #999;
 }
 
+/* 리뷰 평점 스타일 */
 .item-rating {
   display: flex;
   align-items: center;
@@ -327,6 +383,31 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
   color: #999;
   font-size: 12px;
   font-style: italic;
+}
+
+/* 일정 메모 스타일 */
+.item-memo {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #555;
+  font-style: italic;
+  margin-top: 4px;
+  line-height: 1.4;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.memo-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  color: #999;
+  flex-shrink: 0;
 }
 
 /* 로딩 스타일 */
@@ -391,6 +472,39 @@ const emit = defineEmits(['selectPlace', 'loadMoreResults'])
 }
 
 .load-more-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 일정 추가 버튼 */
+.add-schedule-container {
+  padding: 20px 0;
+  text-align: center;
+}
+
+.add-schedule-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  background-color: #fff;
+  color: #6FBBFF;
+  border: 2px solid #6FBBFF;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-schedule-button:hover {
+  background-color: #6FBBFF;
+  color: white;
+}
+
+.add-icon {
   width: 16px;
   height: 16px;
 }

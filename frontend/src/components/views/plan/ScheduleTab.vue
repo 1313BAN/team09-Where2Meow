@@ -11,6 +11,7 @@
     <ScheduleList
       :currentDaySchedule="currentDaySchedule"
       :selectedDay="selectedDay"
+      :selectedScheduleItem="selectedPlace"
       @selectScheduleItem="$emit('selectScheduleItem', $event)"
       @addScheduleItem="$emit('addScheduleItem')"
     />
@@ -39,7 +40,8 @@ defineProps({
   selectedDay: Number,
   totalDays: Number,
   currentDaySchedule: Array,
-  isSaving: Boolean
+  isSaving: Boolean,
+  selectedPlace: Object
 })
 
 defineEmits([

@@ -30,6 +30,7 @@
       :totalDays="totalDays"
       :currentDaySchedule="currentDaySchedule"
       :isSaving="isSaving"
+      :selectedPlace="selectedPlace"
       @update:selectedDay="$emit('update:selectedDay', $event)"
       @selectScheduleItem="$emit('selectScheduleItem', $event)"
       @addScheduleItem="$emit('addScheduleItem')"

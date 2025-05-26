@@ -27,39 +27,24 @@ defineEmits(['update:selectedDay'])
 
 <style scoped>
 .day-selector-container {
-  padding: 15px 20px;
+  padding: 10px 15px;
   background-color: #f0f2f5;
   flex-shrink: 0;
-  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
 }
 
 .day-selector {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: min-content;
   gap: 8px;
-  overflow-x: auto;
-  padding: 2px 0;
-}
-
-.day-selector::-webkit-scrollbar {
-  height: 4px;
-}
-
-.day-selector::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 2px;
-}
-
-.day-selector::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 2px;
-}
-
-.day-selector::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  padding: 0;
+  width: 100%;
 }
 
 .day-button {
-  padding: 10px 16px;
+  padding: 8px 16px;
   border-radius: 20px;
   background-color: #e0e0e0;
   color: #555;
@@ -68,9 +53,9 @@ defineEmits(['update:selectedDay'])
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  min-width: 60px;
+  text-align: center;
+  margin: 0;
+  height: auto;
 }
 
 .day-button.active {
@@ -80,5 +65,18 @@ defineEmits(['update:selectedDay'])
 
 .day-button:hover:not(.active) {
   background-color: #d0d0d0;
+}
+
+/* 반응형 그리드 */
+@media (max-width: 768px) {
+  .day-selector {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .day-selector {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

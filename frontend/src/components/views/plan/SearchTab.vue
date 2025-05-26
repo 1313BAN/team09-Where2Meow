@@ -17,12 +17,13 @@
 
       <!-- 검색 결과 -->
       <SearchResults
+        mode="search"
         :searchResults="searchResults"
         :isSearching="isSearching"
         :hasMoreResults="hasMoreResults"
         :searchQuery="searchQuery"
         :selectedPlace="selectedPlace"
-        @selectPlace="$emit('selectPlace', $event)"
+        @selectItem="$emit('selectPlace', $event)"
         @loadMoreResults="$emit('loadMoreResults')"
       />
     </div>
