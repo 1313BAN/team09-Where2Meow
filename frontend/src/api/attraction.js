@@ -29,6 +29,7 @@ export const attractionApi = {
     if (params.keyword) searchParams.append('keyword', params.keyword)
     if (params.page !== undefined) searchParams.append('page', params.page)
     if (params.size) searchParams.append('size', params.size)
+    if (params.sort) searchParams.append('sort', params.sort)  // sort 파라미터 추가
 
     return attractionApiClient
       .get(`/api/attraction?${searchParams.toString()}`)

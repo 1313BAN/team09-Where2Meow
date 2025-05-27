@@ -71,7 +71,7 @@
         >
           <AttractionCard
             v-for="attraction in attractions"
-            :key="attraction.contentid"
+            :key="attraction.attractionId"
             :attraction="attraction"
             @click="handleAttractionClick"
           />
@@ -157,7 +157,7 @@ const getResultTitle = () => {
   if (keyword) {
     title = `"${keyword}" 검색 결과`
   } else if (categoryId) {
-    const category = categories.value.find(cat => cat.categoryId === categoryId)
+    const category = categories.value.find((cat) => cat.categoryId === categoryId)
     title = category ? `${category.categoryName} 여행지` : '여행지'
   }
 
@@ -197,28 +197,22 @@ const loadAttractions = async (page = 0) => {
       params.countryId = 1
     }
 
-    attractionAPI.getAttractionListPaging(
-      params,
-      (response) => {
-        if (response.data) {
-          attractions.value = response.data.content || []
-          totalPages.value = response.data.totalPages || 0
-          totalElements.value = response.data.totalElements || 0
-          currentPage.value = response.data.number || 0
-        }
-      },
-      (error) => {
-        console.error('여행지 목록 로드 실패:', error)
-        toast.error('여행지 목록을 불러오는데 실패했습니다')
-        attractions.value = []
-        totalPages.value = 0
-        totalElements.value = 0
-      },
-    )
-    console.log('여행지 목록 로드 성공:', attractions)
+    // searchAttractions 사용
+    const response = await attractionAPI.attractionApi.searchAttractions(params)
+
+    if (response.data) {
+      attractions.value = response.data.content || []
+      totalPages.value = response.data.totalPages || 0
+      totalElements.value = response.data.totalElements || 0
+      currentPage.value = response.data.number || 0
+    }
+    console.log('여행지 목록 로드 성공:', attractions.value)
   } catch (error) {
-    console.error('여행지 로드 중 오류:', error)
+    console.error('여행지 목록 로드 실패:', error)
+    toast.error('여행지 목록을 불러오는데 실패했습니다')
     attractions.value = []
+    totalPages.value = 0
+    totalElements.value = 0
   } finally {
     isLoading.value = false
   }
@@ -269,7 +263,8 @@ watch(
 onMounted(async () => {
   // 카테고리 데이해 로드
   try {
-    attractionAPI.attractionApi.getAllCategories()
+    attractionAPI.attractionApi
+      .getAllCategories()
       .then((response) => {
         categories.value = response.data
       })
@@ -279,7 +274,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('카테고리 데이터 로드 중 오류:', error)
   }
-  
+
   loadAttractions(0)
 })
 </script>

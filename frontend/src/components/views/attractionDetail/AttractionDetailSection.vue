@@ -14,7 +14,7 @@
         <!-- 뒤로 가기 버튼 -->
         <button
           @click="goBack"
-          class="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          class="cursor-pointer flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
         >
           <i class="pi pi-arrow-left"></i>
           <span>뒤로 가기</span>
@@ -38,15 +38,17 @@
                 :alt="attraction.title"
                 class="w-full h-96 object-cover"
               />
-              
+
               <!-- 카테고리 배지 -->
               <div class="absolute top-4 left-4">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/90 text-gray-800 backdrop-blur-sm">
+                <span
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/90 text-gray-800 backdrop-blur-sm"
+                >
                   {{ getCategoryName(attraction.contenttypeid) }}
                 </span>
               </div>
             </div>
-            
+
             <!-- 추가 이미지 (있는 경우) -->
             <div v-if="attraction.firstimage2" class="grid grid-cols-2 gap-2">
               <img
@@ -73,16 +75,26 @@
                   <span>{{ attraction.tel }}</span>
                 </div>
               </div>
-              
+
               <!-- 평점 표시 -->
               <div class="flex items-center gap-4 mb-6">
                 <div class="flex items-center gap-2">
                   <div class="flex">
-                    <i v-for="star in 5" :key="star" 
-                       :class="['pi text-lg', star <= averageRating ? 'pi-star-fill text-yellow-400' : 'pi-star text-gray-300']">
+                    <i
+                      v-for="star in 5"
+                      :key="star"
+                      :class="[
+                        'pi text-lg',
+                        star <= averageRating
+                          ? 'pi-star-fill text-yellow-400'
+                          : 'pi-star text-gray-300',
+                      ]"
+                    >
                     </i>
                   </div>
-                  <span class="text-lg font-medium text-gray-900">{{ averageRating.toFixed(1) }}</span>
+                  <span class="text-lg font-medium text-gray-900">{{
+                    averageRating.toFixed(1)
+                  }}</span>
                   <span class="text-gray-600">({{ reviewStats.totalReviews }}개 리뷰)</span>
                 </div>
               </div>
@@ -93,14 +105,26 @@
                   @click="toggleLike"
                   class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  <i :class="['pi', isLiked ? 'pi-heart-fill text-red-500' : 'pi-heart text-gray-600']"></i>
+                  <i
+                    :class="[
+                      'pi',
+                      isLiked ? 'pi-heart-fill text-red-500' : 'pi-heart text-gray-600',
+                    ]"
+                  ></i>
                   <span>좋아요</span>
                 </button>
                 <button
                   @click="toggleBookmark"
                   class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  <i :class="['pi', isBookmarked ? 'pi-bookmark-fill text-yellow-500' : 'pi-bookmark text-gray-600']"></i>
+                  <i
+                    :class="[
+                      'pi',
+                      isBookmarked
+                        ? 'pi-bookmark-fill text-yellow-500'
+                        : 'pi-bookmark text-gray-600',
+                    ]"
+                  ></i>
                   <span>저장</span>
                 </button>
                 <button
@@ -144,37 +168,50 @@
           <!-- 리뷰 통계 -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="text-center bg-white rounded-lg p-4">
-              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">{{ averageRating.toFixed(1) }}</div>
+              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">
+                {{ averageRating.toFixed(1) }}
+              </div>
               <div class="flex justify-center mb-2">
                 <div class="flex">
-                  <i v-for="star in 5" :key="star" 
-                     :class="['pi text-sm', star <= averageRating ? 'pi-star-fill text-yellow-400' : 'pi-star text-gray-300']">
+                  <i
+                    v-for="star in 5"
+                    :key="star"
+                    :class="[
+                      'pi text-sm',
+                      star <= averageRating
+                        ? 'pi-star-fill text-yellow-400'
+                        : 'pi-star text-gray-300',
+                    ]"
+                  >
                   </i>
                 </div>
               </div>
               <div class="text-sm text-gray-600">평균 평점</div>
             </div>
             <div class="text-center bg-white rounded-lg p-4">
-              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">{{ reviewStats.totalReviews }}</div>
+              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">
+                {{ reviewStats.totalReviews }}
+              </div>
               <div class="text-sm text-gray-600">전체 리뷰</div>
             </div>
             <div class="text-center bg-white rounded-lg p-4">
-              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">{{ reviewStats.recommendationRate }}%</div>
+              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">
+                {{ reviewStats.recommendationRate }}%
+              </div>
               <div class="text-sm text-gray-600">추천율</div>
             </div>
           </div>
 
           <!-- 리뷰 목록 -->
-          <ReviewList 
-            :attraction-id="attractionId"
-            @review-updated="loadAttractionDetail"
-          />
+          <ReviewList :attraction-id="attractionId" @review-updated="loadAttractionDetail" />
         </div>
       </div>
 
       <!-- 에러 상태 -->
       <div v-else class="text-center py-12">
-        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+        <div
+          class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4"
+        >
           <i class="pi pi-exclamation-triangle text-gray-400 text-2xl"></i>
         </div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">여행지를 찾을 수 없습니다</h3>
@@ -226,12 +263,13 @@ const showReviewModal = ref(false)
 const categories = ref([])
 
 // 기본 이미지
-const defaultImage = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center'
+const defaultImage =
+  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center'
 
 // 임시 리뷰 통계 (추후 실제 데이터와 연동)
 const reviewStats = ref({
   totalReviews: 23,
-  recommendationRate: 87
+  recommendationRate: 87,
 })
 
 const averageRating = computed(() => {
@@ -255,7 +293,7 @@ const loadAttractionDetail = async () => {
       (error) => {
         console.error('여행지 상세 정보 로드 실패:', error)
         toast.error('여행지 정보를 불러오는데 실패했습니다')
-      }
+      },
     )
   } catch (error) {
     console.error('여행지 상세 정보 로드 중 오류:', error)
@@ -266,7 +304,7 @@ const loadAttractionDetail = async () => {
 
 // 유틸리티 함수들
 const getCategoryName = (categoryId) => {
-  const category = categories.value.find(cat => cat.categoryId === categoryId)
+  const category = categories.value.find((cat) => cat.categoryId === categoryId)
   return category ? category.categoryName : '기타'
 }
 
@@ -284,7 +322,7 @@ const toggleLike = () => {
     toast.error('로그인이 필요합니다')
     return
   }
-  
+
   isLiked.value = !isLiked.value
   toast.success(isLiked.value ? '좋아요를 눌렀습니다' : '좋아요를 취소했습니다')
 }
@@ -294,20 +332,20 @@ const toggleBookmark = () => {
     toast.error('로그인이 필요합니다')
     return
   }
-  
+
   isBookmarked.value = !isBookmarked.value
   toast.success(isBookmarked.value ? '북마크에 저장했습니다' : '북마크에서 제거했습니다')
 }
 
 const shareAttraction = async () => {
   const url = window.location.href
-  
+
   if (navigator.share) {
     try {
       await navigator.share({
         title: attraction.value?.title,
         text: `${attraction.value?.title} - Where2Meow에서 확인해보세요`,
-        url: url
+        url: url,
       })
     } catch (error) {
       if (error.name !== 'AbortError') {
@@ -332,7 +370,7 @@ const openReviewModal = () => {
     router.push('/login')
     return
   }
-  
+
   showReviewModal.value = true
 }
 
@@ -350,7 +388,8 @@ const handleReviewCreated = () => {
 onMounted(async () => {
   // 카테고리 데이터 로드
   try {
-    attractionAPI.attractionApi.getAllCategories()
+    attractionAPI.attractionApi
+      .getAllCategories()
       .then((response) => {
         categories.value = response.data
       })
@@ -360,7 +399,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('카테고리 데이터 로드 중 오류:', error)
   }
-  
+
   loadAttractionDetail()
 })
 </script>
