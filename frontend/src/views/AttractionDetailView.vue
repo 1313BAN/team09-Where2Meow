@@ -1,5 +1,9 @@
 <template>
   <div class="min-h-screen bg-white">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl"></div>
+    <AttractionDetailSection />
   </div>
 </template>
+
+<script setup>
+import AttractionDetailSection from '@/components/views/attractionDetail/AttractionDetailSection.vue'
+</script>

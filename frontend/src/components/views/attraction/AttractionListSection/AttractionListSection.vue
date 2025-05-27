@@ -1,1 +1,342 @@
-<template></template>
+<template>
+  <section class="py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <!-- 검색 결과 헤더 -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-6 gap-4">
+        <div class="flex items-center gap-4">
+          <h2 class="text-xl font-semibold text-gray-900">
+            {{ getResultTitle() }}
+          </h2>
+          <span v-if="totalElements > 0" class="text-sm text-gray-500">
+            총 {{ totalElements.toLocaleString() }}개의 여행지
+          </span>
+        </div>
+
+        <!-- 정렬 및 보기 옵션 -->
+        <div class="flex items-center gap-3">
+          <!-- 정렬 선택 -->
+          <div class="relative">
+            <select
+              v-model="sortOption"
+              @change="handleSortChange"
+              class="relative cursor-pointer min-h-[40px] border border-gray-300 rounded-xl hover:border-gray-400 focus:border-[var(--secondary-color)] focus:outline-none bg-white transition-all duration-200 px-3 py-2 pr-8 text-sm appearance-none"
+            >
+              <option value="attractionName-asc">이름순</option>
+              <option value="attractionName-desc">이름 역순</option>
+              <option value="readcount-desc">인기순</option>
+            </select>
+            <i
+              class="pi pi-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+            ></i>
+          </div>
+
+          <!-- 그리드 크기 선택 -->
+          <!-- <div class="flex border border-gray-300 rounded-lg overflow-hidden">
+            <button
+              @click="setGridColumns(3)"
+              :class="[
+                'cursor-pointer px-3 py-2 text-sm transition-colors',
+                gridColumns === 3
+                  ? 'bg-[var(--primary-color)] text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50',
+              ]"
+            >
+              <i class="pi pi-stop"></i>
+            </button>
+            <button
+              @click="setGridColumns(4)"
+              :class="[
+                'cursor-pointer px-3 py-2 text-sm transition-colors border-l border-gray-300',
+                gridColumns === 4
+                  ? 'bg-[var(--primary-color)] text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50',
+              ]"
+            >
+              <i class="pi pi-th-large"></i>
+            </button>
+          </div> -->
+        </div>
+      </div>
+
+      <!-- 로딩 상태 -->
+      <div v-if="isLoading" class="flex justify-center py-12">
+        <div class="flex items-center gap-3 text-gray-600">
+          <i class="pi pi-spinner pi-spin text-xl"></i>
+          <span>여행지를 불러오는 중...</span>
+        </div>
+      </div>
+
+      <!-- 여행지 그리드 -->
+      <div v-else>
+        <!-- 검색 결과 없음 -->
+        <div v-if="attractions.length === 0" class="text-center py-12">
+          <div
+            class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="pi pi-map-marker text-gray-400 text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">검색 결과가 없습니다</h3>
+          <p class="text-gray-600 mb-4">다른 검색 조건을 시도해보세요.</p>
+          <button
+            @click="clearFilters"
+            class="px-4 py-2 bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] text-white rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 ease-in-out cursor-pointer"
+          >
+            전체 여행지 보기
+          </button>
+        </div>
+
+        <!-- 여행지 카드 그리드 -->
+        <div
+          v-else
+          :class="[
+            'grid gap-6 mb-8',
+            gridColumns === 3
+              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+          ]"
+        >
+          <AttractionCard
+            v-for="attraction in attractions"
+            :key="attraction.contentid"
+            :attraction="attraction"
+            @click="handleAttractionClick"
+            @like="handleLike"
+            @bookmark="handleBookmark"
+          />
+        </div>
+
+        <!-- 페이지네이션 -->
+        <div v-if="totalPages > 1" class="flex justify-center">
+          <div class="flex items-center gap-2">
+            <button
+              @click="changePage(currentPage - 1)"
+              :disabled="currentPage === 0"
+              class="cursor-pointer p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            >
+              <i class="pi pi-angle-left"></i>
+            </button>
+
+            <button
+              v-for="page in visiblePages"
+              :key="page"
+              @click="changePage(page)"
+              :class="[
+                'cursor-pointer px-3 py-2 rounded-lg border transition-colors',
+                currentPage === page
+                  ? 'border-[var(--primary-color)] bg-[var(--primary-color)] text-white'
+                  : 'border-gray-300 hover:bg-gray-50',
+              ]"
+            >
+              {{ page + 1 }}
+            </button>
+
+            <button
+              @click="changePage(currentPage + 1)"
+              :disabled="currentPage === totalPages - 1"
+              class="cursor-pointer p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            >
+              <i class="pi pi-angle-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import AttractionCard from './AttractionCard.vue'
+import attractionAPI from '@/api/attraction'
+import { toast } from 'vue-sonner'
+
+const router = useRouter()
+
+const props = defineProps({
+  searchParams: {
+    type: Object,
+    default: () => ({}),
+  },
+})
+
+// 상태 관리
+const attractions = ref([])
+const isLoading = ref(false)
+const sortOption = ref('attractionName-asc')
+const gridColumns = ref(4)
+
+// 페이지네이션
+const currentPage = ref(0)
+const totalPages = ref(0)
+const totalElements = ref(0)
+const pageSize = 16
+
+// 검색 결과 제목 생성
+const getResultTitle = () => {
+  if (!props.searchParams || Object.keys(props.searchParams).length === 0) {
+    return '전체 여행지'
+  }
+
+  let title = '검색 결과'
+  const { keyword, countryId, stateId, cityId, categoryId } = props.searchParams
+
+  if (keyword) {
+    title = `"${keyword}" 검색 결과`
+  } else if (categoryId) {
+    const categoryNames = {
+      12: '관광지',
+      14: '문화시설',
+      15: '축제공연행사',
+      25: '여행코스',
+      28: '레저/스포츠',
+      32: '숙박',
+      38: '쇼핑',
+      39: '음식점',
+    }
+    title = `${categoryNames[categoryId]} 여행지`
+  }
+
+  return title
+}
+
+// 페이지네이션 표시할 페이지 번호들
+const visiblePages = computed(() => {
+  const pages = []
+  const start = Math.max(0, currentPage.value - 2)
+  const end = Math.min(totalPages.value - 1, currentPage.value + 2)
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
+
+// 여행지 목록 로드
+const loadAttractions = async (page = 0) => {
+  isLoading.value = true
+
+  try {
+    const [sortField, sortDirection] = sortOption.value.split('-')
+
+    const params = {
+      page,
+      size: pageSize,
+      sort: `${sortField},${sortDirection}`,
+      ...props.searchParams,
+    }
+
+    const hasCondition = ['keyword', 'countryId', 'stateId', 'cityId', 'categoryId'].some(
+      (key) => !!params[key],
+    )
+    if (!hasCondition) {
+      params.countryId = 1
+    }
+
+    // API에서 사용하는 필드명으로 변환
+    if (params.keyword) {
+      // 키워드 검색 시에는 다른 파라미터들을 제거할 수도 있음
+    }
+
+    attractionAPI.getAttractionListPaging(
+      params,
+      (response) => {
+        if (response.data) {
+          attractions.value = response.data.content || []
+          totalPages.value = response.data.totalPages || 0
+          totalElements.value = response.data.totalElements || 0
+          currentPage.value = response.data.number || 0
+        }
+      },
+      (error) => {
+        console.error('여행지 목록 로드 실패:', error)
+        toast.error('여행지 목록을 불러오는데 실패했습니다')
+        attractions.value = []
+        totalPages.value = 0
+        totalElements.value = 0
+      },
+    )
+  } catch (error) {
+    console.error('여행지 로드 중 오류:', error)
+    attractions.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 정렬 변경 핸들러
+const handleSortChange = () => {
+  currentPage.value = 0
+  loadAttractions(0)
+}
+
+// 그리드 컬럼 설정
+const setGridColumns = (columns) => {
+  gridColumns.value = columns
+}
+
+// 페이지 변경
+const changePage = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    currentPage.value = page
+    loadAttractions(page)
+    // 페이지 상단으로 스크롤
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// 필터 초기화
+const clearFilters = () => {
+  // 부모 컴포넌트에 필터 초기화 요청
+  loadAttractions(0)
+}
+
+// 이벤트 핸들러들
+const handleAttractionClick = (attraction) => {
+  console.log('여행지 클릭:', attraction)
+  router.push({
+    name: 'attractionDetail',
+    params: { attractionId: attraction.contentid },
+  })
+}
+
+const handleLike = (attraction) => {
+  console.log('좋아요:', attraction)
+  toast.info('좋아요 기능은 준비 중입니다')
+}
+
+const handleBookmark = (attraction) => {
+  console.log('북마크:', attraction)
+  toast.info('북마크 기능은 준비 중입니다')
+}
+
+// 검색 파라미터 변경 감지
+watch(
+  () => props.searchParams,
+  () => {
+    currentPage.value = 0
+    loadAttractions(0)
+  },
+  { deep: true },
+)
+
+// 컴포넌트 마운트 시 데이터 로드
+onMounted(() => {
+  loadAttractions(0)
+})
+</script>
+
+<style scoped>
+/* 그리드 반응형 조정 */
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .grid.xl\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
