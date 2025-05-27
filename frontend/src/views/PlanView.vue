@@ -18,6 +18,7 @@
       :isSearching="isSearching"
       :hasMoreResults="hasMoreResults"
       :isSaving="isSaving"
+      :isLoading="isLoading"
       :selectedPlace="selectedPlace"
       @update:activeTab="activeTab = $event"
       @update:tripTitle="tripTitle = $event"
@@ -60,20 +61,37 @@
     <RightPanel
       :chatMessages="chatMessages"
       :newMessage="newMessage"
+      :isAiProcessing="isAiProcessing"
       @update:newMessage="newMessage = $event"
-      @sendMessage="sendMessage"
+      @sendMessage="sendAiMessage"
     />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import LeftPanel from '@/components/views/plan/LeftPanel.vue'
 import CenterPanel from '@/components/views/plan/CenterPanel.vue'
 import RightPanel from '@/components/views/plan/RightPanel.vue'
 import { planService } from '@/api/plan'
 import { attractionApi } from '@/api/attraction'
+import { aiApi } from '@/api/ai'
 import { transformPlanDataForAPI } from '@/utils/planDataTransformer'
+import { convertScheduleToAiFormat, convertAiResponseToSchedule, detectCommandType } from '@/utils/aiDataConverter'
+
+// 라우트 정보 가져오기
+const route = useRoute()
+
+// 편집 모드 여부 확인
+const isEditMode = computed(() => {
+  return route.name === 'plan-edit' && route.params.planId
+})
+
+// 현재 편집 중인 계획 ID
+const currentPlanId = computed(() => {
+  return route.params.planId || null
+})
 
 // 반응형 데이터
 const activeTab = ref('schedule')
@@ -89,9 +107,13 @@ const availableCategories = ref([]) // 백엔드에서 받아온 카테고리 �
 const newMessage = ref('')
 const isSaving = ref(false)
 const isSearching = ref(false)
+const isLoading = ref(false) // 계획 로드용 로딩 상태 추가
 const searchResults = ref([])
 const currentPage = ref(0)
 const hasMoreResults = ref(true)
+
+// AI 관련 상태
+const isAiProcessing = ref(false)
 
 // ✅ 지도 관련 상태 추가
 const selectedPlace = ref(null)
@@ -187,67 +209,146 @@ const currentDaySchedule = computed(() => {
 })
 
 // 데이터
-const scheduleData = ref({
-  1: [
-    {
-      attractionId: 1,
-      name: '경복궁',
-      location: '서울 종로구',
-      duration: '09:00 - 11:00',
-      content: '경복궁 관광',
-      latitude: 37.579617,
-      longitude: 126.977041
-    },
-    {
-      attractionId: 2,
-      name: '경복궁 별주안',
-      location: '서울 종로구',
-      duration: '11:30 - 12:30',
-      content: '별주안 관광',
-      latitude: 37.582664,
-      longitude: 126.975330
-    },
-    {
-      attractionId: 3,
-      name: '팀모이 골복',
-      location: '서울 종로구',
-      duration: '13:00 - 14:30',
-      content: '골복에서 점심 먹기',
-      latitude: 37.574547,
-      longitude: 126.973106
-    }
-  ],
-  2: [
-    {
-      attractionId: 4,
-      name: '경복궁 밸워하우스',
-      location: '서울 종로구',
-      duration: '09:00 - 11:00',
-      content: '블로그 컨텐츠 제작',
-      latitude: 37.576723,
-      longitude: 126.986298
-    }
-  ]
-})
+const scheduleData = ref({})
 
 const chatMessages = ref([
   {
     id: 1,
     sender: 'ai',
-    text: '안녕하세요! 제주도 여행 계획을 함께 만들어 볼까요?',
+    text: '안냥! AI 여행 플래너 가냥이다냥. "강릉 1박 2일 여행 계획 짜줘" 같은 명령을 해보라냥!',
     time: '09:30',
   },
 ])
 
-// 컴포넌트 마운트 시 카테고리 목록 로드
+// 기존 계획 데이터 로드 함수
+const loadExistingPlan = async (planId) => {
+  try {
+    console.log('계획 데이터 로드 시작:', planId)
+    
+    const response = await planService.getPlanDetail(planId)
+    const planData = response.data
+    
+    console.log('로드된 계획 데이터:', planData)
+    
+    // 기본 정보 설정
+    tripTitle.value = planData.title || ''
+    content.value = planData.content || ''
+    startDate.value = planData.startDate || ''
+    endDate.value = planData.endDate || ''
+    isPublic.value = planData.isPublic || false
+    
+    // 일정 데이터 변환
+    if (planData.attractions && planData.attractions.length > 0) {
+      const newScheduleData = {}
+      
+      // 각 관광지에 대해 상세 정보를 가져와서 일정 데이터 구성
+      for (const attraction of planData.attractions) {
+        try {
+          // 관광지 상세 정보 가져오기
+          const attractionDetail = await attractionApi.getAttractionDetail(attraction.attractionId)
+          const attractionInfo = attractionDetail.data
+          
+          const planDate = new Date(attraction.date)
+          const startDateObj = new Date(startDate.value)
+          const dayDiff = Math.floor((planDate - startDateObj) / (1000 * 60 * 60 * 24)) + 1
+          
+          if (!newScheduleData[dayDiff]) {
+            newScheduleData[dayDiff] = []
+          }
+          
+          newScheduleData[dayDiff].push({
+            attractionId: attraction.attractionId,
+            attractionName: attractionInfo.attractionName || attractionInfo.name,
+            name: attractionInfo.attractionName || attractionInfo.name,
+            stateName: attractionInfo.stateName,
+            cityName: attractionInfo.cityName,
+            location: attractionInfo.stateName && attractionInfo.cityName 
+              ? `${attractionInfo.stateName} ${attractionInfo.cityName}` 
+              : '위치 정보 없음',
+            duration: '시간 미정',
+            content: attraction.content || attractionInfo.attractionName || attractionInfo.name,
+            date: attraction.date,
+            first_image1: attractionInfo.first_image1,
+            first_image2: attractionInfo.first_image2,
+            image: attractionInfo.image || attractionInfo.first_image1,
+            categoryName: attractionInfo.categoryName,
+            attraction_category_name: attractionInfo.attraction_category_name,
+            latitude: attractionInfo.latitude,
+            longitude: attractionInfo.longitude,
+            attractionOrder: attraction.attractionOrder,
+            // 추가 정보
+            tel: attractionInfo.tel,
+            addr1: attractionInfo.addr1,
+            addr2: attractionInfo.addr2,
+            homepage: attractionInfo.homepage,
+            overview: attractionInfo.overview
+          })
+        } catch (attractionError) {
+          console.error(`관광지 ${attraction.attractionId} 상세 정보 로드 실패:`, attractionError)
+          // 관광지 정보를 가져오지 못한 경우에도 기본 정보로 추가
+          const planDate = new Date(attraction.date)
+          const startDateObj = new Date(startDate.value)
+          const dayDiff = Math.floor((planDate - startDateObj) / (1000 * 60 * 60 * 24)) + 1
+          
+          if (!newScheduleData[dayDiff]) {
+            newScheduleData[dayDiff] = []
+          }
+          
+          newScheduleData[dayDiff].push({
+            attractionId: attraction.attractionId,
+            attractionName: `관광지 ${attraction.attractionId}`,
+            name: `관광지 ${attraction.attractionId}`,
+            stateName: '정보 없음',
+            cityName: '정보 없음',
+            location: '위치 정보 없음',
+            duration: '시간 미정',
+            content: attraction.content || `관광지 ${attraction.attractionId}`,
+            date: attraction.date,
+            first_image1: null,
+            first_image2: null,
+            image: null,
+            categoryName: '정보 없음',
+            attraction_category_name: '정보 없음',
+            latitude: null,
+            longitude: null,
+            attractionOrder: attraction.attractionOrder
+          })
+        }
+      }
+      
+      // 각 날짜별로 attractionOrder로 정렬
+      Object.keys(newScheduleData).forEach(day => {
+        newScheduleData[day].sort((a, b) => (a.attractionOrder || 0) - (b.attractionOrder || 0))
+      })
+      
+      scheduleData.value = newScheduleData
+    }
+    
+    console.log('변환된 일정 데이터:', scheduleData.value)
+    
+  } catch (error) {
+    console.error('계획 로드 실패:', error)
+    alert('계획 정보를 불러오는데 실패했습니다.')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 컴포넌트 마운트 시 로직
 onMounted(async () => {
   try {
-    // 백엔드에서 카테고리 목록을 받아올 API가 있다면 사용
+    // 카테고리 목록 로드
     const response = await attractionApi.getAllCategories()
     availableCategories.value = response.data
+    
+    // 편집 모드일 때 기존 계획 데이터 로드
+    if (isEditMode.value && currentPlanId.value) {
+      await loadExistingPlan(currentPlanId.value)
+    }
+    
   } catch (error) {
-    console.error('카테고리 로드 실패:', error)
-    alert('카테고리 정보를 불러오는데 실패했습니다.')
+    console.error('초기화 실패:', error)
+    alert('페이지 초기화에 실패했습니다.')
   }
 })
 
@@ -298,6 +399,11 @@ const updateMemo = (data) => {
   
   // 메모 업데이트
   scheduleData.value[selectedDay.value][itemIndex].content = memo;
+  
+  // 현재 선택된 장소가 동일한 장소인 경우, 해당 장소의 메모도 업데이트
+  if (selectedPlace.value && selectedPlace.value.attractionId === place.attractionId) {
+    selectedPlace.value.content = memo;
+  }
   
   console.log(`${selectedDay.value}일차 일정 메모 업데이트:`, place, memo);
 };
@@ -409,13 +515,45 @@ const loadMoreResults = async () => {
 
 // 기존 메서드들
 const selectScheduleItem = (item) => {
+  console.log('selectScheduleItem 호출됨:', item) // 디버깅용
+  
   selectedPlace.value = {
     ...item,
-    attractionName: item.name,
-    rating: 4.5,
-    reviews: 100,
-    image: 'https://via.placeholder.com/150',
-    description: '선택된 일정 장소입니다.',
+    // 기존 데이터 유지하면서 호환성 보장
+    attractionName: item.attractionName || item.name,
+    name: item.name || item.attractionName,
+    // 이미지 정보 사용 (기본 이미지 대신 실제 데이터 사용)
+    image: item.image || item.first_image1 || item.first_image2,
+    first_image1: item.first_image1,
+    first_image2: item.first_image2,
+    // 위치 정보 사용
+    stateName: item.stateName,
+    cityName: item.cityName,
+    location: item.location,
+    // 카테고리 정보
+    categoryName: item.categoryName,
+    attraction_category_name: item.attraction_category_name,
+    // 좌표 정보
+    latitude: item.latitude,
+    longitude: item.longitude,
+    // 메모 정보
+    content: item.content,
+    // 기본 리뷰 정보 (일정 아이템에는 리뷰가 없으므로 기본값)
+    rating: 0,
+    reviews: 0,
+    reviewCount: 0,
+    reviewAvgScore: 0,
+    description: item.content || '일정에 추가된 장소입니다.',
+  }
+  
+  // ✅ 지도 중심을 해당 장소로 이동
+  if (item.latitude && item.longitude) {
+    mapCenter.value = {
+      lat: parseFloat(item.latitude),
+      lng: parseFloat(item.longitude)
+    }
+    mapZoom.value = 15
+    console.log('일정 아이템 클릭으로 지도 중심 변경:', mapCenter.value, '줌:', mapZoom.value) // 디버깅용
   }
 }
 
@@ -437,7 +575,10 @@ const addToSchedule = (addData) => {
 
   const newItem = {
     attractionId: place.attractionId,
+    attractionName: place.attractionName || place.name,
     name: place.attractionName || place.name,
+    stateName: place.stateName,
+    cityName: place.cityName,
     location:
       place.stateName && place.cityName
         ? `${place.stateName} ${place.cityName}`
@@ -445,6 +586,13 @@ const addToSchedule = (addData) => {
     duration: '시간 미정',
     content: memo || place.attractionName || place.name,
     date: date,
+    // 이미지 정보 추가 (SearchResults에서 사용)
+    first_image1: place.first_image1,
+    first_image2: place.first_image2,
+    image: place.image,
+    // 카테고리 정보 추가
+    categoryName: place.categoryName,
+    attraction_category_name: place.attraction_category_name,
     // 위도, 경도 정보 추가
     latitude: place.latitude,
     longitude: place.longitude
@@ -465,8 +613,8 @@ const addToSchedule = (addData) => {
   console.log(`${dayDiff}일차(${date})에 일정 추가:`, newItem)
 }
 
-const sendMessage = () => {
-  if (!newMessage.value.trim()) return
+const sendAiMessage = async () => {
+  if (!newMessage.value.trim() || isAiProcessing.value) return
 
   const userMessage = {
     id: chatMessages.value.length + 1,
@@ -479,21 +627,123 @@ const sendMessage = () => {
   }
 
   chatMessages.value.push(userMessage)
-
-  setTimeout(() => {
-    const aiMessage = {
+  
+  const originalMessage = newMessage.value
+  newMessage.value = ''
+  
+  try {
+    isAiProcessing.value = true
+    
+    // 로딩 메시지 추가
+    const loadingMessage = {
       id: chatMessages.value.length + 1,
       sender: 'ai',
-      text: '좋은 선택이네요! 더 도움이 필요하시면 말씀해 주세요.',
+      text: 'AI가 여행 계획을 생성하고 있습니다...',
+      time: new Date().toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      isLoading: true
+    }
+    
+    chatMessages.value.push(loadingMessage)
+    
+    // 명령어 유형 감지
+    const commandType = detectCommandType(originalMessage)
+    console.log('감지된 명령 유형:', commandType)
+    
+    let response
+    let query = originalMessage
+    
+    if (commandType === 'create') {
+      // 생성 명령
+      // 기간 정보 추가
+      if (startDate.value && endDate.value) {
+        query = `기간: ${startDate.value} ~ ${endDate.value}, 질문: ${originalMessage}`
+      }
+      
+      response = await aiApi.createPlan(query)
+    } else {
+      // 업데이트 명령
+      const currentPlan = convertScheduleToAiFormat(scheduleData.value, startDate.value, endDate.value)
+      response = await aiApi.updatePlan(originalMessage, currentPlan)
+    }
+    
+    console.log('AI 응답:', response.data)
+    
+    // 로딩 메시지 제거
+    const loadingIndex = chatMessages.value.findIndex(msg => msg.isLoading)
+    if (loadingIndex !== -1) {
+      chatMessages.value.splice(loadingIndex, 1)
+    }
+    
+    // AI 응답 처리
+    if (response.data.attractions && response.data.attractions.length > 0) {
+      // 일정 데이터 업데이트 (비동기로 이미지 URL 가져오기)
+      const newScheduleData = await convertAiResponseToSchedule(response.data.attractions, startDate.value)
+      scheduleData.value = newScheduleData
+      
+      // 설명 메시지 추가
+      const description = response.data.description || '여행 계획이 성공적으로 생성/업데이트되었습니다!'
+      
+      const aiMessage = {
+        id: chatMessages.value.length + 1,
+        sender: 'ai',
+        text: description,
+        time: new Date().toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      }
+      
+      chatMessages.value.push(aiMessage)
+      
+      // 일정 탭으로 이동
+      activeTab.value = 'schedule'
+      selectedDay.value = 1
+      
+      // 지도 재조정
+      adjustMapToSchedule()
+      
+    } else {
+      // 에러 메시지
+      const errorMessage = {
+        id: chatMessages.value.length + 1,
+        sender: 'ai',
+        text: '죄송합니다. 여행 계획을 생성하는데 실패했습니다. 다른 명령을 시도해 주세요.',
+        time: new Date().toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+      }
+      
+      chatMessages.value.push(errorMessage)
+    }
+    
+  } catch (error) {
+    console.error('AI 요청 실패:', error)
+    
+    // 로딩 메시지 제거
+    const loadingIndex = chatMessages.value.findIndex(msg => msg.isLoading)
+    if (loadingIndex !== -1) {
+      chatMessages.value.splice(loadingIndex, 1)
+    }
+    
+    // 에러 메시지 추가
+    const errorMessage = {
+      id: chatMessages.value.length + 1,
+      sender: 'ai',
+      text: '에러가 발생했습니다. 다시 시도해 주세요.',
       time: new Date().toLocaleTimeString('ko-KR', {
         hour: '2-digit',
         minute: '2-digit',
       }),
     }
-    chatMessages.value.push(aiMessage)
-  }, 1000)
-
-  newMessage.value = ''
+    
+    chatMessages.value.push(errorMessage)
+  } finally {
+    isAiProcessing.value = false
+  }
 }
 
 const savePlan = async () => {
@@ -513,17 +763,27 @@ const savePlan = async () => {
 
     console.log('저장할 데이터:', planData)
 
-    const response = await planService.createPlan(planData)
+    let response
+    if (isEditMode.value && currentPlanId.value) {
+      // 편집 모드: 기존 계획 업데이트
+      response = await planService.updatePlan(currentPlanId.value, planData)
+      console.log('업데이트 성공:', response.data)
+      alert('여행 계획이 성공적으로 수정되었습니다!')
+    } else {
+      // 새로운 계획 생성
+      response = await planService.createPlan(planData)
+      console.log('생성 성공:', response.data)
+      alert('여행 계획이 성공적으로 저장되었습니다!')
+    }
 
-    console.log('저장 성공:', response.data)
-    alert('여행 계획이 성공적으로 저장되었습니다!')
   } catch (error) {
     console.error('저장 실패:', error)
 
     if (error.response?.data?.message) {
       alert(`저장 실패: ${error.response.data.message}`)
     } else {
-      alert('여행 계획 저장 중 오류가 발생했습니다.')
+      const action = isEditMode.value ? '수정' : '저장'
+      alert(`여행 계획 ${action} 중 오류가 발생했습니다.`)
     }
   } finally {
     isSaving.value = false

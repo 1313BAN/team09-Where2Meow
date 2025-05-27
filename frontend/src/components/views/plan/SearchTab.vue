@@ -54,6 +54,7 @@ defineEmits(['update:searchQuery', 'update:selectedCategoryIds', 'selectPlace', 
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  width: 100%;
 }
 
 .search-panel-content {
@@ -61,5 +62,6 @@ defineEmits(['update:searchQuery', 'update:selectedCategoryIds', 'selectPlace', 
   flex-direction: column;
   height: 100%;
   padding: 0;
+  width: 100%;
 }
 </style>

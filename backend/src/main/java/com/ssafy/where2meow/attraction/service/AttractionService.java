@@ -68,7 +68,7 @@ public class AttractionService {
 
     if (countryId != null) {
       spec = spec.and((root, query, criteriaBuilder) ->
-          criteriaBuilder.equal(root.get("countryCode"), countryId));
+          criteriaBuilder.equal(root.get("countryId"), countryId));
     }
 
     if (stateId != null) {
@@ -286,5 +286,13 @@ public class AttractionService {
   public Map<Integer, String> getAttractionImageUrls(List<Integer> attractionIds, int width, int height) {
     log.warn("크기 파라미터가 있는 getAttractionImageUrls는 deprecated되었습니다. 고화질 이미지를 반환합니다.");
     return getAttractionImageUrls(attractionIds);
+  }
+
+  /**
+   * 관광지 엔티티 조회
+   */
+  public Attraction getAttractionById(Integer attractionId) {
+    return attractionRepository.findById(attractionId)
+        .orElseThrow(() -> new IllegalArgumentException("해당 관광지를 찾을 수 없습니다: " + attractionId));
   }
 }

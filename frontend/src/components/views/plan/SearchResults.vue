@@ -10,10 +10,10 @@
     <!-- 아이템 목록 (검색 결과 또는 일정) -->
     <div 
       v-for="(item, index) in items" 
-      :key="item.attractionId"
-      @click="$emit('selectItem', item, index + 1)"
+      :key="`${item.attractionId || item.attraction_id}-${index}`"
+      @click="handleItemClick(item, index)"
       class="result-item"
-      :class="{ 'selected': selectedItem?.attractionId === item.attractionId, 'schedule-mode': mode === 'schedule' }"
+      :class="{ 'selected': isItemSelected(item), 'schedule-mode': mode === 'schedule' }"
     >
       <!-- 순번 표시 -->
       <div class="item-number">{{ index + 1 }}</div>
@@ -21,23 +21,30 @@
       <div class="item-image-container">
         <!-- AttractionImage 컴포넌트 사용 -->
         <AttractionImage 
-          :imageUrl="item.image" 
+          :imageUrl="item.image || (item.first_image1 || item.first_image2)" 
+          :attractionId="item.attractionId || item.attraction_id"
           class="item-thumbnail"
-          :alt="item.attractionName"
+          :alt="item.attractionName || item.attraction_name"
         />
-        <div v-if="item.categoryName" class="category-badge">
-          {{ item.categoryName }}
+        <div v-if="item.categoryName || item.attraction_category_name" class="category-badge">
+          {{ item.categoryName || item.attraction_category_name }}
         </div>
       </div>
       
       <div class="item-details">
-        <div class="item-title">{{ item.attractionName }}</div>
+        <div class="item-title">{{ item.attractionName || item.attraction_name }}</div>
         <div class="item-location">
           <svg class="location-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
-          {{ item.stateName }} {{ item.cityName }}
+          <span>
+            {{ 
+              (item.stateName || item.state_name) && (item.cityName || item.city_name) 
+                ? `${item.stateName || item.state_name} ${item.cityName || item.city_name}`
+                : item.location || '위치 정보 없음'
+            }}
+          </span>
         </div>
         
         <div v-if="mode === 'schedule' && item.content" class="item-memo">
@@ -47,6 +54,7 @@
           {{ item.content }}
         </div>
         
+        <!-- 메모가 없는 일정 모드이거나 리뷰가 있는 경우만 평점 표시 -->
         <div v-else-if="item.reviewCount > 0" class="item-rating">
           <div class="rating-stars">
             <span class="star">⭐</span>
@@ -58,9 +66,7 @@
           </div>
           <span class="review-count">({{ item.reviewCount || 0 }}개 리뷰)</span>
         </div>
-        <div v-else class="item-rating">
-          <span class="no-review">리뷰 없음</span>
-        </div>
+        <!-- 리뷰가 없으면 아무것도 표시하지 않음 -->
       </div>
     </div>
 
@@ -117,7 +123,15 @@ const props = defineProps({
 
 // 모드에 따라 적절한 아이템 배열 선택
 const items = computed(() => {
-  return props.mode === 'search' ? props.searchResults || [] : props.scheduleItems || []
+  const result = props.mode === 'search' ? props.searchResults || [] : props.scheduleItems || []
+  
+  // 디버깅용: 일정 모드일 때 데이터 출력
+  if (props.mode === 'schedule' && result.length > 0) {
+    console.log('일정 데이터:', result)
+    console.log('첫 번째 아이템:', result[0])
+  }
+  
+  return result
 })
 
 // 모드에 따라 적절한 선택된 아이템 반환
@@ -125,7 +139,31 @@ const selectedItem = computed(() => {
   return props.mode === 'search' ? props.selectedPlace : props.selectedScheduleItem
 })
 
+// 아이템 선택 여부 확인
+function isItemSelected(item) {
+  if (!selectedItem.value || !item) return false
+  
+  const selectedId = selectedItem.value.attractionId || selectedItem.value.attraction_id
+  const itemId = item.attractionId || item.attraction_id
+  
+  return selectedId == itemId  // 의도적으로 느슨한 비교 사용 (== 연산자)
+}
+
 const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
+
+// ✅ 아이템 클릭 처리 함수
+const handleItemClick = (item, index) => {
+  console.log(`${props.mode} 모드에서 아이템 클릭:`, item, index) // 디버깅용
+  
+  // 모드에 따라 이벤트 전달
+  if (props.mode === 'search') {
+    // 검색 모드: selectItem 이벤트 발생 (selectPlace로 연결됨)
+    emit('selectItem', item, index + 1)
+  } else if (props.mode === 'schedule') {
+    // 일정 모드: selectItem 이벤트 발생 (selectScheduleItem으로 연결됨)
+    emit('selectItem', item, index + 1)
+  }
+}
 </script>
 
 <style scoped>
@@ -134,6 +172,9 @@ const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
   overflow-y: auto;
   padding: 15px 15px 0 15px;
   background-color: #fafafa;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .search-results::-webkit-scrollbar {
@@ -201,6 +242,7 @@ const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
   transition: all 0.2s ease;
   border: 1px solid #f0f0f0;
   position: relative;
+  width: 100%; /* 너비 100% 추가 */
 }
 
 .result-item:hover {
@@ -330,6 +372,7 @@ const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
   flex-direction: column;
   min-width: 0;
   justify-content: space-between;
+  overflow: hidden; /* 오버플로우 처리 추가 */
 }
 
 .item-title {
@@ -350,6 +393,14 @@ const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
   font-size: 13px;
   color: #666;
   margin-bottom: 8px;
+  max-width: 100%; /* 최대 너비 제한 */
+}
+
+.item-location span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
 .location-icon {
@@ -406,7 +457,6 @@ const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
   word-break: break-word;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }

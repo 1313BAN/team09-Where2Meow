@@ -18,7 +18,12 @@ export function getFullImageUrl(imageUrl) {
     return imageUrl
   }
   
-  // 백엔드에서 전체 URL을 반환하므로 그대로 사용
+  // 기본 이미지 경로로 시작하는 경우
+  if (imageUrl === DEFAULT_IMAGE_URL) {
+    return imageUrl
+  }
+  
+  // 원래 방식으로 돌아가기: 드롭인 방식으로 수정
   return imageUrl
 }
 

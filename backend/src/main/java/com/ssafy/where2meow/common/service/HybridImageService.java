@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
+
 @Service
 @Slf4j
 public class HybridImageService {
@@ -17,7 +19,7 @@ public class HybridImageService {
   private ImageCacheService imageCacheService;
 
   /**
-   * 최적의 이미지 URL 반환 (고화질 캐싱 방식)
+   * 최적의 이미지 URL 반환 (고화질 캐싱 방식) - 임시 해결책 적용
    */
   public String getBestImageUrl(Attraction attraction) {
     if (attraction == null) {
@@ -31,30 +33,40 @@ public class HybridImageService {
       return baseUrl + "/images/default-attraction.jpg";
     }
 
+    log.debug("이미지 URL 생성 시작: attractionId={}, baseUrl={}", attractionId, baseUrl);
+
     // 1. 캐시된 고화질 이미지 우선 확인
     String cachedUrl = imageCacheService.getCachedImageUrl(attractionId);
     if (cachedUrl != null) {
-      log.info("캐시된 고화질 이미지 사용: attractionId={}", attractionId);
-      return baseUrl + cachedUrl;
+      String fullUrl = baseUrl + cachedUrl;
+      log.info("캐시된 고화질 이미지 사용: attractionId={}, cachedUrl={}, fullUrl={}", attractionId, cachedUrl, fullUrl);
+      return fullUrl;
     }
 
-    // 2. 한국관광공사 이미지가 있으면 고화질로 캐싱
+    // 2. 한국관광공사 이미지가 있으면 원본 URL 즐시 반환 + 백그라운드 캐싱
     String originalUrl = attraction.getFirstImage1();
+    log.debug("DB에서 가져온 원본 이미지 URL: attractionId={}, originalUrl={}", attractionId, originalUrl);
+    
     if (originalUrl != null && !originalUrl.trim().isEmpty()) {
-      String cachedImageUrl = imageCacheService.downloadAndCacheImage(originalUrl, attractionId);
-      if (cachedImageUrl != null) {
-        log.info("한국관광공사 이미지 고화질 캐싱 성공: attractionId={}", attractionId);
-        return baseUrl + cachedImageUrl;
-      } else {
-        // 캐싱 실패시 원본 URL 직접 반환
-        log.debug("캐싱 실패, 원본 URL 반환: attractionId={}", attractionId);
-        return originalUrl;
-      }
+      // 백그라운드에서 비동기적 캐싱 시작
+      CompletableFuture.runAsync(() -> {
+        try {
+          log.info("백그라운드 이미지 캐싱 시작: attractionId={}", attractionId);
+          imageCacheService.downloadAndCacheImage(originalUrl, attractionId);
+        } catch (Exception e) {
+          log.warn("백그라운드 이미지 캐싱 실패: attractionId={}, error={}", attractionId, e.getMessage());
+        }
+      });
+
+      // 원본 URL 즐시 반환 (사용자가 즐시 이미지를 볼 수 있음)
+      log.info("원본 URL 즐시 반환 (백그라운드 캐싱): attractionId={}, originalUrl={}", attractionId, originalUrl);
+      return originalUrl;
     }
 
     // 3. 이미지가 없는 경우 기본 이미지
-    log.debug("기본 이미지 사용: attractionId={}", attractionId);
-    return baseUrl + "/images/default-attraction.jpg";
+    String defaultUrl = baseUrl + "/images/default-attraction.jpg";
+    log.debug("기본 이미지 사용: attractionId={}, defaultUrl={}", attractionId, defaultUrl);
+    return defaultUrl;
   }
 
   /**

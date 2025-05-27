@@ -4,25 +4,34 @@
       <!-- 이미지 섹션 -->
       <div class="image-section">
         <AttractionImage 
-          :imageUrl="selectedPlace.image" 
-          :alt="selectedPlace.attractionName"
+          :imageUrl="selectedPlace.image || (selectedPlace.first_image1 || selectedPlace.first_image2)" 
+          :attractionId="selectedPlace.attractionId || selectedPlace.attraction_id"
+          :alt="selectedPlace.attractionName || selectedPlace.attraction_name"
           class="attraction-image"
         />
         <!-- 카테고리 뱃지 -->
-        <div class="category-badge">
-          {{ selectedPlace.categoryName }}
+        <div class="category-badge" v-if="selectedPlace.categoryName || selectedPlace.attraction_category_name">
+          {{ selectedPlace.categoryName || selectedPlace.attraction_category_name }}
         </div>
       </div>
       
       <!-- 콘텐츠 섹션 -->
       <div class="content-section">
         <div class="main-info">
-          <h3 class="attraction-title">{{ selectedPlace.attractionName }}</h3>
+          <h3 class="attraction-title">{{ selectedPlace.attractionName || selectedPlace.attraction_name }}</h3>
           <div class="location-info">
             <svg class="location-icon" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
             </svg>
-            <span>{{ selectedPlace.stateName }} {{ selectedPlace.cityName }}</span>
+            <span>{{ selectedPlace.stateName || selectedPlace.state_name }} {{ selectedPlace.cityName || selectedPlace.city_name }}</span>
+          </div>
+          
+          <!-- 주소 정보 표시 -->
+          <div v-if="selectedPlace.addr1 || selectedPlace.addr2" class="address-info">
+            <svg class="address-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+            </svg>
+            <span>{{ (selectedPlace.addr1 || '') + ' ' + (selectedPlace.addr2 || '') }}</span>
           </div>
         </div>
         
@@ -69,7 +78,7 @@
           
           <button 
             v-if="isInSchedule"
-            @click="showEditMemoModal = true"
+            @click="showEditMemo()"
             class="btn btn-memo"
           >
             <svg class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -117,14 +126,15 @@
           <div class="selected-place-info">
             <div class="place-thumbnail">
               <AttractionImage 
-                :imageUrl="selectedPlace.image" 
-                :alt="selectedPlace.attractionName"
+                :imageUrl="selectedPlace.image || (selectedPlace.first_image1 || selectedPlace.first_image2)" 
+                :attractionId="selectedPlace.attractionId || selectedPlace.attraction_id"
+                :alt="selectedPlace.attractionName || selectedPlace.attraction_name"
                 class="thumbnail-image"
               />
             </div>
             <div class="place-details">
-              <h4 class="place-name">{{ selectedPlace.attractionName }}</h4>
-              <p class="place-location">{{ selectedPlace.stateName }} {{ selectedPlace.cityName }}</p>
+              <h4 class="place-name">{{ selectedPlace.attractionName || selectedPlace.attraction_name }}</h4>
+              <p class="place-location">{{ selectedPlace.stateName || selectedPlace.state_name }} {{ selectedPlace.cityName || selectedPlace.city_name }}</p>
             </div>
           </div>
           
@@ -185,14 +195,15 @@
           <div class="selected-place-info">
             <div class="place-thumbnail">
               <AttractionImage 
-                :imageUrl="selectedPlace.image" 
-                :alt="selectedPlace.attractionName"
+                :imageUrl="selectedPlace.image || (selectedPlace.first_image1 || selectedPlace.first_image2)" 
+                :attractionId="selectedPlace.attractionId || selectedPlace.attraction_id"
+                :alt="selectedPlace.attractionName || selectedPlace.attraction_name"
                 class="thumbnail-image"
               />
             </div>
             <div class="place-details">
-              <h4 class="place-name">{{ selectedPlace.attractionName }}</h4>
-              <p class="place-location">{{ selectedPlace.stateName }} {{ selectedPlace.cityName }}</p>
+              <h4 class="place-name">{{ selectedPlace.attractionName || selectedPlace.attraction_name }}</h4>
+              <p class="place-location">{{ selectedPlace.stateName || selectedPlace.state_name }} {{ selectedPlace.cityName || selectedPlace.city_name }}</p>
             </div>
           </div>
           
@@ -328,6 +339,11 @@ const updateMemo = () => {
     memo: editedMemo.value
   })
   
+  // 현재 컴포넌트의 선택된 장소 메모도 업데이트
+  if (props.selectedPlace) {
+    props.selectedPlace.content = editedMemo.value
+  }
+  
   closeEditMemoModal()
 }
 </script>
@@ -412,6 +428,28 @@ const updateMemo = () => {
   width: 16px;
   height: 16px;
   color: #ef4444;
+}
+
+/* 주소 정보 */
+.address-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.address-icon {
+  width: 16px;
+  height: 16px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.address-info span {
+  word-break: break-all;
 }
 
 /* 메모 표시 */

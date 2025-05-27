@@ -62,12 +62,7 @@ export const attractionApi = {
     
     return attractionApiClient.get(`/api/attraction?${searchParams.toString()}`)
       .then(response => {
-        if (response.data && response.data.content) {
-          response.data.content = response.data.content.map(item => ({
-            ...item,
-            image: getFullImageUrl(item.image)
-          }));
-        }
+        // 그대로 반환
         return response;
       });
   },
@@ -80,9 +75,7 @@ export const attractionApi = {
   getAttractionDetail(attractionId) {
     return attractionApiClient.get(`/api/attraction/detail/${attractionId}`)
       .then(response => {
-        if (response.data) {
-          response.data.image = getFullImageUrl(response.data.image);
-        }
+        // 그대로 반환
         return response;
       });
   },
@@ -93,7 +86,25 @@ export const attractionApi = {
   getAllCategories() {
     return attractionApiClient.get('/api/attraction/categories')
   },
-  
+
+  /**
+   * 관광지 이미지 URL 조회
+   * @param {number} attractionId - 관광지 ID
+   * @returns {Promise} 이미지 URL
+   */
+  getAttractionImageUrl(attractionId) {
+    console.log('관광지 이미지 URL API 호출:', attractionId)
+    return attractionApiClient.get(`/api/attraction/${attractionId}/image`)
+      .then(response => {
+        console.log('관광지 이미지 URL API 응답:', response)
+        console.log('응답 데이터:', response.data)
+        return response.data // 직접 URL 문자열 반환
+      })
+      .catch(error => {
+        console.error('관광지 이미지 URL API 에러:', error)
+        throw error
+      })
+  },
 
 }
 

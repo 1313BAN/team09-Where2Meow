@@ -14,6 +14,7 @@
     <div class="chat-input-container">
       <ChatInput
         :newMessage="newMessage"
+        :isAiProcessing="isAiProcessing"
         @update:newMessage="$emit('update:newMessage', $event)"
         @sendMessage="$emit('sendMessage')"
       />
@@ -28,7 +29,8 @@ import ChatInput from './ChatInput.vue'
 
 defineProps({
   chatMessages: Array,
-  newMessage: String
+  newMessage: String,
+  isAiProcessing: Boolean
 })
 
 defineEmits(['update:newMessage', 'sendMessage'])

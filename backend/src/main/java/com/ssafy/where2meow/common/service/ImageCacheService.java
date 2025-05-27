@@ -66,7 +66,7 @@ public class ImageCacheService {
   }
 
   /**
-   * 이미지 다운로드 및 고화질 캐싱
+   * 이미지 다운로드 및 고화질 캐싱 (비동기적 버전)
    */
   public String downloadAndCacheImage(String originalUrl, Integer attractionId) {
     try {
@@ -79,13 +79,13 @@ public class ImageCacheService {
         return IMAGE_URL_PREFIX + fileName;
       }
 
-      log.info("이미지 다운로드 시작: attractionId={}, url={}", attractionId, originalUrl);
+      log.info("비동기적 이미지 다운로드 시작: attractionId={}, url={}", attractionId, originalUrl);
 
       // 원본 이미지 다운로드
       URL url = new URL(originalUrl);
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-      connection.setConnectTimeout(10000); // 10초 타임아웃
-      connection.setReadTimeout(30000); // 30초 타임아웃
+      connection.setConnectTimeout(5000); // 5초 연결 타임아웃
+      connection.setReadTimeout(15000); // 15초 읽기 타임아웃
       connection.setRequestProperty("User-Agent",
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
 
@@ -95,18 +95,67 @@ public class ImageCacheService {
         if (originalImage != null) {
           // 고화질 이미지 처리 및 저장
           BufferedImage processedImage = processImageForHighQuality(originalImage);
-
-          // 파일 저장 (JPEG 고품질)
           saveHighQualityImage(processedImage, cachedFile);
 
-          log.info("고화질 이미지 캐싱 완료: {}", fileName);
+          log.info("비동기적 고화질 이미지 캐싱 완료: {}", fileName);
           return IMAGE_URL_PREFIX + fileName;
         } else {
           log.warn("이미지 읽기 실패 - 유효하지 않은 이미지: {}", originalUrl);
         }
       }
     } catch (Exception e) {
-      log.error("이미지 캐싱 실패 - attractionId: {}, url: {}", attractionId, originalUrl, e);
+      log.error("비동기적 이미지 캐싱 실패 - attractionId: {}, url: {}", attractionId, originalUrl, e);
+    }
+
+    return null;
+  }
+
+  /**
+   * 이미지 다운로드 및 고화질 캐싱 (동기적 버전)
+   */
+  public String downloadAndCacheImageSync(String originalUrl, Integer attractionId, long timeoutMs) {
+    try {
+      String fileName = generateFileName(attractionId);
+      File cachedFile = new File(IMAGE_CACHE_DIR + fileName);
+
+      // 이미 캐시된 파일이 있으면 URL 반환
+      if (cachedFile.exists()) {
+        log.debug("이미 캐시된 이미지 반환: {}", fileName);
+        return IMAGE_URL_PREFIX + fileName;
+      }
+
+      log.info("동기적 이미지 다운로드 시작: attractionId={}, url={}, timeout={}ms", attractionId, originalUrl, timeoutMs);
+
+      // 원본 이미지 다운로드
+      URL url = new URL(originalUrl);
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setConnectTimeout((int) Math.min(timeoutMs / 2, 5000)); // 최대 5초
+      connection.setReadTimeout((int) timeoutMs); // 전체 대기 시간
+      connection.setRequestProperty("User-Agent",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+
+      long startTime = System.currentTimeMillis();
+      
+      try (InputStream inputStream = connection.getInputStream()) {
+        BufferedImage originalImage = ImageIO.read(inputStream);
+
+        if (originalImage != null) {
+          long downloadTime = System.currentTimeMillis() - startTime;
+          log.info("이미지 다운로드 완료: {}ms", downloadTime);
+          
+          // 고화질 이미지 처리 및 저장
+          BufferedImage processedImage = processImageForHighQuality(originalImage);
+          saveHighQualityImage(processedImage, cachedFile);
+
+          long totalTime = System.currentTimeMillis() - startTime;
+          log.info("동기적 고화질 이미지 캐싱 완료: {}, 전체 소요시간: {}ms", fileName, totalTime);
+          return IMAGE_URL_PREFIX + fileName;
+        } else {
+          log.warn("이미지 읽기 실패 - 유효하지 않은 이미지: {}", originalUrl);
+        }
+      }
+    } catch (Exception e) {
+      log.error("동기적 이미지 캐싱 실패 - attractionId: {}, url: {}", attractionId, originalUrl, e);
     }
 
     return null;
