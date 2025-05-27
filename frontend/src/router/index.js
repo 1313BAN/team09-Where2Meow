@@ -21,9 +21,18 @@ const router = createRouter({
         // 로그인이 필요한 페이지들
         {
           path: 'plan',
-          name: 'plan',
-          component: () => import('@/views/PlanView.vue'),
-          meta: { requiresAuth: true },
+          children: [
+            {
+              path: 'dashboard',
+              name: 'plan-dashboard',
+              component: () => import('@/views/PlanDashboardView.vue'),
+            },
+            {
+              path: 'create',
+              name: 'plan-create',
+              component: () => import('@/views/PlanView.vue'),
+            },
+          ],
         },
         {
           path: 'mypage',

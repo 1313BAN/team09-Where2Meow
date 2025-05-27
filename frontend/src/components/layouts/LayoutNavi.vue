@@ -193,7 +193,7 @@ const { isLoggedIn, userName } = storeToRefs(authStore)
 
 // 메뉴 항목 정의
 const menuItems = ref([
-  { label: '일정', path: '/plan', icon: 'pi pi-calendar' },
+  { label: '일정', path: '/plan/dashboard', icon: 'pi pi-calendar' },
   { label: '여행지', path: '/attraction', icon: 'pi pi-map-marker' },
   { label: '게시판', path: '/board', icon: 'pi pi-users' },
 ])
