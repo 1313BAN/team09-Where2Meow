@@ -137,6 +137,7 @@ const attractions = ref([])
 const isLoading = ref(false)
 const sortOption = ref('attractionName-asc')
 const gridColumns = ref(4)
+const categories = ref([])
 
 // 페이지네이션
 const currentPage = ref(0)
@@ -156,17 +157,8 @@ const getResultTitle = () => {
   if (keyword) {
     title = `"${keyword}" 검색 결과`
   } else if (categoryId) {
-    const categoryNames = {
-      12: '관광지',
-      14: '문화시설',
-      15: '축제공연행사',
-      25: '여행코스',
-      28: '레저/스포츠',
-      32: '숙박',
-      38: '쇼핑',
-      39: '음식점',
-    }
-    title = `${categoryNames[categoryId]} 여행지`
+    const category = categories.value.find(cat => cat.categoryId === categoryId)
+    title = category ? `${category.categoryName} 여행지` : '여행지'
   }
 
   return title
@@ -238,11 +230,6 @@ const handleSortChange = () => {
   loadAttractions(0)
 }
 
-// 그리드 컬럼 설정
-const setGridColumns = (columns) => {
-  gridColumns.value = columns
-}
-
 // 페이지 변경
 const changePage = (page) => {
   if (page >= 0 && page < totalPages.value) {
@@ -279,7 +266,20 @@ watch(
 )
 
 // 컴포넌트 마운트 시 데이터 로드
-onMounted(() => {
+onMounted(async () => {
+  // 카테고리 데이해 로드
+  try {
+    attractionAPI.attractionApi.getAllCategories()
+      .then((response) => {
+        categories.value = response.data
+      })
+      .catch((error) => {
+        console.error('카테고리 목록 불러오기 실패', error)
+      })
+  } catch (error) {
+    console.error('카테고리 데이터 로드 중 오류:', error)
+  }
+  
   loadAttractions(0)
 })
 </script>

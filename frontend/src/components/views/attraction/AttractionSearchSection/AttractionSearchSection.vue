@@ -169,6 +169,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import addressAPI from '@/api/address'
+import attractionAPI from '@/api/attraction'
 
 const emit = defineEmits(['search'])
 
@@ -191,16 +192,7 @@ const stateSuggestions = ref([])
 const citySuggestions = ref([])
 
 // 카테고리 목록
-const categories = ref([
-  { id: 12, name: '관광지' },
-  { id: 14, name: '문화시설' },
-  { id: 15, name: '축제공연행사' },
-  { id: 25, name: '여행코스' },
-  { id: 28, name: '레저/스포츠' },
-  { id: 32, name: '숙박' },
-  { id: 38, name: '쇼핑' },
-  { id: 39, name: '음식점' },
-])
+const categories = ref([])
 
 // 활성 필터 계산
 const activeFilters = computed(() => {
@@ -299,9 +291,10 @@ const handleSearch = () => {
   }, 500)
 }
 
-// 컴포넌트 마운트 시 국가 목록 로드
+// 컴포넌트 마운트 시 국가 목록 및 카테고리 로드
 onMounted(async () => {
   try {
+    // 국가 목록 로드
     addressAPI.getCountries(
       (res) => {
         countrySuggestions.value = res.data
@@ -310,8 +303,20 @@ onMounted(async () => {
         console.error('국가 목록 불러오기 실패', err)
       },
     )
+    
+    // 카테고리 목록 로드
+    attractionAPI.attractionApi.getAllCategories()
+      .then((response) => {
+        categories.value = response.data.map(category => ({
+          id: category.categoryId,
+          name: category.categoryName
+        }))
+      })
+      .catch((error) => {
+        console.error('카테고리 목록 불러오기 실패', error)
+      })
   } catch (error) {
-    console.error('국가 목록 로드 중 오류:', error)
+    console.error('초기 데이터 로드 중 오류:', error)
   }
 })
 

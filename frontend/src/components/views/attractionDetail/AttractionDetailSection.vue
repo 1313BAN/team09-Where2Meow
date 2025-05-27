@@ -223,21 +223,10 @@ const isLoading = ref(false)
 const isLiked = ref(false)
 const isBookmarked = ref(false)
 const showReviewModal = ref(false)
+const categories = ref([])
 
 // 기본 이미지
 const defaultImage = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center'
-
-// 카테고리 매핑
-const categoryNames = {
-  12: '관광지',
-  14: '문화시설',
-  15: '축제공연행사',
-  25: '여행코스',
-  28: '레저/스포츠',
-  32: '숙박',
-  38: '쇼핑',
-  39: '음식점'
-}
 
 // 임시 리뷰 통계 (추후 실제 데이터와 연동)
 const reviewStats = ref({
@@ -276,8 +265,9 @@ const loadAttractionDetail = async () => {
 }
 
 // 유틸리티 함수들
-const getCategoryName = (contentTypeId) => {
-  return categoryNames[contentTypeId] || '기타'
+const getCategoryName = (categoryId) => {
+  const category = categories.value.find(cat => cat.categoryId === categoryId)
+  return category ? category.categoryName : '기타'
 }
 
 const handleImageError = (event) => {
@@ -357,7 +347,20 @@ const handleReviewCreated = () => {
 }
 
 // 컴포넌트 마운트 시 데이터 로드
-onMounted(() => {
+onMounted(async () => {
+  // 카테고리 데이터 로드
+  try {
+    attractionAPI.attractionApi.getAllCategories()
+      .then((response) => {
+        categories.value = response.data
+      })
+      .catch((error) => {
+        console.error('카테고리 목록 불러오기 실패', error)
+      })
+  } catch (error) {
+    console.error('카테고리 데이터 로드 중 오류:', error)
+  }
+  
   loadAttractionDetail()
 })
 </script>

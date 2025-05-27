@@ -73,7 +73,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import attractionAPI from '@/api/attraction'
 
 const props = defineProps({
   attraction: {
@@ -88,17 +89,8 @@ const emit = defineEmits(['click', 'like', 'bookmark'])
 const defaultImage =
   'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop&crop=center'
 
-// 카테고리 매핑
-const categoryNames = {
-  12: '관광지',
-  14: '문화시설',
-  15: '축제공연행사',
-  25: '여행코스',
-  28: '레저/스포츠',
-  32: '숙박',
-  38: '쇼핑',
-  39: '음식점',
-}
+// 카테고리 데이터
+const categories = ref([])
 
 const averageRating = computed(() => {
   return props.attraction.reviewAvgScore || 0
@@ -109,8 +101,9 @@ const reviewCount = computed(() => {
 })
 
 // 카테고리 이름 반환
-const getCategoryName = (contentTypeId) => {
-  return categoryNames[contentTypeId] || '기타'
+const getCategoryName = (categoryId) => {
+  const category = categories.value.find(cat => cat.categoryId === categoryId)
+  return category ? category.categoryName : '기타'
 }
 
 // 주소 포맷팅
@@ -135,6 +128,21 @@ const handleClick = () => {
 const handleImageError = (event) => {
   event.target.src = defaultImage
 }
+
+// 컴포넌트 마운트 시 카테고리 데이터 로드
+onMounted(async () => {
+  try {
+    attractionAPI.attractionApi.getAllCategories()
+      .then((response) => {
+        categories.value = response.data
+      })
+      .catch((error) => {
+        console.error('카테고리 목록 불러오기 실패', error)
+      })
+  } catch (error) {
+    console.error('카테고리 데이터 로드 중 오류:', error)
+  }
+})
 </script>
 
 <style scoped>
