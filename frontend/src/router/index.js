@@ -35,7 +35,8 @@ const router = createRouter({
           children: [{
             path: 'dashboard',
             name: 'plan-dashboard',
-            component: () => import('@/views/PlanDashboardView.vue')
+            component: () => import('@/views/PlanDashboardView.vue'),
+            meta: { requiresAuth: true }
           }]
         },
         {
@@ -54,7 +55,22 @@ const router = createRouter({
         {
           path: '',
           name: 'plan-create',
-          component: () => import('@/views/PlanView.vue')
+          component: () => import('@/views/PlanView.vue'),
+          meta: { requiresAuth: true }
+        }
+      ]
+    },
+    // 계획 편집 라우트
+    {
+      path: '/plan/edit/:planId',
+      component: PlanLayout,
+      children: [
+        {
+          path: '',
+          name: 'plan-edit',
+          component: () => import('@/views/PlanView.vue'),
+          meta: { requiresAuth: true },
+          props: true
         }
       ]
     }

@@ -10,7 +10,7 @@
       :scheduleItems="currentDaySchedule"
       :selectedScheduleItem="selectedScheduleItem"
       :isSearching="false"
-      @selectItem="$emit('selectScheduleItem', $event)"
+      @selectItem="handleSelectItem"
       @addScheduleItem="$emit('addScheduleItem')"
     />
   </div>
@@ -25,7 +25,13 @@ defineProps({
   selectedScheduleItem: Object
 })
 
-defineEmits(['selectScheduleItem', 'addScheduleItem'])
+const emit = defineEmits(['selectScheduleItem', 'addScheduleItem'])
+
+// ✅ 일정 아이템 선택 처리 함수
+const handleSelectItem = (item, index) => {
+  console.log('일정 아이템 선택:', item, index) // 디버깅용
+  emit('selectScheduleItem', item)
+}
 </script>
 
 <style scoped>

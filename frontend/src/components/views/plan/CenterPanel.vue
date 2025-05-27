@@ -39,7 +39,7 @@
             }"
             :icon="getScheduleMarkerIcon(index + 1)"
             :zIndex="200 + index"
-            @click="$emit('selectScheduleItem', scheduleItem)"
+            @click="selectScheduleItem(scheduleItem)"
           />
 
           <!-- 일정 경로 선 -->
@@ -268,6 +268,26 @@ const selectPlace = (place) => {
         lng: parseFloat(place.longitude)
       },
       props.mapZoom // 현재 zoom 유지
+    )
+  }
+}
+
+// ✅ 일정 마커 클릭 처리 함수
+const selectScheduleItem = (scheduleItem) => {
+  console.log('일정 마커 클릭:', scheduleItem) // 디버깅용
+  
+  // PlanView에 이벤트 전달
+  emit('selectScheduleItem', scheduleItem)
+  
+  // 지도를 해당 위치로 이동
+  if (mapRef.value && mapRef.value.$mapObject && scheduleItem.latitude && scheduleItem.longitude) {
+    smoothlyAnimateTo(
+      mapRef.value.$mapObject,
+      {
+        lat: parseFloat(scheduleItem.latitude),
+        lng: parseFloat(scheduleItem.longitude)
+      },
+      15 // 일정 마커 클릭 시 좀 레벨
     )
   }
 }

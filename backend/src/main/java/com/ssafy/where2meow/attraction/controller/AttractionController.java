@@ -4,6 +4,8 @@ import com.ssafy.where2meow.attraction.dto.AttractionCategoryResponse;
 import com.ssafy.where2meow.attraction.dto.AttractionDetailResponse;
 import com.ssafy.where2meow.attraction.dto.AttractionListResponse;
 import com.ssafy.where2meow.attraction.service.AttractionService;
+import com.ssafy.where2meow.common.service.HybridImageService;
+import com.ssafy.where2meow.attraction.entity.Attraction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -18,9 +20,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/attraction")
 @RequiredArgsConstructor
+@Slf4j
 public class AttractionController {
 
   private final AttractionService attractionService;
+  private final HybridImageService hybridImageService;
 
   /**
    * 여행지 페이징 조회 API
@@ -47,8 +51,13 @@ public class AttractionController {
       @RequestParam(required = false) String keyword,
       @PageableDefault(size = 10, sort = "attractionName", direction = Sort.Direction.ASC) Pageable pageable) {
 
+    log.debug("여행지 검색 요청: countryId={}, stateId={}, cityId={}, categoryId={}, keyword={}",
+        countryId, stateId, cityId, categoryId, keyword);
+    
     Page<AttractionListResponse> attractions = attractionService.getAttractionList(
         countryId, stateId, cityId, categoryId, keyword, pageable);
+
+    log.debug("여행지 검색 결과: {} 개", attractions.getTotalElements());
     return ResponseEntity.ok(attractions);
   }
 
@@ -74,6 +83,26 @@ public class AttractionController {
       AttractionCategoryResponse>> getAllCategories() {
     List<AttractionCategoryResponse> categories = attractionService.getAllCategories();
     return ResponseEntity.ok(categories);
+  }
+
+  /**
+   * 관광지 이미지 URL 조회 API
+   *
+   * @param attractionId 관광지 ID
+   * @return 이미지 URL
+   */
+  @GetMapping("/{attractionId}/image")
+  public ResponseEntity<String> getAttractionImageUrl(@PathVariable Integer attractionId) {
+    try {
+      log.info("관광지 이미지 URL 조회 요청: attractionId={}", attractionId);
+      Attraction attraction = attractionService.getAttractionById(attractionId);
+      String imageUrl = hybridImageService.getBestImageUrl(attraction);
+      log.info("관광지 이미지 URL 조회 성공: attractionId={}, imageUrl={}", attractionId, imageUrl);
+      return ResponseEntity.ok(imageUrl);
+    } catch (Exception e) {
+      log.error("관광지 이미지 URL 조회 실패: attractionId={}", attractionId, e);
+      return ResponseEntity.notFound().build();
+    }
   }
 
 }

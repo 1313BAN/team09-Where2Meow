@@ -46,6 +46,7 @@ import {
   handleImageError,
   preloadImage,
 } from '@/utils/image-utils'
+import { attractionApi } from '@/api/attraction'
 
 export default {
   name: 'AttractionImage',
@@ -53,6 +54,10 @@ export default {
     imageUrl: {
       type: String,
       default: '',
+    },
+    attractionId: {
+      type: [Number, String],
+      default: null,
     },
     alt: {
       type: String,
@@ -86,11 +91,13 @@ export default {
   },
   methods: {
     handleLoad() {
+      console.log('이미지 로드 성공:', this.imgSrc)
       this.loading = false
       this.error = false
       this.$emit('imageLoaded', this.imageUrl)
     },
     handleError(event) {
+      console.error('이미지 로드 에러:', this.imgSrc, event)
       this.loading = false
       this.error = true
       this.$emit('imageError', this.imageUrl)
@@ -99,9 +106,10 @@ export default {
       const MAX_RETRY_ATTEMPTS = 3
       setTimeout(() => {
         if (this.error && this.imageUrl && this.loadAttempts <= MAX_RETRY_ATTEMPTS) {
+          console.log('이미지 로드 재시도:', this.loadAttempts)
           this.refreshImage()
         } else if (this.loadAttempts > MAX_RETRY_ATTEMPTS) {
-          log.warn(`최대 재시도 횟수 초과: ${this.imageUrl}`)
+          console.warn(`최대 재시도 횟수 초과: ${this.imageUrl}`)
         }
       }, 3000)
 
@@ -119,8 +127,42 @@ export default {
     },
     async updateImageSrc() {
       this.loadAttempts++
+      
+      console.log('AttractionImage updateImageSrc 호출:', {
+        attractionId: this.attractionId,
+        imageUrl: this.imageUrl,
+        loadAttempts: this.loadAttempts
+      })
+
+      // attractionId가 있으면 백엔드에서 이미지 URL을 가져옴
+      if (this.attractionId && this.attractionId > 0 && !this.imageUrl) {
+        try {
+          this.loading = true
+          console.log('백엔드에서 이미지 URL 조회 시작:', this.attractionId)
+          const imageUrl = await attractionApi.getAttractionImageUrl(this.attractionId)
+          console.log('백엔드에서 이미지 URL 조회 성공:', imageUrl)
+          
+          this.imgSrc = imageUrl
+          this.loading = false
+          this.error = false
+          this.lastImageUrl = imageUrl
+          return
+        } catch (error) {
+          console.error('이미지 URL 조회 실패:', error)
+          console.error('에러 상세:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data
+          })
+          this.imgSrc = DEFAULT_IMAGE_URL
+          this.loading = false
+          this.error = true
+          return
+        }
+      }
 
       if (!this.imageUrl) {
+        console.log('이미지 URL이 없어서 기본 이미지 사용')
         this.imgSrc = DEFAULT_IMAGE_URL
         this.loading = false
         this.lastImageUrl = null
@@ -130,19 +172,27 @@ export default {
       const processedUrl = getFullImageUrl(this.imageUrl)
       const isUrlChanged = this.lastImageUrl !== processedUrl
 
+      console.log('이미지 URL 처리:', {
+        originalUrl: this.imageUrl,
+        processedUrl: processedUrl,
+        isUrlChanged: isUrlChanged
+      })
+
       let finalUrl = processedUrl
 
       // URL이 변경되었거나 에러 상태인 경우 캐시 버스팅 적용
       if (isUrlChanged || this.error) {
         finalUrl = this.addCacheBustingLocal(processedUrl)
+        console.log('캐시 버스팅 적용:', finalUrl)
       }
 
       // 프리로드 옵션이 켜진 경우 미리 로딩
       if (this.preload) {
         try {
           await preloadImage(finalUrl)
+          console.log('이미지 프리로드 성공:', finalUrl)
         } catch (error) {
-          // 프리로드 실패는 조용히 무시
+          console.log('이미지 프리로드 실패 (무시):', error)
         }
       }
 
@@ -156,12 +206,14 @@ export default {
         const imgElement = this.$refs.imageElement
         if (imgElement && imgElement.complete && imgElement.naturalWidth > 0) {
           // 이미 로드된 이미지인 경우
+          console.log('이미지가 이미 로드됨')
           this.loading = false
           this.error = false
         } else {
           // 로드 이벤트를 기다리는 타이머 (안전장치)
           setTimeout(() => {
             if (this.loading && imgElement && imgElement.complete) {
+              console.log('타이머에 의한 로딩 완료 처리')
               this.loading = false
             }
           }, 2000)
@@ -188,6 +240,15 @@ export default {
       immediate: true,
       handler() {
         this.updateImageSrc()
+      },
+    },
+    attractionId: {
+      immediate: true,
+      handler() {
+        // attractionId가 변경되면 이미지 업데이트
+        if (this.attractionId && !this.imageUrl) {
+          this.updateImageSrc()
+        }
       },
     },
   },
