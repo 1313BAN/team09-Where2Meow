@@ -34,12 +34,7 @@ export const attractionApi = {
     return attractionApiClient
       .get(`/api/attraction?${searchParams.toString()}`)
       .then((response) => {
-        if (response.data && response.data.content) {
-          response.data.content = response.data.content.map((item) => ({
-            ...item,
-            image: getFullImageUrl(item.image),
-          }))
-        }
+
         return response
       })
   },
@@ -51,9 +46,6 @@ export const attractionApi = {
    */
   getAttractionDetail(attractionId) {
     return attractionApiClient.get(`/api/attraction/detail/${attractionId}`).then((response) => {
-      if (response.data) {
-        response.data.image = getFullImageUrl(response.data.image)
-      }
       return response
     })
   },
