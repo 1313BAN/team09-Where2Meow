@@ -8,12 +8,26 @@
       class="relative w-full flex items-center justify-center overflow-hidden"
       style="height: 180px; background: linear-gradient(135deg, #6FBBFF 0%, #00EDB3 100%);"
     >
-      <img v-if="plan.image" :src="plan.image" :alt="plan.title" class="w-full h-full object-cover" />
+      <img v-if="planImageUrl" :src="planImageUrl" :alt="plan.title" class="w-full h-full object-cover" @error="handleImageError" />
       <div v-else class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-base font-medium">
         <span>400 × 180</span>
       </div>
       <div class="absolute top-3 right-3 bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-sm">
         <span class="text-white text-xs font-medium">{{ getDuration() }}</span>
+      </div>
+      <!-- 삭제 버튼 (내가 만든 일정일 때만 표시) -->
+      <div v-if="showDeleteButton" class="absolute top-3 left-3">
+        <button 
+          @click.stop="handleDelete" 
+          class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors shadow-lg"
+          :disabled="deleteLoading"
+          title="여행 계획 삭제"
+        >
+          <svg v-if="!deleteLoading" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          </svg>
+          <div v-else class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        </button>
       </div>
     </div>
     
@@ -68,6 +82,8 @@
 
 <script>
 import planAPI from '@/api/plan'
+import { attractionApi } from '@/api/attraction'
+import { getFullImageUrl, handleImageError as utilHandleImageError } from '@/utils/image-utils'
 
 const planService = planAPI.planService
 
@@ -77,16 +93,106 @@ export default {
     plan: {
       type: Object,
       required: true
+    },
+    showDeleteButton: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['click', 'update'],
+  emits: ['click', 'update', 'delete'],
   data() {
     return {
       bookmarkLoading: false,
-      likeLoading: false
+      likeLoading: false,
+      deleteLoading: false,
+      planImageUrl: null
+    }
+  },
+  async mounted() {
+    await this.loadPlanImage()
+  },
+  watch: {
+    'plan.planId': {
+      handler() {
+        this.loadPlanImage()
+      },
+      immediate: false
     }
   },
   methods: {
+    // 여행 계획 이미지 로드
+    async loadPlanImage() {
+      try {
+        // 계획 상세 정보 가져오기
+        const response = await planService.getPlanDetail(this.plan.planId)
+        const planDetail = response.data
+        
+        if (planDetail.attractions && planDetail.attractions.length > 0) {
+          // 관광지들을 순서대로 정렬
+          const sortedAttractions = planDetail.attractions.sort((a, b) => {
+            // 날짜 먼저 비교
+            const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime()
+            if (dateCompare !== 0) return dateCompare
+            // 같은 날이면 순서로 비교
+            return a.attractionOrder - b.attractionOrder
+          })
+          
+          // 이미지가 있는 첫 번째 관광지 찾기
+          for (const attraction of sortedAttractions) {
+            try {
+              const attractionResponse = await attractionApi.getAttractionDetail(attraction.attractionId)
+              const attractionDetail = attractionResponse.data
+              
+              if (attractionDetail.firstImage1) {
+                this.planImageUrl = getFullImageUrl(attractionDetail.firstImage1)
+                break
+              } else if (attractionDetail.firstImage2) {
+                this.planImageUrl = getFullImageUrl(attractionDetail.firstImage2)
+                break
+              }
+            } catch (error) {
+              console.warn(`관광지 ${attraction.attractionId} 상세 정보 로드 실패:`, error)
+              continue
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('여행 계획 이미지 로드 실패:', error)
+      }
+    },
+    
+    // 이미지 로드 에러 처리
+    handleImageError(event) {
+      utilHandleImageError(event)
+      this.planImageUrl = null
+    },
+    
+    // 여행 계획 삭제
+    async handleDelete() {
+      if (this.deleteLoading) return
+      
+      const confirmed = confirm(`"${this.plan.title}" 여행 계획을 정말 삭제하시겠습니까?\n\n삭제된 계획은 복구할 수 없습니다.`)
+      if (!confirmed) return
+      
+      this.deleteLoading = true
+      try {
+        await planService.deletePlan(this.plan.planId)
+        this.$emit('delete', this.plan)
+        alert('여행 계획이 삭제되었습니다.')
+      } catch (error) {
+        console.error('여행 계획 삭제 실패:', error)
+        if (error.response?.status === 403) {
+          alert('삭제 권한이 없습니다.')
+        } else if (error.response?.status === 404) {
+          alert('여행 계획을 찾을 수 없습니다.')
+        } else {
+          alert('여행 계획 삭제에 실패했습니다. 다시 시도해주세요.')
+        }
+      } finally {
+        this.deleteLoading = false
+      }
+    },
+    
     getDuration() {
       const start = new Date(this.plan.startDate);
       const end = new Date(this.plan.endDate);

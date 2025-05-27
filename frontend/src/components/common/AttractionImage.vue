@@ -135,7 +135,7 @@ export default {
       })
 
       // attractionId가 있으면 백엔드에서 이미지 URL을 가져옴
-      if (this.attractionId && !this.imageUrl) {
+      if (this.attractionId && this.attractionId > 0 && !this.imageUrl) {
         try {
           this.loading = true
           console.log('백엔드에서 이미지 URL 조회 시작:', this.attractionId)

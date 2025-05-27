@@ -43,7 +43,7 @@ public class HybridImageService {
       return fullUrl;
     }
 
-    // 2. 한국관광공사 이미지가 있으면 원본 URL 즐시 반환 + 백그라운드 캐싱
+    // 2. 한국관광공사 이미지가 있으면 원본 URL 즉시 반환 + 백그라운드 캐싱
     String originalUrl = attraction.getFirstImage1();
     log.debug("DB에서 가져온 원본 이미지 URL: attractionId={}, originalUrl={}", attractionId, originalUrl);
     
@@ -58,8 +58,8 @@ public class HybridImageService {
         }
       });
 
-      // 원본 URL 즐시 반환 (사용자가 즐시 이미지를 볼 수 있음)
-      log.info("원본 URL 즐시 반환 (백그라운드 캐싱): attractionId={}, originalUrl={}", attractionId, originalUrl);
+      // 원본 URL 즉시 반환 (사용자가 즉시 이미지를 볼 수 있음)
+      log.info("원본 URL 즉시 반환 (백그라운드 캐싱): attractionId={}, originalUrl={}", attractionId, originalUrl);
       return originalUrl;
     }
 

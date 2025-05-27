@@ -82,8 +82,10 @@
           v-for="plan in plans"
           :key="plan.planId"
           :plan="plan"
+          :show-delete-button="activeTab === 'myPlans'"
           @click="openPlan"
           @update="updatePlan"
+          @delete="deletePlan"
         />
         
         <!-- 내가 만든 일정 탭에서만 추가 카드 표시 -->
@@ -272,6 +274,14 @@ export default {
         } else {
           this.plans.splice(index, 1, updatedPlan);
         }
+      }
+    },
+    
+    // 계획 삭제 (목록에서 제거)
+    deletePlan(deletedPlan) {
+      const index = this.plans.findIndex(plan => plan.planId === deletedPlan.planId);
+      if (index !== -1) {
+        this.plans.splice(index, 1);
       }
     }
   }
