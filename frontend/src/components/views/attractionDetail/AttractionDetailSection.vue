@@ -46,26 +46,7 @@
               />
 
               <!-- 카테고리 배지 -->
-              <div class="absolute top-4 left-4">
-                <span
-                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/90 text-gray-800 backdrop-blur-sm"
-                >
-                  {{ getCategoryName(attraction.categoryId || attraction.contenttypeid) }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 추가 이미지 (있는 경우) -->
-            <div
-              v-if="attraction.firstImage2 && attraction.firstImage2 !== attraction.firstImage1"
-              class="grid grid-cols-2 gap-2"
-            >
-              <img
-                :src="attraction.firstImage2"
-                :alt="attraction.attractionName"
-                class="w-full h-48 object-cover rounded-lg"
-                @error="handleImageError"
-              />
+              <div class="category-badge">{{ getCategoryName(attraction.categoryId) }}</div>
             </div>
           </div>
 
@@ -106,39 +87,9 @@
                   }}</span>
                   <span class="text-gray-600">({{ reviewStats.totalReviews }}개 리뷰)</span>
                 </div>
-              </div>
-
-              <!-- 액션 버튼들 -->
-              <div class="flex gap-3 mb-6">
-                <button
-                  @click="toggleLike"
-                  class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  <i
-                    :class="[
-                      'pi',
-                      isLiked ? 'pi-heart-fill text-red-500' : 'pi-heart text-gray-600',
-                    ]"
-                  ></i>
-                  <span>좋아요</span>
-                </button>
-                <button
-                  @click="toggleBookmark"
-                  class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  <i
-                    :class="[
-                      'pi',
-                      isBookmarked
-                        ? 'pi-bookmark-fill text-yellow-500'
-                        : 'pi-bookmark text-gray-600',
-                    ]"
-                  ></i>
-                  <span>저장</span>
-                </button>
                 <button
                   @click="shareAttraction"
-                  class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
+                  class="cursor-pointer flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <i class="pi pi-share-alt"></i>
                   <span>공유</span>
@@ -152,11 +103,23 @@
               <p class="text-gray-700 leading-relaxed">{{ attraction.overview }}</p>
             </div>
 
-            <!-- 지도 (추후 구현) -->
-            <div class="bg-gray-100 rounded-xl p-6 h-64 flex items-center justify-center">
+            <!-- 지도 -->
+            <div v-if="attraction.latitude && attraction.longitude" class="bg-gray-50 rounded-xl p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">위치</h3>
+              <GoogleMap 
+                :latitude="attraction.latitude" 
+                :longitude="attraction.longitude"
+                :marker-title="attraction.attractionName"
+                height="300px"
+                :zoom="15"
+              />
+            </div>
+            
+            <!-- 지도 데이터가 없는 경우 -->
+            <div v-else class="bg-gray-100 rounded-xl p-6 h-64 flex items-center justify-center">
               <div class="text-center text-gray-500">
                 <i class="pi pi-map text-2xl mb-2"></i>
-                <p>지도는 준비 중입니다</p>
+                <p>위치 정보가 없습니다</p>
               </div>
             </div>
           </div>
@@ -253,6 +216,7 @@ import { storeToRefs } from 'pinia'
 import attractionAPI from '@/api/attraction'
 import ReviewList from './ReviewList.vue'
 import ReviewModal from './ReviewModal.vue'
+import GoogleMap from '@/components/common/map/GoogleMap.vue'
 import { toast } from 'vue-sonner'
 
 const route = useRoute()
@@ -430,5 +394,19 @@ onMounted(async () => {
   .grid.grid-cols-1.md\:grid-cols-3 {
     grid-template-columns: 1fr;
   }
+}
+
+.category-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #00edb3 0%, #00c297 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 237, 179, 0.3);
+  backdrop-filter: blur(10px);
 }
 </style>

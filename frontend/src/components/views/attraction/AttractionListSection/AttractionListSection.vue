@@ -13,8 +13,7 @@
         </div>
 
         <!-- 정렬 및 보기 옵션 -->
-        <div class="flex items-center gap-3">
-          <!-- 정렬 선택 -->
+        <!-- <div class="flex items-center gap-3">
           <div class="relative">
             <select
               v-model="sortOption"
@@ -29,7 +28,7 @@
               class="pi pi-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
             ></i>
           </div>
-        </div>
+        </div>-->
       </div>
 
       <!-- 로딩 상태 -->
@@ -248,10 +247,10 @@ const loadAttractions = async (page = 0) => {
 }
 
 // 정렬 변경 핸들러
-const handleSortChange = () => {
-  currentPage.value = 0
-  loadAttractions(0)
-}
+// const handleSortChange = () => {
+//   currentPage.value = 0
+//   loadAttractions(0)
+// }
 
 // 페이지 변경
 const changePage = (page) => {
