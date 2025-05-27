@@ -13,6 +13,7 @@
           optionLabel="countryName"
           optionValue="countryId"
           placeholder="국가 선택"
+          showClear
           pt:root="relative cursor-pointer min-h-[48px] border border-gray-300 rounded-xl hover:border-gray-400 focus-within:!border-[var(--secondary-color)] bg-white transition-all duration-200"
           pt:label="absolute left-3 top-1/2 -translate-y-1/2 "
           pt:dropdown="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
@@ -21,6 +22,7 @@
           pt:list="max-h-[220px] overflow-auto box-border py-0"
           pt:option="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm leading-[1.5rem]"
           pt:optionLabel="text-sm leading-5"
+          pt:clearIcon="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 hover:text-[var(--danger-color)] transition-colors duration-150"
         />
 
         <!-- 지역 선택 -->
@@ -31,6 +33,7 @@
           optionValue="stateCode"
           placeholder="지역 선택"
           :disabled="!searchForm.country"
+          showClear
           pt:root="relative cursor-pointer min-h-[48px] border border-gray-300 rounded-xl hover:border-gray-400 focus-within:!border-[var(--secondary-color)] bg-white transition-all duration-200"
           pt:label="absolute left-3 top-1/2 -translate-y-1/2 "
           pt:dropdown="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
@@ -39,6 +42,7 @@
           pt:list="max-h-[220px] overflow-auto box-border py-0"
           pt:option="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm leading-[1.5rem]"
           pt:optionLabel="text-sm leading-5"
+          pt:clearIcon="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 hover:text-[var(--danger-color)] transition-colors duration-150"
         />
 
         <!-- 도시 선택 -->
@@ -49,6 +53,7 @@
           optionValue="cityId"
           placeholder="도시 선택"
           :disabled="!searchForm.state"
+          showClear
           pt:root="relative cursor-pointer min-h-[48px] border border-gray-300 rounded-xl hover:border-gray-400 focus-within:!border-[var(--secondary-color)] bg-white transition-all duration-200"
           pt:label="absolute left-3 top-1/2 -translate-y-1/2 "
           pt:dropdown="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
@@ -57,6 +62,7 @@
           pt:list="max-h-[220px] overflow-auto box-border py-0"
           pt:option="px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm leading-[1.5rem]"
           pt:optionLabel="text-sm leading-5"
+          pt:clearIcon="absolute right-10 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 hover:text-[var(--danger-color)] transition-colors duration-150"
         />
 
         <!-- 검색 버튼 -->

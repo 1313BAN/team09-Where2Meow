@@ -68,7 +68,7 @@ public class AttractionService {
 
     if (countryId != null) {
       spec = spec.and((root, query, criteriaBuilder) ->
-          criteriaBuilder.equal(root.get("countryCode"), countryId));
+          criteriaBuilder.equal(root.get("countryId"), countryId));
     }
 
     if (stateId != null) {

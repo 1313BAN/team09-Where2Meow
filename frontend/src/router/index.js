@@ -19,6 +19,16 @@ const router = createRouter({
           name: 'boardDetail',
           component: () => import('@/views/BoardDetailView.vue'),
         },
+        {
+          path: 'attraction',
+          name: 'attraction',
+          component: () => import('@/views/AttractionView.vue'),
+        },
+        {
+          path: 'attraction/:attractionId',
+          name: 'attractionDetail',
+          component: () => import('@/views/AttractionDetailView.vue'),
+        },
         // 로그인이 필요한 페이지들
         {
           path: 'plan', 
