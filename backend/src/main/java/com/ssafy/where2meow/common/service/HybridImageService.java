@@ -76,7 +76,6 @@ public class HybridImageService {
     Integer attractionId = attraction.getAttractionId();
 
     // 기존 캐시 삭제
-    imageCacheService.deleteCachedImage(attractionId);
     boolean deleted = imageCacheService.deleteCachedImage(attractionId);
     if (!deleted) {
       log.warn("기존 캐시 삭제 실패: attractionId={}", attractionId);
