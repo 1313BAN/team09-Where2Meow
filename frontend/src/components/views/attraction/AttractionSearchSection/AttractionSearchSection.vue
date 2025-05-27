@@ -101,7 +101,7 @@
               v-model="searchForm.city"
               :options="citySuggestions"
               optionLabel="cityName"
-              optionValue="cityId"
+              optionValue="cityCode"
               placeholder="도시 선택"
               :disabled="!searchForm.state"
               showClear
@@ -303,13 +303,14 @@ onMounted(async () => {
         console.error('국가 목록 불러오기 실패', err)
       },
     )
-    
+
     // 카테고리 목록 로드
-    attractionAPI.attractionApi.getAllCategories()
+    attractionAPI.attractionApi
+      .getAllCategories()
       .then((response) => {
-        categories.value = response.data.map(category => ({
+        categories.value = response.data.map((category) => ({
           id: category.categoryId,
-          name: category.categoryName
+          name: category.categoryName,
         }))
       })
       .catch((error) => {

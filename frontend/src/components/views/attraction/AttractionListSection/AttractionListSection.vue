@@ -300,7 +300,6 @@ watch(
   () => pageSize.value,
   (newSize, oldSize) => {
     if (newSize !== oldSize) {
-      console.log(`PageSize 변경: ${oldSize} -> ${newSize}`)
       currentPage.value = 0
       loadAttractions(0)
     }

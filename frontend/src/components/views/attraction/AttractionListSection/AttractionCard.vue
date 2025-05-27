@@ -19,13 +19,14 @@
       </div>
 
       <!-- 카테고리 배지 -->
-      <div class="absolute top-3 left-3">
+      <!-- <div class="absolute top-3 left-3">
         <span
           class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/90 text-gray-800 backdrop-blur-sm"
         >
           {{ getCategoryName(attraction.categoryId) }}
         </span>
-      </div>
+      </div> -->
+      <div class="category-badge">{{ getCategoryName(attraction.categoryId) }}</div>
     </div>
 
     <!-- 콘텐츠 섹션 -->
@@ -102,7 +103,7 @@ const reviewCount = computed(() => {
 
 // 카테고리 이름 반환
 const getCategoryName = (categoryId) => {
-  const category = categories.value.find(cat => cat.categoryId === categoryId)
+  const category = categories.value.find((cat) => cat.categoryId === categoryId)
   return category ? category.categoryName : '기타'
 }
 
@@ -132,7 +133,8 @@ const handleImageError = (event) => {
 // 컴포넌트 마운트 시 카테고리 데이터 로드
 onMounted(async () => {
   try {
-    attractionAPI.attractionApi.getAllCategories()
+    attractionAPI.attractionApi
+      .getAllCategories()
       .then((response) => {
         categories.value = response.data
       })
@@ -164,5 +166,19 @@ onMounted(async () => {
   right: 0;
   bottom: 0;
   left: 0;
+}
+
+.category-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #00edb3 0%, #00c297 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 237, 179, 0.3);
+  backdrop-filter: blur(10px);
 }
 </style>
