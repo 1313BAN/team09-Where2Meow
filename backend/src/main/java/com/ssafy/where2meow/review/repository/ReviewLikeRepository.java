@@ -37,6 +37,11 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Integer>
     List<ReviewLike> findByUser(User user);
     
     /**
+     * 특정 사용자가 여러 리뷰에 대해 좋아요를 눌렀는지 확인
+     */
+    List<ReviewLike> findByUserAndReviewIn(User user, List<Review> reviews);
+    
+    /**
      * 특정 리뷰에 대한 모든 좋아요 삭제
      */
     void deleteByReview(Review review);

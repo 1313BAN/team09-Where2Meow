@@ -131,7 +131,7 @@ public class ReviewService {
                 count -> likeCountMap.put(count.getReviewId(), count.getCount())
         );
         
-        // 작성자 정보 조회
+        // 사용자 정보 조회
         List<Integer> userIds = reviewPage.getContent().stream()
                 .map(Review::getUserId)
                 .collect(Collectors.toList());
@@ -139,6 +139,25 @@ public class ReviewService {
         userRepository.findAllById(userIds).forEach(
                 user -> userMap.put(user.getUserId(), user)
         );
+        
+        // 현재 사용자 정보 (좋아요 여부 확인용)
+        User currentUser = null;
+        try {
+            currentUser = getCurrentUser(uuid);
+        } catch (Exception e) {
+            log.debug("비로그인 사용자입니다.");
+        }
+        
+        // 좋아요 여부 조회 (로그인한 사용자의 경우만)
+        Map<Integer, Boolean> likedMap = new HashMap<>();
+        if (currentUser != null) {
+            List<ReviewLike> userLikes = reviewLikeRepository.findByUserAndReviewIn(
+                currentUser, reviewPage.getContent()
+            );
+            userLikes.forEach(like -> 
+                likedMap.put(like.getReview().getReviewId(), true)
+            );
+        }
         
         // 응답 DTO 변환
         List<ReviewListResponse> responseList = reviewPage.getContent().stream()
@@ -149,9 +168,12 @@ public class ReviewService {
                             .content(review.getContent())
                             .score(review.getScore())
                             .createdAt(review.getCreatedAt())
+                            .updatedAt(review.getUpdatedAt())
                             .userNickname(author.getNickname())
                             .userImage(author.getImage())
+                            .userUuid(author.getUuid())
                             .likeCount(likeCountMap.getOrDefault(review.getReviewId(), 0))
+                            .isLiked(likedMap.getOrDefault(review.getReviewId(), false))
                             .build();
                 })
                 .collect(Collectors.toList());

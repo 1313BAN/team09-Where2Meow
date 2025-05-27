@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -16,7 +17,10 @@ public class ReviewListResponse {
     private String content;
     private Integer score;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private String userNickname;
     private String userImage;
+    private UUID userUuid;
     private Integer likeCount;
+    private Boolean isLiked;
 }
