@@ -163,9 +163,7 @@
                 <span v-if="isMyPost(board.userId)" class="text-blue-500 text-xs font-medium">
                   내 글
                 </span>
-                <span v-if="board.updatedAt !== board.createdAt" class="text-xs text-gray-400">
-                  (수정됨)
-                </span>
+
               </div>
 
               <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ board.title }}</h3>

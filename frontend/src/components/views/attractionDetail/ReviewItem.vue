@@ -60,9 +60,7 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3 text-sm text-gray-500">
             <span>{{ formatDate(review.createdAt) }}</span>
-            <span v-if="review.updatedAt !== review.createdAt" class="text-gray-400">
-              (수정됨)
-            </span>
+
           </div>
 
           <!-- 좋아요 버튼 -->

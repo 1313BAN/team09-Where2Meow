@@ -59,9 +59,7 @@
                 <i class="pi pi-heart"></i>
                 {{ comment.likeCount }}
               </span>
-              <span v-if="comment.updatedAt !== comment.createdAt" class="text-xs text-gray-400">
-                (수정됨)
-              </span>
+
             </div>
           </div>
 
