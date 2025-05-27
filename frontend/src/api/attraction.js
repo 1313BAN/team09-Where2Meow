@@ -60,7 +60,7 @@ export const attractionApi = {
     if (params.page !== undefined) searchParams.append('page', params.page)
     if (params.size) searchParams.append('size', params.size)
     
-    return attractionApiClient.get(`/attraction?${searchParams.toString()}`)
+    return attractionApiClient.get(`/api/attraction?${searchParams.toString()}`)
       .then(response => {
         if (response.data && response.data.content) {
           response.data.content = response.data.content.map(item => ({
@@ -78,7 +78,7 @@ export const attractionApi = {
    * @returns {Promise} 관광지 상세 정보
    */
   getAttractionDetail(attractionId) {
-    return attractionApiClient.get(`/attraction/detail/${attractionId}`)
+    return attractionApiClient.get(`/api/attraction/detail/${attractionId}`)
       .then(response => {
         if (response.data) {
           response.data.image = getFullImageUrl(response.data.image);
@@ -91,13 +91,11 @@ export const attractionApi = {
    * 모든 카테고리 목록 조회
    */
   getAllCategories() {
-    return attractionApiClient.get('/attraction/categories')
+    return attractionApiClient.get('/api/attraction/categories')
   },
   
 
 }
-
-export default attractionApi
 
 const attractionAPI = localAxios()
 
@@ -138,4 +136,5 @@ const getAttractionDetail = (attractionId, success, fail) => {
 export default {
   getAttractionListPaging,
   getAttractionDetail,
+  attractionApi, // 추가된 attractionApi 객체
 }
