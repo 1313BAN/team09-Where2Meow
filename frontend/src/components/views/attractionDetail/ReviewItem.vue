@@ -5,7 +5,7 @@
       <div
         class="w-10 h-10 rounded-full bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] flex items-center justify-center text-white font-semibold flex-shrink-0"
       >
-        {{ getUserInitial(review.userName) }}
+        {{ getUserInitial(review.userNickname) }}
       </div>
 
       <!-- 리뷰 내용 -->
@@ -13,7 +13,7 @@
         <!-- 헤더: 사용자명, 평점, 날짜 -->
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-3">
-            <span class="font-medium text-gray-900">{{ review.userName || '익명' }}</span>
+            <span class="font-medium text-gray-900">{{ review.userNickname || '익명' }}</span>
             
             <!-- 평점 -->
             <div class="flex items-center gap-1">
@@ -23,12 +23,12 @@
                   :key="star"
                   :class="[
                     'pi text-sm',
-                    star <= review.rating ? 'pi-star-fill text-yellow-400' : 'pi-star text-gray-300',
+                    star <= review.score ? 'pi-star-fill text-yellow-400' : 'pi-star text-gray-300',
                   ]"
                 >
                 </i>
               </div>
-              <span class="text-sm text-gray-500 ml-1">{{ review.rating }}.0</span>
+              <span class="text-sm text-gray-500 ml-1">{{ review.score }}.0</span>
             </div>
           </div>
 
@@ -69,9 +69,9 @@
           <button
             @click="handleLike"
             class="flex items-center gap-1 text-sm transition-colors py-1 px-2 rounded hover:bg-gray-50"
-            :class="review.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'"
+                        :class="review.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'"
           >
-            <i :class="['pi', review.isLiked ? 'pi-heart-fill' : 'pi-heart']"></i>
+                        <i :class="['pi', review.isLiked ? 'pi-heart-fill' : 'pi-heart']"></i>
             <span>{{ review.likeCount || 0 }}</span>
           </button>
         </div>
