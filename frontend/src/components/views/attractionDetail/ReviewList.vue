@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <!-- 리뷰 정렬 옵션 -->
-    <div class="flex items-center justify-between">
+    <!-- <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
         <span class="text-sm text-gray-600">정렬:</span>
         <select
@@ -15,7 +15,7 @@
           <option value="rating-asc">평점 낮은순</option>
         </select>
       </div>
-    </div>
+    </div> -->
 
     <!-- 로딩 상태 -->
     <div v-if="isLoading" class="flex justify-center py-8">
@@ -77,7 +77,9 @@
     >
       <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" @click.stop>
         <div class="text-center">
-          <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+          <div
+            class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4"
+          >
             <i class="pi pi-exclamation-triangle text-red-500 text-2xl"></i>
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">리뷰 삭제</h3>
@@ -120,13 +122,13 @@ import ReviewEditModal from './ReviewEditModal.vue'
 import { toast } from 'vue-sonner'
 
 const authStore = useAuthStore()
-const { userId } = storeToRefs(authStore)
+const { userUuid } = storeToRefs(authStore)
 
 const props = defineProps({
   attractionId: {
     type: Number,
-    required: true
-  }
+    required: true,
+  },
 })
 
 const emit = defineEmits(['review-updated'])
@@ -159,28 +161,28 @@ const loadReviews = async (reset = true) => {
 
   try {
     const page = reset ? 0 : currentPage.value + 1
-    
+
     reviewAPI.getReviewsByAttraction(
       props.attractionId,
-      userId.value, // UUID 대신 사용자 ID 사용
+      userUuid.value, // UUID 사용
       page,
       pageSize,
       (response) => {
         const newReviews = response.data?.content || []
-        
+
         if (reset) {
           reviews.value = newReviews
         } else {
           reviews.value.push(...newReviews)
         }
-        
+
         currentPage.value = page
         hasMore.value = newReviews.length === pageSize
       },
       (error) => {
         console.error('리뷰 목록 로드 실패:', error)
         toast.error('리뷰를 불러오는데 실패했습니다')
-      }
+      },
     )
   } catch (error) {
     console.error('리뷰 로드 중 오류:', error)
@@ -201,10 +203,10 @@ const loadMoreReviews = () => {
 const handleReviewLike = (review) => {
   reviewAPI.toggleReviewLike(
     review.reviewId,
-    userId.value,
+    userUuid.value,
     (response) => {
       // 리뷰 목록에서 해당 리뷰의 좋아요 상태 업데이트
-      const reviewIndex = reviews.value.findIndex(r => r.reviewId === review.reviewId)
+      const reviewIndex = reviews.value.findIndex((r) => r.reviewId === review.reviewId)
       if (reviewIndex !== -1) {
         reviews.value[reviewIndex] = { ...reviews.value[reviewIndex], ...response.data }
       }
@@ -212,7 +214,7 @@ const handleReviewLike = (review) => {
     (error) => {
       console.error('리뷰 좋아요 토글 실패:', error)
       toast.error('좋아요 처리에 실패했습니다')
-    }
+    },
   )
 }
 
@@ -251,7 +253,7 @@ const confirmDelete = async () => {
   try {
     reviewAPI.deleteReview(
       deletingReviewId.value,
-      userId.value,
+      userUuid.value,
       () => {
         loadReviews()
         emit('review-updated')
@@ -260,7 +262,7 @@ const confirmDelete = async () => {
       (error) => {
         console.error('리뷰 삭제 실패:', error)
         toast.error('리뷰 삭제에 실패했습니다')
-      }
+      },
     )
   } catch (error) {
     console.error('리뷰 삭제 중 오류:', error)

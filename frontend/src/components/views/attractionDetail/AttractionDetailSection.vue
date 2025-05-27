@@ -141,7 +141,7 @@
           </div>
 
           <!-- 리뷰 통계 -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <!-- <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="text-center bg-white rounded-lg p-4">
               <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">
                 {{ averageRating.toFixed(1) }}
@@ -175,7 +175,7 @@
               </div>
               <div class="text-sm text-gray-600">추천율</div>
             </div>
-          </div>
+          </div> -->
 
           <!-- 리뷰 목록 -->
           <ReviewList :attraction-id="attractionId" @review-updated="loadAttractionDetail" />
@@ -233,8 +233,6 @@ const attractionId = computed(() => parseInt(route.params.attractionId))
 // 상태 관리
 const attraction = ref(null)
 const isLoading = ref(false)
-const isLiked = ref(false)
-const isBookmarked = ref(false)
 const showReviewModal = ref(false)
 const categories = ref([])
 
@@ -243,10 +241,18 @@ const defaultImage =
   'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center'
 
 // 리뷰 통계
-const reviewStats = computed(() => ({
-  totalReviews: attraction.value?.reviews?.length || 0, // reviews 배열의 길이 사용
-  recommendationRate: 87, // 추후 실제 데이터로 대체
-}))
+const reviewStats = computed(() => {
+  const totalReviews = attraction.value?.reviews?.length || 0
+  const recommendedCount =
+    attraction.value?.reviews?.filter((review) => review.isRecommended).length || 0
+  const recommendationRate =
+    totalReviews > 0 ? ((recommendedCount / totalReviews) * 100).toFixed(1) : 0
+
+  return {
+    totalReviews,
+    recommendationRate,
+  }
+})
 
 const averageRating = computed(() => {
   return attraction.value?.reviewAvgScore || 0
