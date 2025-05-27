@@ -78,7 +78,7 @@
         </div>
 
         <!-- 페이지네이션 -->
-        <div v-if="totalPages > 1" class="flex justify-center">
+        <div v-if="totalPages > 1" class="flex justify-center mt-8">
           <div class="flex items-center gap-2">
             <button
               @click="changePage(currentPage - 1)"
@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AttractionCard from './AttractionCard.vue'
 import attractionAPI from '@/api/attraction'
@@ -139,11 +139,33 @@ const sortOption = ref('attractionName-asc')
 const gridColumns = ref(4)
 const categories = ref([])
 
+// 반응형 pageSize
+const windowWidth = ref(window.innerWidth)
+const pageSize = computed(() => {
+  if (windowWidth.value < 768) {
+    // 모바일: 1열 × 6행 = 6개
+    return 6
+  } else if (windowWidth.value < 1024) {
+    // 태블릿: 2열 × 4행 = 8개
+    return 8
+  } else if (windowWidth.value < 1280) {
+    // 데스크톱 소: 3열 × 4행 = 12개
+    return 12
+  } else {
+    // 데스크톱 대: 4열 × 4행 = 16개
+    return 16
+  }
+})
+
+// window resize 이벤트 처리
+const handleResize = () => {
+  windowWidth.value = window.innerWidth
+}
+
 // 페이지네이션
 const currentPage = ref(0)
 const totalPages = ref(0)
 const totalElements = ref(0)
-const pageSize = 16
 
 // 검색 결과 제목 생성
 const getResultTitle = () => {
@@ -185,7 +207,7 @@ const loadAttractions = async (page = 0) => {
 
     const params = {
       page,
-      size: pageSize,
+      size: pageSize.value, // computed 값 사용
       sort: `${sortField},${sortDirection}`,
       ...props.searchParams,
     }
@@ -199,14 +221,28 @@ const loadAttractions = async (page = 0) => {
 
     // searchAttractions 사용
     const response = await attractionAPI.attractionApi.searchAttractions(params)
+    console.log('API 응답 데이터:', response.data) // 디버그용
 
     if (response.data) {
       attractions.value = response.data.content || []
-      totalPages.value = response.data.totalPages || 0
-      totalElements.value = response.data.totalElements || 0
-      currentPage.value = response.data.number || 0
+      // API 응답 구조에 맞게 수정
+      if (response.data.page) {
+        totalPages.value = response.data.page.totalPages || 0
+        totalElements.value = response.data.page.totalElements || 0
+        // currentPage는 여전히 파라미터 page 사용
+      } else {
+        // fallback: 기존 방식
+        totalPages.value = response.data.totalPages || 0
+        totalElements.value = response.data.totalElements || 0
+      }
+      currentPage.value = page
     }
-    console.log('여행지 목록 로드 성공:', attractions.value)
+    console.log('여행지 목록 로드 성공:', {
+      attractions: attractions.value.length,
+      currentPage: currentPage.value,
+      totalPages: totalPages.value,
+      totalElements: totalElements.value,
+    })
   } catch (error) {
     console.error('여행지 목록 로드 실패:', error)
     toast.error('여행지 목록을 불러오는데 실패했습니다')
@@ -259,8 +295,23 @@ watch(
   { deep: true },
 )
 
+// pageSize 변경 감지 (viewport 크기 변경 시)
+watch(
+  () => pageSize.value,
+  (newSize, oldSize) => {
+    if (newSize !== oldSize) {
+      console.log(`PageSize 변경: ${oldSize} -> ${newSize}`)
+      currentPage.value = 0
+      loadAttractions(0)
+    }
+  },
+)
+
 // 컴포넌트 마운트 시 데이터 로드
 onMounted(async () => {
+  // window resize 이벤트 리스너 등록
+  window.addEventListener('resize', handleResize)
+
   // 카테고리 데이해 로드
   try {
     attractionAPI.attractionApi
@@ -276,6 +327,11 @@ onMounted(async () => {
   }
 
   loadAttractions(0)
+})
+
+// 컴포넌트 언마운트 시 이벤트 리스너 제거
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
