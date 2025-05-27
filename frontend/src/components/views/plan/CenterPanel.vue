@@ -47,9 +47,9 @@
             v-if="scheduleItems.length > 1"
             :path="schedulePath"
             :options="{
-              strokeColor: '#6FBBFF',
-              strokeOpacity: 0.8,
-              strokeWeight: 4
+              strokeColor: '#ff6b6b',
+              strokeOpacity: 1,
+              strokeWeight: 6
             }"
           />
         </template>

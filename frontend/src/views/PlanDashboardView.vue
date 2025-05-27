@@ -1,5 +1,7 @@
 <template>
-  <div class="flex">
+  <div class="w-full bg-white min-h-screen">
+    <div class="max-w-7xl mx-auto bg-white min-h-screen">
+      <div class="flex">
     <!-- 왼쪽 사이드바 -->
     <aside class="w-64 bg-white border-r border-gray-200 flex-shrink-0">
       <div class="p-6">
@@ -10,7 +12,7 @@
             :class="[
               'w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors text-sm font-medium',
               activeTab === 'myPlans' 
-                ? 'bg-[#00EDB3] text-white' 
+                ? 'bg-[var(--primary-10)] text-[var(--primary-dark)]' 
                 : 'text-gray-700 hover:bg-gray-100'
             ]"
           >
@@ -26,7 +28,7 @@
             :class="[
               'w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors text-sm font-medium',
               activeTab === 'bookmarks' 
-                ? 'bg-[#00EDB3] text-white' 
+                ? 'bg-[var(--primary-10)] text-[var(--primary-dark)]' 
                 : 'text-gray-700 hover:bg-gray-100'
             ]"
           >
@@ -42,13 +44,23 @@
     <!-- 오른쪽 컨텐츠 영역 -->
     <main class="flex-1 p-6 bg-white">
       <!-- 페이지 제목 -->
-      <div class="mb-6">
+      <div class="mb-6 flex justify-between items-center">
         <h1 class="text-2xl font-bold text-gray-900">{{ getPageTitle() }}</h1>
+        <button 
+          v-if="activeTab === 'myPlans'"
+          @click="addNewPlan"
+          class="flex items-center px-4 py-2 bg-[var(--secondary-color)] text-white rounded-lg hover:bg-[var(--secondary-dark)] font-semibold transition-colors text-sm font-medium"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          일정 추가하기
+        </button>
       </div>
 
       <!-- 로딩 상태 -->
       <div v-if="loading" class="flex flex-col items-center justify-center py-20 gap-4">
-        <div class="w-8 h-8 border-4 border-gray-200 border-t-[#00EDB3] rounded-full animate-spin"></div>
+        <div class="w-8 h-8 border-4 border-gray-200 border-t-[var(--primary-10] rounded-full animate-spin"></div>
         <span class="text-gray-600">데이터를 불러오는 중...</span>
       </div>
 
@@ -61,6 +73,14 @@
         >
           다시 시도
         </button>
+      </div>
+
+      <!-- 빈 상태 (내가 만든 일정이 없을 때) -->
+      <div v-else-if="activeTab === 'myPlans' && plans.length === 0" class="text-center py-20">
+        <div class="text-6xl mb-4">📝</div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">아직 만든 여행 계획이 없습니다</h3>
+        <p class="text-gray-600 mb-6">첫 번째 여행 계획을 만들어보세요</p>
+        <AddPlanCard @click="addNewPlan" class="max-w-sm mx-auto" />
       </div>
 
       <!-- 빈 상태 (북마크가 없을 때) -->
@@ -77,7 +97,7 @@
       </div>
 
       <!-- 여행 계획 그리드 -->
-      <div v-else class="grid gap-6" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+      <div v-else class="grid gap-6 grid-cols-2 md:grid-cols-3 xl:grid-cols-3">
         <TravelPlanCard
           v-for="plan in plans"
           :key="plan.planId"
@@ -92,6 +112,8 @@
         <AddPlanCard v-if="activeTab === 'myPlans'" @click="addNewPlan" />
       </div>
     </main>
+      </div>
+    </div>
   </div>
 </template>
 

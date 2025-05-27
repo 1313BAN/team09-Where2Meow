@@ -34,6 +34,7 @@
       @update:selectedDay="$emit('update:selectedDay', $event)"
       @selectScheduleItem="$emit('selectScheduleItem', $event)"
       @addScheduleItem="$emit('addScheduleItem')"
+      @updateScheduleOrder="$emit('updateScheduleOrder', $event)"
       @savePlan="$emit('savePlan')"
     />
 
@@ -93,6 +94,7 @@ defineEmits([
   'update:selectedCategoryIds',
   'selectScheduleItem',
   'addScheduleItem',
+  'updateScheduleOrder',
   'selectPlace',
   'savePlan',
   'loadMoreResults'

@@ -242,7 +242,7 @@ export default {
         case 'ongoing':
           return 'text-[#FFD900] bg-yellow-50';
         case 'completed':
-          return 'text-[#00EDB3] bg-green-50';
+          return 'text-[var(--primary-dark)] bg-green-50';
         default:
           return baseClass;
       }

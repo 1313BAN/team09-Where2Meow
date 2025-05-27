@@ -14,6 +14,7 @@
       :selectedScheduleItem="selectedPlace"
       @selectScheduleItem="$emit('selectScheduleItem', $event)"
       @addScheduleItem="$emit('addScheduleItem')"
+      @updateScheduleOrder="$emit('updateScheduleOrder', $event)"
     />
 
     <!-- 저장 버튼 -->
@@ -48,6 +49,7 @@ defineEmits([
   'update:selectedDay',
   'selectScheduleItem',
   'addScheduleItem',
+  'updateScheduleOrder',
   'savePlan'
 ])
 </script>

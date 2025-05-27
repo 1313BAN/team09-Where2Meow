@@ -31,6 +31,7 @@
       @update:selectedCategoryIds="handleCategoryFilter"
       @selectScheduleItem="selectScheduleItem"
       @addScheduleItem="addScheduleItem"
+      @updateScheduleOrder="updateScheduleOrder"
       @selectPlace="selectPlace"
       @addToSchedule="addToSchedule"
       @savePlan="savePlan"
@@ -140,7 +141,7 @@ const adjustMapToSchedule = () => {
           lat: parseFloat(firstValidItem.latitude),
           lng: parseFloat(firstValidItem.longitude)
         };
-        mapZoom.value = 14; // 적절한 줌 레벨로 설정
+        mapZoom.value = 11; // 적절한 줌 레벨로 설정
       }
     }
   }
@@ -216,7 +217,10 @@ const chatMessages = ref([
     id: 1,
     sender: 'ai',
     text: '안냥! AI 여행 플래너 가냥이다냥. "강릉 1박 2일 여행 계획 짜줘" 같은 명령을 해보라냥!',
-    time: '09:30',
+    time: new Date().toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
   },
 ])
 
@@ -561,6 +565,16 @@ const addScheduleItem = () => {
   console.log('일정 추가')
 }
 
+// ✅ 일정 순서 변경 처리 함수
+const updateScheduleOrder = (newOrderItems) => {
+  console.log('일정 순서 변경:', selectedDay.value, newOrderItems)
+  
+  // 현재 선택된 날짜의 일정을 새로운 순서로 업데이트
+  scheduleData.value[selectedDay.value] = newOrderItems
+  
+  console.log('업데이트된 일정 데이터:', scheduleData.value[selectedDay.value])
+}
+
 const addToSchedule = (addData) => {
   const { place, date, memo } = addData
   
@@ -638,7 +652,7 @@ const sendAiMessage = async () => {
     const loadingMessage = {
       id: chatMessages.value.length + 1,
       sender: 'ai',
-      text: 'AI가 여행 계획을 생성하고 있습니다...',
+      text: '가냥이가 여행 계획을 생성하고 있습니다...',
       time: new Date().toLocaleTimeString('ko-KR', {
         hour: '2-digit',
         minute: '2-digit',

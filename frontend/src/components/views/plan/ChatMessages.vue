@@ -82,6 +82,7 @@ defineProps({
   border-radius: 18px;
   word-wrap: break-word;
   font-size: 0.95em;
+  white-space: pre-wrap;
 }
 
 .message.received .message-bubble {

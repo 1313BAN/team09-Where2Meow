@@ -12,6 +12,7 @@
       :isSearching="false"
       @selectItem="handleSelectItem"
       @addScheduleItem="$emit('addScheduleItem')"
+      @updateScheduleOrder="handleUpdateScheduleOrder"
     />
   </div>
 </template>
@@ -25,12 +26,18 @@ defineProps({
   selectedScheduleItem: Object
 })
 
-const emit = defineEmits(['selectScheduleItem', 'addScheduleItem'])
+const emit = defineEmits(['selectScheduleItem', 'addScheduleItem', 'updateScheduleOrder'])
 
 // ✅ 일정 아이템 선택 처리 함수
 const handleSelectItem = (item, index) => {
   console.log('일정 아이템 선택:', item, index) // 디버깅용
   emit('selectScheduleItem', item)
+}
+
+// ✅ 일정 순서 변경 처리 함수
+const handleUpdateScheduleOrder = (newOrderItems) => {
+  console.log('일정 순서 변경:', newOrderItems) // 디버깅용
+  emit('updateScheduleOrder', newOrderItems)
 }
 </script>
 

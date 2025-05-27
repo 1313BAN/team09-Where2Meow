@@ -7,13 +7,90 @@
       <p class="no-results-subtext">{{ mode === 'schedule' ? '검색 탭에서 장소를 검색하고 추가해보세요.' : '다른 키워드로 검색해보세요.' }}</p>
     </div>
 
-    <!-- 아이템 목록 (검색 결과 또는 일정) -->
+    <!-- 일정 모드: 드래그 가능한 목록 -->
+    <draggable 
+      v-if="mode === 'schedule' && items.length > 0"
+      v-model="draggableItems"
+      item-key="attractionId"
+      class="draggable-list"
+      :animation="200"
+      ghost-class="ghost-item"
+      chosen-class="chosen-item"
+      drag-class="drag-item"
+      @start="onDragStart"
+      @end="onDragEnd"
+    >
+      <template #item="{ element: item, index }">
+        <div 
+          @click="handleItemClick(item, index)"
+          class="result-item schedule-item"
+          :class="{ 'selected': isItemSelected(item), 'schedule-mode': mode === 'schedule' }"
+        >
+          
+          <!-- 순번 표시 -->
+          <div class="item-number">{{ index + 1 }}</div>
+          
+          <div class="item-image-container">
+            <!-- AttractionImage 컴포넌트 사용 -->
+            <AttractionImage 
+              :imageUrl="item.image || (item.first_image1 || item.first_image2)" 
+              :attractionId="item.attractionId || item.attraction_id"
+              class="item-thumbnail"
+              :alt="item.attractionName || item.attraction_name"
+            />
+            <div v-if="item.categoryName || item.attraction_category_name" class="category-badge">
+              {{ item.categoryName || item.attraction_category_name }}
+            </div>
+          </div>
+          
+          <div class="item-details">
+            <div class="item-title">{{ item.attractionName || item.attraction_name }}</div>
+            <div class="item-location">
+              <svg class="location-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span>
+                {{ 
+                  (item.stateName || item.state_name) && (item.cityName || item.city_name) 
+                    ? `${item.stateName || item.state_name} ${item.cityName || item.city_name}`
+                    : item.location || '위치 정보 없음'
+                }}
+              </span>
+            </div>
+            
+            <div v-if="item.content" class="item-memo">
+              <svg class="memo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              {{ item.content }}
+            </div>
+            
+            <!-- 메모가 없는 일정 모드이거나 리뷰가 있는 경우만 평점 표시 -->
+            <div v-else-if="item.reviewCount > 0" class="item-rating">
+              <div class="rating-stars">
+                <span class="star">⭐</span>
+                <span class="rating-score">{{ 
+                  item.reviewAvgScore && !isNaN(item.reviewAvgScore) 
+                    ? item.reviewAvgScore.toFixed(1) 
+                    : '0.0' 
+                }}</span>
+              </div>
+              <span class="review-count">({{ item.reviewCount || 0 }}개 리뷰)</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </draggable>
+
+    <!-- 검색 모드: 일반 목록 -->
     <div 
+      v-else-if="mode === 'search'"
       v-for="(item, index) in items" 
       :key="`${item.attractionId || item.attraction_id}-${index}`"
       @click="handleItemClick(item, index)"
       class="result-item"
-      :class="{ 'selected': isItemSelected(item), 'schedule-mode': mode === 'schedule' }"
+      :class="{ 'selected': isItemSelected(item) }"
     >
       <!-- 순번 표시 -->
       <div class="item-number">{{ index + 1 }}</div>
@@ -47,15 +124,8 @@
           </span>
         </div>
         
-        <div v-if="mode === 'schedule' && item.content" class="item-memo">
-          <svg class="memo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-          </svg>
-          {{ item.content }}
-        </div>
-        
-        <!-- 메모가 없는 일정 모드이거나 리뷰가 있는 경우만 평점 표시 -->
-        <div v-else-if="item.reviewCount > 0" class="item-rating">
+        <!-- 리뷰가 있는 경우만 평점 표시 -->
+        <div v-if="item.reviewCount > 0" class="item-rating">
           <div class="rating-stars">
             <span class="star">⭐</span>
             <span class="rating-score">{{ 
@@ -66,7 +136,6 @@
           </div>
           <span class="review-count">({{ item.reviewCount || 0 }}개 리뷰)</span>
         </div>
-        <!-- 리뷰가 없으면 아무것도 표시하지 않음 -->
       </div>
     </div>
 
@@ -100,6 +169,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
+import draggable from 'vuedraggable'
 import AttractionImage from '@/components/common/AttractionImage.vue'
 
 const props = defineProps({
@@ -149,10 +219,49 @@ function isItemSelected(item) {
   return selectedId == itemId  // 의도적으로 느슨한 비교 사용 (== 연산자)
 }
 
-const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
+// 드래그 가능한 아이템 배열 (일정 모드에서만 사용)
+const draggableItems = computed({
+  get() {
+    return props.mode === 'schedule' ? props.scheduleItems || [] : []
+  },
+  set(newItems) {
+    if (props.mode === 'schedule') {
+      emit('updateScheduleOrder', newItems)
+    }
+  }
+})
+
+// 드래그 상태
+const isDragging = ref(false)
+
+const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem', 'updateScheduleOrder'])
+
+// 드래그 시작
+const onDragStart = (event) => {
+  isDragging.value = true
+  console.log('드래그 시작:', event)
+}
+
+// 드래그 종료
+const onDragEnd = (event) => {
+  isDragging.value = false
+  console.log('드래그 종료:', event)
+  
+  // 순서가 변경되었는지 확인
+  if (event.oldIndex !== event.newIndex) {
+    console.log(`아이템이 ${event.oldIndex}에서 ${event.newIndex}로 이동됨`)
+    console.log('드래그 종료 후 아이템 순서:', draggableItems.value)
+    // draggableItems의 setter가 자동으로 호출되어 updateScheduleOrder 이벤트가 발생함
+  }
+}
 
 // ✅ 아이템 클릭 처리 함수
 const handleItemClick = (item, index) => {
+  // 드래그 중일 때는 클릭 이벤트 무시
+  if (isDragging.value) {
+    return
+  }
+  
   console.log(`${props.mode} 모드에서 아이템 클릭:`, item, index) // 디버깅용
   
   // 모드에 따라 이벤트 전달
@@ -578,6 +687,57 @@ const handleItemClick = (item, index) => {
   margin-top: 20px;
 }
 
+/* 드래그 앤 드롭 스타일 */
+.draggable-list {
+  width: 100%;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  color: #999;
+  cursor: grab;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.drag-handle:hover {
+  color: #6FBBFF;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 드래그 상태 스타일 */
+.ghost-item {
+  opacity: 0.5;
+  background-color: #f0f8ff;
+  border: 2px dashed #6FBBFF;
+  transform: scale(1.02);
+}
+
+.chosen-item {
+  box-shadow: 0 8px 32px rgba(111, 187, 255, 0.3);
+  transform: scale(1.02);
+  border: 2px solid #6FBBFF;
+}
+
+.drag-item {
+  opacity: 0.8;
+  transform: rotate(2deg);
+  z-index: 1000;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .result-item {
@@ -589,6 +749,17 @@ const handleItemClick = (item, index) => {
     height: 28px;
     font-size: 12px;
     margin-right: 10px;
+  }
+  
+  .drag-handle {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+  }
+  
+  .drag-icon {
+    width: 14px;
+    height: 14px;
   }
   
   .item-image-container {

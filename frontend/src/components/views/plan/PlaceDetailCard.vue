@@ -88,7 +88,7 @@
           </button>
           
           <button 
-            @click="$emit('viewDetail', selectedPlace)"
+            @click="openAttractionDetail"
             class="btn btn-secondary"
           >
             <svg class="btn-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -345,6 +345,15 @@ const updateMemo = () => {
   }
   
   closeEditMemoModal()
+}
+
+// 관광지 상세 페이지를 새 탭으로 열기
+const openAttractionDetail = () => {
+  const attractionId = props.selectedPlace.attractionId || props.selectedPlace.attraction_id
+  if (attractionId) {
+    const url = `/attraction/${attractionId}`
+    window.open(url, '_blank')
+  }
 }
 </script>
 

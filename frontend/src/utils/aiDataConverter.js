@@ -154,7 +154,7 @@ export const convertAiResponseToSchedule = async (attractions, startDate) => {
 // 명령어에서 생성/업데이트 구분
 export const detectCommandType = (message) => {
   const createKeywords = ['생성', '만들', '짜', '계획', '스케줄', '일정 만들', '새로']
-  const updateKeywords = ['수정', '변경', '바꿔', '교체', '업데이트', '다시', '추가']
+  const updateKeywords = ['수정', '변경', '바꿔', '교체', '업데이트', '다시', '추가', '삭제']
   
   const lowerMessage = message.toLowerCase()
   
