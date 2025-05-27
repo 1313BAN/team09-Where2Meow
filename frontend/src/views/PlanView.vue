@@ -71,7 +71,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import LeftPanel from '@/components/views/plan/LeftPanel.vue'
 import CenterPanel from '@/components/views/plan/CenterPanel.vue'
 import RightPanel from '@/components/views/plan/RightPanel.vue'
@@ -83,6 +83,7 @@ import { convertScheduleToAiFormat, convertAiResponseToSchedule, detectCommandTy
 
 // 라우트 정보 가져오기
 const route = useRoute()
+const router = useRouter()
 
 // 편집 모드 여부 확인
 const isEditMode = computed(() => {
@@ -348,6 +349,19 @@ onMounted(async () => {
     // 편집 모드일 때 기존 계획 데이터 로드
     if (isEditMode.value && currentPlanId.value) {
       await loadExistingPlan(currentPlanId.value)
+    }
+    
+    // query parameter로 전달된 메시지가 있는 경우 자동으로 AI 채팅에 전송
+    const queryMessage = route.query.message
+    if (queryMessage && typeof queryMessage === 'string') {
+      // 메시지를 newMessage에 설정하고 전송
+      newMessage.value = queryMessage
+      // 약간의 딴레이 후 전송 (아이 채팅 패널이 렌더링된 후)
+      setTimeout(() => {
+        sendAiMessage()
+        // URL에서 query parameter 제거
+        router.replace({ name: route.name, params: route.params })
+      }, 500)
     }
     
   } catch (error) {

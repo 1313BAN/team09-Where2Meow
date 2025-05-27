@@ -41,8 +41,8 @@ const router = useRouter()
 // 이벤트 핸들러들
 const handleBannerSearch = (query) => {
   console.log('배너 검색:', query)
-  // AI 검색 페이지로 이동하거나 검색 결과 표시
-  router.push({ name: 'search', query: { q: query, type: 'ai' } })
+  // PlanView로 이동하면서 검색어를 query로 전달
+  router.push({ name: 'plan-create', query: { message: query } })
 }
 
 const handleDetailSearch = (searchForm) => {
