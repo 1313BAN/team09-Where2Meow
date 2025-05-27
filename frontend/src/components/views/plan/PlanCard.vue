@@ -67,7 +67,9 @@
 </template>
 
 <script>
-import { planService } from '@/api/plan'
+import planAPI from '@/api/plan'
+
+const planService = planAPI.planService
 
 export default {
   name: 'TravelPlanCard',
