@@ -2,6 +2,7 @@ package com.ssafy.where2meow.common.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -16,9 +17,12 @@ import java.net.URL;
 @Slf4j
 public class ImageCacheService {
 
-  private static final String IMAGE_CACHE_DIR = "src/main/resources/static/images/attractions/";
-  private static final String IMAGE_URL_PREFIX = "/images/attractions/";
-  
+  @Value("${app.image.cache.directory}")
+  private String IMAGE_CACHE_DIR;
+
+  @Value("${app.image.cache.url-prefix}")
+  private String IMAGE_URL_PREFIX;
+
   // 고화질 저장을 위한 기본 크기 설정
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 300;
@@ -28,11 +32,11 @@ public class ImageCacheService {
     // 현재 작업 디렉토리 확인
     String currentDir = System.getProperty("user.dir");
     log.info("현재 작업 디렉토리: {}", currentDir);
-    
+
     // 캐시 디렉토리 생성
     File cacheDir = new File(IMAGE_CACHE_DIR);
     log.info("이미지 캐시 디렉토리 절대 경로: {}", cacheDir.getAbsolutePath());
-    
+
     if (!cacheDir.exists()) {
       cacheDir.mkdirs();
     }
@@ -43,9 +47,14 @@ public class ImageCacheService {
    * 캐시된 이미지 URL 반환 (고화질 버전)
    */
   public String getCachedImageUrl(Integer attractionId) {
+    if (attractionId == null || attractionId <= 0) {
+      log.warn("유효하지 않은 attractionId: {}", attractionId);
+      return null;
+    }
+
     String fileName = generateFileName(attractionId);
     File cachedFile = new File(IMAGE_CACHE_DIR + fileName);
-    
+
     log.debug("캐시 이미지 확인: attractionId={}, fileName={}, exists={}", attractionId, fileName, cachedFile.exists());
 
     if (cachedFile.exists()) {
@@ -77,7 +86,7 @@ public class ImageCacheService {
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       connection.setConnectTimeout(10000); // 10초 타임아웃
       connection.setReadTimeout(30000); // 30초 타임아웃
-      connection.setRequestProperty("User-Agent", 
+      connection.setRequestProperty("User-Agent",
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
 
       try (InputStream inputStream = connection.getInputStream()) {
@@ -109,17 +118,17 @@ public class ImageCacheService {
   private BufferedImage processImageForHighQuality(BufferedImage originalImage) {
     int originalWidth = originalImage.getWidth();
     int originalHeight = originalImage.getHeight();
-    
+
     // 원본이 작은 경우 원본 크기 유지, 큰 경우 적절한 크기로 조정
     int targetWidth, targetHeight;
-    
+
     if (originalWidth <= DEFAULT_WIDTH && originalHeight <= DEFAULT_HEIGHT) {
       // 원본이 작으면 그대로 사용
       return originalImage;
     } else {
       // 비율을 유지하면서 리사이징
       double aspectRatio = (double) originalWidth / originalHeight;
-      
+
       if (aspectRatio > 1) {
         // 가로가 더 긴 경우
         targetWidth = Math.min(originalWidth, DEFAULT_WIDTH * 2); // 더 큰 크기로 설정
@@ -129,7 +138,7 @@ public class ImageCacheService {
         targetHeight = Math.min(originalHeight, DEFAULT_HEIGHT * 2);
         targetWidth = (int) (targetHeight * aspectRatio);
       }
-      
+
       return resizeImageHighQuality(originalImage, targetWidth, targetHeight);
     }
   }
@@ -158,20 +167,21 @@ public class ImageCacheService {
    * 고품질 JPEG 저장
    */
   private void saveHighQualityImage(BufferedImage image, File file) throws Exception {
-    // ImageIO로 고품질 JPEG 저장
-    javax.imageio.ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
-    javax.imageio.ImageWriteParam param = writer.getDefaultWriteParam();
-    
-    // 압축 품질 설정 (0.9 = 90% 품질)
-    param.setCompressionMode(javax.imageio.ImageWriteParam.MODE_EXPLICIT);
-    param.setCompressionQuality(0.9f);
-    
-    javax.imageio.stream.ImageOutputStream outputStream = ImageIO.createImageOutputStream(file);
-    writer.setOutput(outputStream);
-    writer.write(null, new javax.imageio.IIOImage(image, null, null), param);
-    
-    outputStream.close();
-    writer.dispose();
+    try (javax.imageio.stream.ImageOutputStream outputStream = ImageIO.createImageOutputStream(file)) {
+      javax.imageio.ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+      try {
+        javax.imageio.ImageWriteParam param = writer.getDefaultWriteParam();
+
+        // 압축 품질 설정 (0.9 = 90% 품질)
+        param.setCompressionMode(javax.imageio.ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(0.9f);
+
+        writer.setOutput(outputStream);
+        writer.write(null, new javax.imageio.IIOImage(image, null, null), param);
+      } finally {
+        writer.dispose();
+      }
+    }
   }
 
   /**
@@ -187,7 +197,7 @@ public class ImageCacheService {
   public boolean deleteCachedImage(Integer attractionId) {
     String fileName = generateFileName(attractionId);
     File cachedFile = new File(IMAGE_CACHE_DIR + fileName);
-    
+
     if (cachedFile.exists()) {
       boolean deleted = cachedFile.delete();
       if (deleted) {
@@ -195,7 +205,7 @@ public class ImageCacheService {
       }
       return deleted;
     }
-    
+
     return false;
   }
 }

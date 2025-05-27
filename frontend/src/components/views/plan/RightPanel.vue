@@ -37,11 +37,13 @@ defineEmits(['update:newMessage', 'sendMessage'])
 <style scoped>
 .right-panel {
   width: 350px;
+  min-width: 280px;
+  max-width: 100vw;
   background-color: #f9f9f9;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  height: 100%; /* 100vh에서 100%로 변경 */
+  height: 100%;
   overflow: hidden;
 }
 
@@ -56,5 +58,28 @@ defineEmits(['update:newMessage', 'sendMessage'])
 
 .chat-input-container {
   flex-shrink: 0;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .right-panel {
+    width: 100%;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .right-panel.mobile-open {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .right-panel {
+    width: 100vw;
+  }
 }
 </style>

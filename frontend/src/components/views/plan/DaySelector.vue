@@ -5,10 +5,11 @@
         v-for="day in totalDays"
         :key="day"
         @click="$emit('update:selectedDay', day)"
-        :class="[
-          'day-button',
-          selectedDay === day ? 'active' : ''
-        ]"
+        :class="['day-button', selectedDay === day ? 'active' : '']"
+        :aria-pressed="selectedDay === day"
+        :aria-label="`${day}일차 선택`"
+        role="button"
+        type="button"
       >
         day{{ day }}
       </button>
@@ -18,8 +19,16 @@
 
 <script setup>
 defineProps({
-  selectedDay: Number,
-  totalDays: Number
+  selectedDay: {
+    type: Number,
+    required: true,
+    validator: (value) => value > 0
+  },
+  totalDays: {
+    type: Number,
+    required: true,
+    validator: (value) => value > 0 && value <= 365
+  }
 })
 
 defineEmits(['update:selectedDay'])
@@ -59,7 +68,7 @@ defineEmits(['update:selectedDay'])
 }
 
 .day-button.active {
-  background-color: #6FBBFF;
+  background-color: #6fbbff;
   color: #fff;
 }
 

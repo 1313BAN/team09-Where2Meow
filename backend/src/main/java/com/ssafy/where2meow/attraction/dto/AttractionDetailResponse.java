@@ -19,8 +19,8 @@ public class AttractionDetailResponse {
     private String firstImage1;
     private String firstImage2;
     private Integer mapLevel;
-    private BigDecimal latitude;
-    private BigDecimal longitude;
+    private Double latitude;
+    private Double longitude;
     private String tel;
     private String addr1;
     private String addr2;

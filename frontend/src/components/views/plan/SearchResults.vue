@@ -50,9 +50,13 @@
         <div v-else-if="item.reviewCount > 0" class="item-rating">
           <div class="rating-stars">
             <span class="star">⭐</span>
-            <span class="rating-score">{{ item.reviewAvgScore.toFixed(1) }}</span>
+            <span class="rating-score">{{ 
+              item.reviewAvgScore && !isNaN(item.reviewAvgScore) 
+                ? item.reviewAvgScore.toFixed(1) 
+                : '0.0' 
+            }}</span>
           </div>
-          <span class="review-count">({{ item.reviewCount }}개 리뷰)</span>
+          <span class="review-count">({{ item.reviewCount || 0 }}개 리뷰)</span>
         </div>
         <div v-else class="item-rating">
           <span class="no-review">리뷰 없음</span>
@@ -133,21 +137,26 @@ const emit = defineEmits(['selectItem', 'loadMoreResults', 'addScheduleItem'])
 }
 
 .search-results::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .search-results::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .search-results::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+  background: #aaa; /* 더 높은 대비 */
+  border-radius: 4px;
+  min-height: 20px; /* 최소 높이 보장 */
 }
 
 .search-results::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: #888; /* 호버 시 더 진한 색상 */
+}
+
+.search-results::-webkit-scrollbar-thumb:active {
+  background: #666; /* 활성 상태 색상 */
 }
 
 /* 결과 없음 스타일 */

@@ -59,9 +59,9 @@ public class AttractionController {
    * @return 여행지 상세 정보
    */
   @GetMapping("/detail/{attractionId}")
-  public ResponseEntity<AttractionListResponse> getAttractionDetail(
+  public ResponseEntity<AttractionDetailResponse> getAttractionDetail(
       @PathVariable Integer attractionId) {
-    AttractionListResponse attraction = attractionService.getAttractionDetail(attractionId);
+    AttractionDetailResponse attraction = attractionService.getAttractionDetail(attractionId);
     return ResponseEntity.ok(attraction);
   }
 

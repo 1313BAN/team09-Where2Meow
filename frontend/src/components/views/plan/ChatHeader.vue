@@ -1,11 +1,10 @@
 <template>
   <div class="chat-header">
     <div class="ai-status">
-      <div class="ai-name">AI 가넷이</div>
-      <div class="status-indicator online">온라인</div>
+      <div class="ai-name">AI 가냥이</div>
     </div>
-    <button class="more-options">
-      <span class="material-icons"
+    <button class="more-options" aria-label="더 많은 옵션">
+      <span class="icons"
         ><svg
           xmlns="http://www.w3.org/2000/svg"
           height="24"
@@ -64,7 +63,7 @@
   color: #fff;
 }
 
-.more-options .material-icons {
+.more-options .icons {
   font-size: 24px;
 }
 </style>

@@ -7,6 +7,8 @@
         @input="$emit('update:tripTitle', $event.target.value)"
         class="form-input"
         placeholder="여행 제목을 입력하세요"
+        maxlength="100"
+        required
       />
     </div>
     
@@ -29,6 +31,7 @@
           @input="$emit('update:startDate', $event.target.value)"
           type="date"
           class="date-input"
+          :max="endDate"
         />
         <span class="date-separator">~</span>
         <input 
@@ -36,6 +39,7 @@
           @input="$emit('update:endDate', $event.target.value)"
           type="date"
           class="date-input"
+          :min="startDate"
         />
       </div>
     </div>

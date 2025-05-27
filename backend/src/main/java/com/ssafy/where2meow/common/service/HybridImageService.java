@@ -20,12 +20,21 @@ public class HybridImageService {
    * 최적의 이미지 URL 반환 (고화질 캐싱 방식)
    */
   public String getBestImageUrl(Attraction attraction) {
+    if (attraction == null) {
+      log.warn("Attraction 객체가 null입니다. 기본 이미지를 반환합니다.");
+      return baseUrl + "/images/default-attraction.jpg";
+    }
+
     Integer attractionId = attraction.getAttractionId();
+    if (attractionId == null) {
+      log.warn("Attraction ID가 null입니다. 기본 이미지를 반환합니다.");
+      return baseUrl + "/images/default-attraction.jpg";
+    }
 
     // 1. 캐시된 고화질 이미지 우선 확인
     String cachedUrl = imageCacheService.getCachedImageUrl(attractionId);
     if (cachedUrl != null) {
-    log.info("캐시된 고화질 이미지 사용: attractionId={}", attractionId);
+      log.info("캐시된 고화질 이미지 사용: attractionId={}", attractionId);
       return baseUrl + cachedUrl;
     }
 
@@ -60,11 +69,19 @@ public class HybridImageService {
    * 이미지 캐시 강제 새로고침
    */
   public String refreshImageCache(Attraction attraction) {
+    if (attraction == null || attraction.getAttractionId() == null) {
+      throw new IllegalArgumentException("유효하지 않은 Attraction 객체입니다.");
+    }
+
     Integer attractionId = attraction.getAttractionId();
-    
+
     // 기존 캐시 삭제
     imageCacheService.deleteCachedImage(attractionId);
-    
+    boolean deleted = imageCacheService.deleteCachedImage(attractionId);
+    if (!deleted) {
+      log.warn("기존 캐시 삭제 실패: attractionId={}", attractionId);
+    }
+
     // 새로 캐싱
     return getBestImageUrl(attraction);
   }

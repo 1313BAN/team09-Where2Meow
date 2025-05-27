@@ -77,10 +77,10 @@ import { transformPlanDataForAPI } from '@/utils/planDataTransformer'
 
 // 반응형 데이터
 const activeTab = ref('schedule')
-const tripTitle = ref('제주도 여행')
+const tripTitle = ref('')
 const content = ref('')
-const startDate = ref('2024-06-01')
-const endDate = ref('2024-06-03')
+const startDate = ref(new Date().toISOString().split('T')[0])
+const endDate = ref(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
 const isPublic = ref(false)
 const selectedDay = ref(1)
 const searchQuery = ref('')
@@ -243,22 +243,11 @@ const chatMessages = ref([
 onMounted(async () => {
   try {
     // 백엔드에서 카테고리 목록을 받아올 API가 있다면 사용
-    // const response = await attractionApi.getAllCategories()
-    // availableCategories.value = response.data
-
-    // 임시로 하드코딩된 카테고리 (실제로는 백엔드에서 받아와야 함)
-    availableCategories.value = [
-      { categoryId: 12, categoryName: '관광지' },
-      { categoryId: 14, categoryName: '문화시설' },
-      { categoryId: 15, categoryName: '축제공연행사' },
-      { categoryId: 25, categoryName: '여행코스' },
-      { categoryId: 28, categoryName: '레포츠' },
-      { categoryId: 32, categoryName: '숙박' },
-      { categoryId: 38, categoryName: '쇼핑' },
-      { categoryId: 39, categoryName: '음식점' },
-    ]
+    const response = await attractionApi.getAllCategories()
+    availableCategories.value = response.data
   } catch (error) {
     console.error('카테고리 로드 실패:', error)
+    alert('카테고리 정보를 불러오는데 실패했습니다.')
   }
 })
 
@@ -356,7 +345,7 @@ const performSearch = async () => {
     )
 
     searchResults.value = response.data.content
-    hasMoreResults.value = !response.data.last
+    hasMoreResults.value = response.data.page.number + 1 < response.data.page.totalPages
 
     console.log('초기 hasMoreResults 설정:', hasMoreResults.value)
   } catch (error) {

@@ -1,6 +1,7 @@
 package com.ssafy.where2meow.attraction.service;
 
 import com.ssafy.where2meow.attraction.dto.AttractionCategoryResponse;
+import com.ssafy.where2meow.attraction.dto.AttractionDetailResponse;
 import com.ssafy.where2meow.attraction.dto.AttractionListResponse;
 import com.ssafy.where2meow.attraction.entity.Attraction;
 import com.ssafy.where2meow.attraction.entity.AttractionCategory;
@@ -174,7 +175,7 @@ public class AttractionService {
   /**
    * 관광지 상세 조회 (고화질 이미지 적용)
    */
-  public AttractionListResponse getAttractionDetail(Integer attractionId) {
+  public AttractionDetailResponse getAttractionDetail(Integer attractionId) {
     Attraction attraction = attractionRepository.findById(attractionId)
         .orElseThrow(() -> new IllegalArgumentException("해당 관광지를 찾을 수 없습니다."));
 
@@ -192,21 +193,25 @@ public class AttractionService {
     Long reviewCount = reviewRepository.countByAttractionId(attractionId);
     Double reviewAvgScore = reviewRepository.getAverageScoreByAttractionId(attractionId);
 
-    return AttractionListResponse.builder()
+    return AttractionDetailResponse.builder()
         .attractionId(attraction.getAttractionId())
+        .contentId(attraction.getContentId())
         .attractionName(attraction.getAttractionName())
-        .image(highQualityImageUrl)
-        .reviewCount(reviewCount != null ? reviewCount : 0L)
-        .reviewAvgScore(reviewAvgScore != null ? reviewAvgScore : 0.0)
-        .stateName(state.getStateName())
-        .cityName(city.getCityName())
-        .categoryId(attraction.getAttractionCategoryId())
-        .categoryName(category != null ? category.getAttractionCategoryName() : "기타")
-        // ✅ 위도/경도 추가
+        .firstImage1(attraction.getFirstImage1())
+        .firstImage2(attraction.getFirstImage2())
+        .mapLevel(attraction.getMapLevel())
         .latitude(attraction.getLatitude())
         .longitude(attraction.getLongitude())
+        .tel(attraction.getTel())
+        .addr1(attraction.getAddr1())
+        .addr2(attraction.getAddr2())
+        .homepage(attraction.getHomepage())
+        .overview(attraction.getOverview())
+        .categoryName(category != null ? category.getAttractionCategoryName() : "기타")
+        .stateName(state.getStateName())
+        .cityName(city.getCityName())
+        .reviewAvgScore(reviewAvgScore != null ? reviewAvgScore : 0.0)
         .build();
-
   }
 
   /**

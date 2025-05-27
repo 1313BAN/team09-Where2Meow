@@ -16,11 +16,14 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ImagePreloadScheduler {
 
-  @Autowired
-  private AttractionRepository attractionRepository;
+  private final AttractionRepository attractionRepository;
+  private final HybridImageService hybridImageService;
 
-  @Autowired
-  private HybridImageService hybridImageService;
+  public ImagePreloadScheduler(AttractionRepository attractionRepository,
+                               HybridImageService hybridImageService) {
+    this.attractionRepository = attractionRepository;
+    this.hybridImageService = hybridImageService;
+  }
 
   /**
    * 인기 관광지 이미지 사전 로딩 (매일 새벽 2시 실행)
@@ -31,7 +34,7 @@ public class ImagePreloadScheduler {
 
     try {
       // 인기 관광지 100개 조회 (리뷰 수 기준)
-      Pageable pageable = PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "attractionName"));
+      Pageable pageable = PageRequest.of(0, 100, Sort.by(Sort.Direction.DESC, "reviewCount"));
       Page<Attraction> popularAttractions = attractionRepository.findAll(pageable);
 
       int processedCount = 0;
