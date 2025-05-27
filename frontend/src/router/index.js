@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import PlanLayout from '@/layouts/PlanLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -20,19 +21,12 @@ const router = createRouter({
         },
         // 로그인이 필요한 페이지들
         {
-          path: 'plan',
-          children: [
-            {
-              path: 'dashboard',
-              name: 'plan-dashboard',
-              component: () => import('@/views/PlanDashboardView.vue'),
-            },
-            {
-              path: 'create',
-              name: 'plan-create',
-              component: () => import('@/views/PlanView.vue'),
-            },
-          ],
+          path: 'plan', 
+          children: [{
+            path: 'dashboard',
+            name: 'plan-dashboard',
+            component: () => import('@/views/PlanDashboardView.vue')
+          }]
         },
         {
           path: 'mypage',
@@ -42,6 +36,18 @@ const router = createRouter({
         },
       ],
     },
+    // PlanLayout을 사용하는 별도 라우트
+    {
+      path: '/plan/create',
+      component: PlanLayout,
+      children: [
+        {
+          path: '',
+          name: 'plan-create',
+          component: () => import('@/views/PlanView.vue')
+        }
+      ]
+    }
   ],
 
   scrollBehavior(to, from, savedPosition) {

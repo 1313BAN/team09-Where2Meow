@@ -1,5 +1,6 @@
 package com.ssafy.where2meow.attraction.controller;
 
+import com.ssafy.where2meow.attraction.dto.AttractionCategoryResponse;
 import com.ssafy.where2meow.attraction.dto.AttractionDetailResponse;
 import com.ssafy.where2meow.attraction.dto.AttractionListResponse;
 import com.ssafy.where2meow.attraction.service.AttractionService;
@@ -63,4 +64,16 @@ public class AttractionController {
     AttractionDetailResponse attraction = attractionService.getAttractionDetail(attractionId);
     return ResponseEntity.ok(attraction);
   }
+
+  /**
+   * 모든 카테고리 목록 조회 API
+   * @return 카테고리 목록
+   */
+  @GetMapping("/categories")
+  public ResponseEntity<List<
+      AttractionCategoryResponse>> getAllCategories() {
+    List<AttractionCategoryResponse> categories = attractionService.getAllCategories();
+    return ResponseEntity.ok(categories);
+  }
+
 }
