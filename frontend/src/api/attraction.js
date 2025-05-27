@@ -3,36 +3,6 @@ import { getFullImageUrl } from '@/utils/image-utils'
 
 const attractionApiClient = localAxios()
 
-// 요청 인터셉터 (인증 토큰 추가)
-attractionApiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
-
-// 응답 인터셉터 (에러 처리)
-attractionApiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      localStorage.removeItem('accessToken')
-      if (window.app && window.app.$router) {
-        window.app.$router.push('/login')
-      } else {
-        window.location.href = '/login'
-      }
-    }
-    return Promise.reject(error)
-  }
-)
-
 // 이미지 URL이 상대 경로인 경우 전체 URL로 변환
 // 이미 utils/image-utils.js에 구현되어 있음
 
@@ -51,7 +21,7 @@ export const attractionApi = {
    */
   searchAttractions(params = {}) {
     const searchParams = new URLSearchParams()
-    
+
     if (params.countryId) searchParams.append('countryId', params.countryId)
     if (params.stateId) searchParams.append('stateId', params.stateId)
     if (params.cityId) searchParams.append('cityId', params.cityId)
@@ -59,17 +29,18 @@ export const attractionApi = {
     if (params.keyword) searchParams.append('keyword', params.keyword)
     if (params.page !== undefined) searchParams.append('page', params.page)
     if (params.size) searchParams.append('size', params.size)
-    
-    return attractionApiClient.get(`/api/attraction?${searchParams.toString()}`)
-      .then(response => {
+
+    return attractionApiClient
+      .get(`/api/attraction?${searchParams.toString()}`)
+      .then((response) => {
         if (response.data && response.data.content) {
-          response.data.content = response.data.content.map(item => ({
+          response.data.content = response.data.content.map((item) => ({
             ...item,
-            image: getFullImageUrl(item.image)
-          }));
+            image: getFullImageUrl(item.image),
+          }))
         }
-        return response;
-      });
+        return response
+      })
   },
 
   /**
@@ -78,13 +49,12 @@ export const attractionApi = {
    * @returns {Promise} 관광지 상세 정보
    */
   getAttractionDetail(attractionId) {
-    return attractionApiClient.get(`/api/attraction/detail/${attractionId}`)
-      .then(response => {
-        if (response.data) {
-          response.data.image = getFullImageUrl(response.data.image);
-        }
-        return response;
-      });
+    return attractionApiClient.get(`/api/attraction/detail/${attractionId}`).then((response) => {
+      if (response.data) {
+        response.data.image = getFullImageUrl(response.data.image)
+      }
+      return response
+    })
   },
 
   /**
@@ -93,8 +63,6 @@ export const attractionApi = {
   getAllCategories() {
     return attractionApiClient.get('/api/attraction/categories')
   },
-  
-
 }
 
 const attractionAPI = localAxios()

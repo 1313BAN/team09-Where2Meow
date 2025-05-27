@@ -4,16 +4,16 @@
     <div class="relative overflow-hidden rounded-lg mb-3">
       <div class="aspect-w-4 aspect-h-3 bg-gray-200">
         <img
-          v-if="attraction.firstimage"
-          :src="attraction.firstimage"
-          :alt="attraction.title"
+          v-if="attraction.image"
+          :src="attraction.image"
+          :alt="attraction.attractionName"
           class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
           @error="handleImageError"
         />
         <img
           v-else
           :src="defaultImage"
-          :alt="attraction.title"
+          :alt="attraction.attractionName"
           class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
@@ -23,27 +23,9 @@
         <span
           class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/90 text-gray-800 backdrop-blur-sm"
         >
-          {{ getCategoryName(attraction.contenttypeid) }}
+          {{ getCategoryName(attraction.categoryId) }}
         </span>
       </div>
-
-      <!-- 좋아요/북마크 버튼 (추후 구현용) -->
-      <!-- <div
-        class="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-      >
-        <button
-          class="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
-          @click.stop="toggleLike"
-        >
-          <i class="pi pi-heart text-gray-600 hover:text-red-500 transition-colors"></i>
-        </button>
-        <button
-          class="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors"
-          @click.stop="toggleBookmark"
-        >
-          <i class="pi pi-bookmark text-gray-600 hover:text-yellow-500 transition-colors"></i>
-        </button>
-      </div>-->
     </div>
 
     <!-- 콘텐츠 섹션 -->
@@ -52,7 +34,7 @@
       <h3
         class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-[var(--primary-color)] transition-colors"
       >
-        {{ attraction.title }}
+        {{ attraction.attractionName }}
       </h3>
 
       <!-- 주소 -->
@@ -64,7 +46,6 @@
       <!-- 평점 및 리뷰 -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <!-- 평점 표시 (추후 리뷰 데이터와 연동) -->
           <div class="flex items-center gap-1">
             <div class="flex">
               <i
@@ -119,15 +100,12 @@ const categoryNames = {
   39: '음식점',
 }
 
-// 임시 평점 데이터 (추후 실제 리뷰 데이터와 연동)
 const averageRating = computed(() => {
-  // 임시로 3.5 ~ 4.8 사이의 랜덤 평점 생성
-  return Math.random() * 1.3 + 3.5
+  return props.attraction.reviewAvgScore || 0
 })
 
 const reviewCount = computed(() => {
-  // 임시로 0 ~ 50 사이의 랜덤 리뷰 개수 생성
-  return Math.floor(Math.random() * 51)
+  return props.attraction.reviewCount || 0
 })
 
 // 카테고리 이름 반환
@@ -138,13 +116,12 @@ const getCategoryName = (contentTypeId) => {
 // 주소 포맷팅
 const formatAddress = (attraction) => {
   const parts = []
-  if (attraction.addr1) {
-    // 주소를 간단하게 표시 (시/도, 시/군/구만)
+  if (attraction.stateName && attraction.cityName) {
+    parts.push(attraction.stateName, attraction.cityName)
+  } else if (attraction.addr1) {
     const addressParts = attraction.addr1.split(' ')
     if (addressParts.length >= 2) {
       parts.push(addressParts[0], addressParts[1])
-    } else {
-      parts.push(attraction.addr1)
     }
   }
   return parts.join(' ') || '주소 정보 없음'
@@ -158,14 +135,6 @@ const handleClick = () => {
 const handleImageError = (event) => {
   event.target.src = defaultImage
 }
-
-// const toggleLike = () => {
-//   emit('like', props.attraction)
-// }
-
-// const toggleBookmark = () => {
-//   emit('bookmark', props.attraction)
-// }
 </script>
 
 <style scoped>

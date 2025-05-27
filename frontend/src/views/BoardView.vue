@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-white">
     <div class="container mx-auto px-4 py-8">
       <div class="max-w-7xl mx-auto">
         <!-- 페이지 헤더 -->
@@ -11,7 +11,7 @@
         <div class="flex gap-8">
           <!-- 좌측 사이드바 -->
           <div class="w-64 flex-shrink-0">
-            <BoardSidebar 
+            <BoardSidebar
               :active-category="activeCategory"
               @category-change="handleCategoryChange"
             />
@@ -70,6 +70,6 @@ provide('boardNavigation', {
   changeToWriteMode,
   changeToListMode,
   activeCategory,
-  activeMenu
+  activeMenu,
 })
 </script>

@@ -29,32 +29,6 @@
               class="pi pi-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
             ></i>
           </div>
-
-          <!-- 그리드 크기 선택 -->
-          <!-- <div class="flex border border-gray-300 rounded-lg overflow-hidden">
-            <button
-              @click="setGridColumns(3)"
-              :class="[
-                'cursor-pointer px-3 py-2 text-sm transition-colors',
-                gridColumns === 3
-                  ? 'bg-[var(--primary-color)] text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50',
-              ]"
-            >
-              <i class="pi pi-stop"></i>
-            </button>
-            <button
-              @click="setGridColumns(4)"
-              :class="[
-                'cursor-pointer px-3 py-2 text-sm transition-colors border-l border-gray-300',
-                gridColumns === 4
-                  ? 'bg-[var(--primary-color)] text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50',
-              ]"
-            >
-              <i class="pi pi-th-large"></i>
-            </button>
-          </div> -->
         </div>
       </div>
 
@@ -100,8 +74,6 @@
             :key="attraction.contentid"
             :attraction="attraction"
             @click="handleAttractionClick"
-            @like="handleLike"
-            @bookmark="handleBookmark"
           />
         </div>
 
@@ -233,11 +205,6 @@ const loadAttractions = async (page = 0) => {
       params.countryId = 1
     }
 
-    // API에서 사용하는 필드명으로 변환
-    if (params.keyword) {
-      // 키워드 검색 시에는 다른 파라미터들을 제거할 수도 있음
-    }
-
     attractionAPI.getAttractionListPaging(
       params,
       (response) => {
@@ -256,6 +223,7 @@ const loadAttractions = async (page = 0) => {
         totalElements.value = 0
       },
     )
+    console.log('여행지 목록 로드 성공:', attractions)
   } catch (error) {
     console.error('여행지 로드 중 오류:', error)
     attractions.value = []
@@ -296,18 +264,8 @@ const handleAttractionClick = (attraction) => {
   console.log('여행지 클릭:', attraction)
   router.push({
     name: 'attractionDetail',
-    params: { attractionId: attraction.contentid },
+    params: { attractionId: attraction.attractionId },
   })
-}
-
-const handleLike = (attraction) => {
-  console.log('좋아요:', attraction)
-  toast.info('좋아요 기능은 준비 중입니다')
-}
-
-const handleBookmark = (attraction) => {
-  console.log('북마크:', attraction)
-  toast.info('북마크 기능은 준비 중입니다')
 }
 
 // 검색 파라미터 변경 감지
