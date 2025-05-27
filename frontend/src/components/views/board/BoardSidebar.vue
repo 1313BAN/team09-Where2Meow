@@ -91,7 +91,7 @@ const handleWritePost = () => {
     router.push('/login')
     return
   }
-  
+
   if (boardNavigation) {
     boardNavigation.changeToWriteMode()
   }
@@ -99,6 +99,6 @@ const handleWritePost = () => {
 
 // 새로고침
 const handleRefresh = () => {
-  window.location.reload()
+  router.go(0)
 }
 </script>
