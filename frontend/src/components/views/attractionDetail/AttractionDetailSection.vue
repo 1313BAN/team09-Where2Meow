@@ -21,7 +21,7 @@
         </button>
 
         <!-- 여행지 기본 정보 -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="space-y-8">
           <!-- 이미지 섹션 -->
           <div class="space-y-4">
             <div class="relative overflow-hidden rounded-xl">
@@ -35,14 +35,14 @@
                   (attraction.image !== '/images/default-attraction.jpg' ? attraction.image : null)
                 "
                 :alt="attraction.attractionName"
-                class="w-full h-96 object-cover"
+                class="w-full h-96 md:h-[500px] object-cover"
                 @error="handleImageError"
               />
               <img
                 v-else
                 :src="defaultImage"
                 :alt="attraction.attractionName"
-                class="w-full h-96 object-cover"
+                class="w-full h-96 md:h-[500px] object-cover"
               />
 
               <!-- 카테고리 배지 -->
@@ -104,17 +104,20 @@
             </div>
 
             <!-- 지도 -->
-            <div v-if="attraction.latitude && attraction.longitude" class="bg-gray-50 rounded-xl p-6">
+            <div
+              v-if="attraction.latitude && attraction.longitude"
+              class="bg-gray-50 rounded-xl p-6"
+            >
               <h3 class="text-lg font-semibold text-gray-900 mb-4">위치</h3>
-              <GoogleMap 
-                :latitude="attraction.latitude" 
+              <GoogleMap
+                :latitude="attraction.latitude"
                 :longitude="attraction.longitude"
                 :marker-title="attraction.attractionName"
                 height="300px"
                 :zoom="15"
               />
             </div>
-            
+
             <!-- 지도 데이터가 없는 경우 -->
             <div v-else class="bg-gray-100 rounded-xl p-6 h-64 flex items-center justify-center">
               <div class="text-center text-gray-500">
@@ -295,26 +298,6 @@ const goBack = () => {
   router.go(-1)
 }
 
-const toggleLike = () => {
-  if (!isLoggedIn.value) {
-    toast.error('로그인이 필요합니다')
-    return
-  }
-
-  isLiked.value = !isLiked.value
-  toast.success(isLiked.value ? '좋아요를 눌렀습니다' : '좋아요를 취소했습니다')
-}
-
-const toggleBookmark = () => {
-  if (!isLoggedIn.value) {
-    toast.error('로그인이 필요합니다')
-    return
-  }
-
-  isBookmarked.value = !isBookmarked.value
-  toast.success(isBookmarked.value ? '북마크에 저장했습니다' : '북마크에서 제거했습니다')
-}
-
 const shareAttraction = async () => {
   const url = window.location.href
 
@@ -384,12 +367,6 @@ onMounted(async () => {
 
 <style scoped>
 /* 반응형 그리드 조정 */
-@media (max-width: 1024px) {
-  .grid.grid-cols-1.lg\:grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 768px) {
   .grid.grid-cols-1.md\:grid-cols-3 {
     grid-template-columns: 1fr;
