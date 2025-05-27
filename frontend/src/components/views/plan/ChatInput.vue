@@ -2,26 +2,36 @@
   <div class="chat-input">
     <input 
       :value="newMessage"
+      :disabled="isAiProcessing"
       @input="$emit('update:newMessage', $event.target.value)"
-      @keyup.enter="$emit('sendMessage')"
+      @keyup.enter="handleSend"
       type="text"
-      placeholder="메시지를 입력하세요..."
+      :placeholder="isAiProcessing ? 'AI가 처리 중입니다...' : '메시지를 입력하세요...'"
     />
     <button 
-      @click="$emit('sendMessage')"
-      class="send-button"
+      @click="handleSend"
+      :disabled="isAiProcessing"
+      :class="['send-button', { 'processing': isAiProcessing }]"
     >
-      <span class="material-icons">send</span>
+      <i v-if="isAiProcessing" class="pi pi-spin pi-spinner processing-icon"></i>
+      <i v-else class="pi pi-send"></i>
     </button>
   </div>
 </template>
 
 <script setup>
-defineProps({
-  newMessage: String
+const props = defineProps({
+  newMessage: String,
+  isAiProcessing: Boolean
 })
 
-defineEmits(['update:newMessage', 'sendMessage'])
+const emit = defineEmits(['update:newMessage', 'sendMessage'])
+
+const handleSend = () => {
+  if (!props.isAiProcessing) {
+    emit('sendMessage')
+  }
+}
 </script>
 
 <style scoped>
@@ -40,6 +50,13 @@ defineEmits(['update:newMessage', 'sendMessage'])
   border-radius: 20px;
   outline: none;
   font-size: 1em;
+  transition: opacity 0.2s ease;
+}
+
+.chat-input input[type="text"]:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
 }
 
 .chat-input .send-button {
@@ -54,14 +71,23 @@ defineEmits(['update:newMessage', 'sendMessage'])
   align-items: center;
   cursor: pointer;
   margin-left: 10px;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
 }
 
-.chat-input .send-button:hover {
+.chat-input .send-button:hover:not(:disabled) {
   background-color: #5aa8e6;
 }
 
-.chat-input .send-button .material-icons {
+.chat-input .send-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.chat-input .send-button.processing {
+  background-color: #ff9800;
+}
+
+.chat-input .send-button i {
   font-size: 20px;
 }
 </style>

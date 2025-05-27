@@ -95,6 +95,7 @@
 
 <script>
 import { planService } from '@/api/plan'
+import { attractionApi } from '@/api/attraction'
 import TravelPlanCard from '@/components/views/plan/PlanCard.vue'
 import AddPlanCard from '@/components/views/plan/AddPlanCard.vue'
 
@@ -164,7 +165,95 @@ export default {
     // 여행 계획 열기
     openPlan(plan) {
       console.log('Opening plan:', plan);
-      this.$router.push(`/plan/${plan.planId}`);
+      
+      if (this.activeTab === 'myPlans') {
+        // 내가 만든 일정은 바로 편집 모드로 이동
+        this.$router.push(`/plan/edit/${plan.planId}`);
+      } else if (this.activeTab === 'bookmarks') {
+        // 북마크한 일정은 복사하여 새로운 계획으로 편집
+        this.copyAndEditPlan(plan);
+      }
+    },
+    
+    // 북마크한 계획을 복사하여 편집
+    async copyAndEditPlan(plan) {
+      try {
+        this.loading = true;
+        
+        // 계획 상세 정보 가져오기
+        const detailResponse = await planService.getPlanDetail(plan.planId);
+        const planDetail = detailResponse.data;
+        
+        // 계획 상세 정보에서 관광지 상세 데이터 가져오기
+        const attractionsWithDetails = [];
+        
+        if (planDetail.attractions && planDetail.attractions.length > 0) {
+          for (const attraction of planDetail.attractions) {
+            try {
+              // 각 관광지에 대해 상세 정보 가져오기
+              const attractionDetailResponse = await attractionApi.getAttractionDetail(attraction.attractionId);
+              const attractionInfo = attractionDetailResponse.data;
+              
+              attractionsWithDetails.push({
+                attractionId: attraction.attractionId,
+                attractionName: attractionInfo.attractionName,
+                stateName: attractionInfo.stateName,
+                cityName: attractionInfo.cityName,
+                content: attraction.content,
+                date: attraction.date,
+                attractionOrder: attraction.attractionOrder,
+                // 추가 정보
+                first_image1: attractionInfo.firstImage1,
+                first_image2: attractionInfo.firstImage2,
+                latitude: attractionInfo.latitude,
+                longitude: attractionInfo.longitude,
+                categoryName: attractionInfo.categoryName,
+                tel: attractionInfo.tel,
+                addr1: attractionInfo.addr1,
+                addr2: attractionInfo.addr2,
+                homepage: attractionInfo.homepage,
+                overview: attractionInfo.overview
+              });
+              
+            } catch (attractionError) {
+              console.error(`관광지 ${attraction.attractionId} 상세 정보 로드 실패:`, attractionError);
+              // 관광지 상세 정보를 가져오지 못한 경우에도 기본 정보로 추가
+              attractionsWithDetails.push({
+                attractionId: attraction.attractionId,
+                attractionName: `관광지 ${attraction.attractionId}`,
+                stateName: '',
+                cityName: '',
+                content: attraction.content || `관광지 ${attraction.attractionId}`,
+                date: attraction.date,
+                attractionOrder: attraction.attractionOrder
+              });
+            }
+          }
+        }
+        
+        // 새로운 계획으로 복사
+        const copyData = {
+          title: `${planDetail.title} (복사본)`,
+          content: planDetail.content,
+          startDate: planDetail.startDate,
+          endDate: planDetail.endDate,
+          isPublic: false, // 복사본은 기본적으로 비공개
+          attractions: attractionsWithDetails
+        };
+        
+        // 새 계획 생성
+        const createResponse = await planService.createPlan(copyData);
+        const newPlanId = createResponse.data.planId;
+        
+        // 새로 생성된 계획 편집 페이지로 이동
+        this.$router.push(`/plan/edit/${newPlanId}`);
+        
+      } catch (error) {
+        console.error('계획 복사에 실패했습니다:', error);
+        alert('계획을 복사하는데 실패했습니다. 다시 시도해주세요.');
+      } finally {
+        this.loading = false;
+      }
     },
     
     // 새 계획 추가
