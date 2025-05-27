@@ -265,7 +265,7 @@ const changePage = (page) => {
 // 필터 초기화
 const clearFilters = () => {
   // 부모 컴포넌트에 필터 초기화 요청
-  loadAttractions(0)
+  emit('clearFilters')
 }
 
 // 이벤트 핸들러들
@@ -302,19 +302,16 @@ onMounted(async () => {
   // window resize 이벤트 리스너 등록
   window.addEventListener('resize', handleResize)
 
-  // 카테고리 데이해 로드
-  try {
-    attractionAPI.attractionApi
-      .getAllCategories()
-      .then((response) => {
-        categories.value = response.data
-      })
-      .catch((error) => {
-        console.error('카테고리 목록 불러오기 실패', error)
-      })
-  } catch (error) {
-    console.error('카테고리 데이터 로드 중 오류:', error)
-  }
+  // 카테고리 데이터 로드
+  attractionAPI.attractionApi
+    .getAllCategories()
+    .then((response) => {
+      categories.value = response.data
+    })
+    .catch((error) => {
+      console.error('카테고리 목록 불러오기 실패', error)
+      toast.error('카테고리 목록을 불러오는데 실패했습니다')
+    })
 
   loadAttractions(0)
 })
