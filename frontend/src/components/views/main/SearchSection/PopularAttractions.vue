@@ -180,6 +180,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 // Props
 const props = defineProps({
@@ -203,6 +204,9 @@ const props = defineProps({
 
 // Events
 const emit = defineEmits(['attraction-click', 'retry-search'])
+
+// Router
+const router = useRouter()
 
 // 기본 이미지
 const defaultImage =
@@ -241,6 +245,10 @@ const title = computed(() => {
 
 // 장소 클릭 핸들러
 const handleAttractionClick = (attraction) => {
+  // 상세 페이지로 이동
+  router.push(`/attraction/${attraction.attractionId}`)
+  
+  // 기존 이벤트 emit (필요한 경우)
   emit('attraction-click', attraction)
   console.log('선택된 장소:', attraction)
 }

@@ -40,14 +40,14 @@
                     :class="[
                       'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors cursor-pointer',
                       activeMenu === item.key
-                        ? 'bg-[var(--primary-10)] text-[var(--primary-color)] font-semibold'
+                        ? 'bg-[var(--primary-10)] text-[var(--primary-dark)] font-semibold'
                         : 'text-gray-700 hover:bg-gray-50',
                     ]"
                   >
                     <i
                       :class="[
                         item.icon,
-                        activeMenu === item.key ? 'text-[var(--primary-color)]' : 'text-gray-400',
+                        activeMenu === item.key ? 'text-[var(--primary-dark)]' : 'text-gray-400',
                       ]"
                     ></i>
                     <span>{{ item.label }}</span>

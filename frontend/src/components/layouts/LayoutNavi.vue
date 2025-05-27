@@ -1,8 +1,7 @@
 <template>
   <nav
     :class="[
-      'fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300',
-      scrolled ? 'bg-white shadow-md py-2' : 'bg-white py-2',
+      'fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 bg-white shadow-md py-2',
     ]"
   >
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">

@@ -84,8 +84,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 import reviewAPI from '@/api/review'
 import { toast } from 'vue-sonner'
+
+const authStore = useAuthStore()
+const { userUuid } = storeToRefs(authStore)
 
 const props = defineProps({
   review: {
@@ -166,8 +171,9 @@ const handleSubmit = async () => {
 
   try {
     const reviewData = {
-      rating: rating.value,
-      content: content.value.trim()
+      score: rating.value, // rating 대신 score 사용
+      content: content.value.trim(),
+      uuid: userUuid.value // UUID 추가
     }
 
     reviewAPI.updateReview(
@@ -176,9 +182,15 @@ const handleSubmit = async () => {
       (response) => {
         emit('updated', response.data)
         toast.success('리뷰가 수정되었습니다')
+        emit('close') // 모달 닫기
       },
       (error) => {
         console.error('리뷰 수정 실패:', error)
+        console.error('전송한 데이터:', reviewData)
+        if (error.response) {
+          console.error('서버 응답:', error.response.data)
+          console.error('상태 코드:', error.response.status)
+        }
         toast.error('리뷰 수정에 실패했습니다')
       }
     )
@@ -204,10 +216,11 @@ const handleClose = () => {
 // 컴포넌트 마운트 시 기존 데이터 설정
 onMounted(() => {
   if (props.review) {
-    rating.value = props.review.rating
-    content.value = props.review.content
-    originalRating.value = props.review.rating
-    originalContent.value = props.review.content
+    // score 필드가 있으면 score 사용, 없으면 rating 사용
+    rating.value = props.review.score || props.review.rating || 0
+    content.value = props.review.content || ''
+    originalRating.value = rating.value
+    originalContent.value = content.value
   }
 })
 </script>

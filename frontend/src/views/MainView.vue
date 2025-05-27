@@ -20,7 +20,7 @@
       title="현재 HOT한 게시글"
       card-type="board"
       background-color="bg-white"
-      section-icon="pi-fire"
+      section-icon="pi-bolt"
       @item-click="handleBoardClick"
     />
 

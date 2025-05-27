@@ -148,12 +148,12 @@
           <div
             v-for="filter in activeFilters"
             :key="filter.key"
-            class="inline-flex items-center gap-1 px-3 py-1 bg-[var(--primary-10)] text-[var(--primary-color)] rounded-full text-sm"
+            class="inline-flex items-center gap-1 px-3 py-1 bg-[var(--primary-10)] text-[var(--primary-dark)] rounded-full text-sm"
           >
             <span>{{ filter.label }}</span>
             <button
               @click="removeFilter(filter.key)"
-              class="cursor-pointer ml-1 text-[var(--primary-color)] hover:text-[var(--danger-color)] transition-colors"
+              class="cursor-pointer ml-1 text-[var(--primary-dark)] hover:text-[var(--danger-color)] transition-colors"
             >
               <i class="pi pi-times text-xs"></i>
             </button>

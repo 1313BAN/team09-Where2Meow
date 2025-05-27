@@ -140,43 +140,6 @@
             </button>
           </div>
 
-          <!-- 리뷰 통계 -->
-          <!-- <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="text-center bg-white rounded-lg p-4">
-              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">
-                {{ averageRating.toFixed(1) }}
-              </div>
-              <div class="flex justify-center mb-2">
-                <div class="flex">
-                  <i
-                    v-for="star in 5"
-                    :key="star"
-                    :class="[
-                      'pi text-sm',
-                      star <= averageRating
-                        ? 'pi-star-fill text-yellow-400'
-                        : 'pi-star text-gray-300',
-                    ]"
-                  >
-                  </i>
-                </div>
-              </div>
-              <div class="text-sm text-gray-600">평균 평점</div>
-            </div>
-            <div class="text-center bg-white rounded-lg p-4">
-              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">
-                {{ reviewStats.totalReviews }}
-              </div>
-              <div class="text-sm text-gray-600">전체 리뷰</div>
-            </div>
-            <div class="text-center bg-white rounded-lg p-4">
-              <div class="text-2xl font-bold text-[var(--primary-color)] mb-1">
-                {{ reviewStats.recommendationRate }}%
-              </div>
-              <div class="text-sm text-gray-600">추천율</div>
-            </div>
-          </div> -->
-
           <!-- 리뷰 목록 -->
           <ReviewList :attraction-id="attractionId" @review-updated="loadAttractionDetail" />
         </div>

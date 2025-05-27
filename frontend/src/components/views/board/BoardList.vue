@@ -150,7 +150,7 @@
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
                 <span
-                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--primary-10)] text-[var(--primary-color)]"
+                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[var(--primary-10)] text-[var(--primary-dark)]"
                 >
                   {{ getCategoryName(board.categoryId) }}
                 </span>
@@ -162,9 +162,6 @@
                 </span>
                 <span v-if="isMyPost(board.userId)" class="text-blue-500 text-xs font-medium">
                   내 글
-                </span>
-                <span v-if="board.updatedAt !== board.createdAt" class="text-xs text-gray-400">
-                  (수정됨)
                 </span>
               </div>
 

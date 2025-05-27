@@ -13,8 +13,8 @@
               <span>어디가냥</span>
             </span>
           </h3>
-          <p class="text-sm text-gray-300 mb-4">© 2025 Where2Meow. All rights reserved.</p>
-          <p class="text-sm text-gray-300 mb-6 leading-relaxed">
+          <p class="text-sm text-gray-500 mb-4">© 2025 Where2Meow. All rights reserved.</p>
+          <p class="text-sm text-gray-500 mb-6 leading-relaxed">
             가냥이와 함께 여행 계획을 짜는 사이트로, 여행자의 리뷰와 의견을 바탕으로 최적의 여행
             계획을 만들어 드립니다.
           </p>
@@ -46,7 +46,7 @@
               v-for="service in serviceLinks"
               :key="service.name"
               :href="service.url"
-              class="text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
+              class="text-sm text-gray-500 transition-colors paw-cursor flex items-center gap-2"
             >
               <i class="pi pi-angle-right text-[var(--primary-color)]"></i>
               {{ service.name }}
@@ -67,7 +67,7 @@
               v-for="link in generalLinks"
               :key="link.name"
               :href="link.url"
-              class="text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
+              class="text-sm text-gray-500 transition-colors paw-cursor flex items-center gap-2"
             >
               <i class="pi pi-angle-right text-[var(--primary-color)]"></i>
               {{ link.name }}
@@ -88,7 +88,7 @@
               v-for="support in supportLinks"
               :key="support.name"
               :href="support.url"
-              class="text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
+              class="text-sm text-gray-500 transition-colors paw-cursor flex items-center gap-2"
             >
               <i class="pi pi-angle-right text-[var(--primary-color)]"></i>
               {{ support.name }}
@@ -101,7 +101,7 @@
       <div
         class="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-600"
       >
-        <div class="text-xs text-gray-400 mb-4 md:mb-0">
+        <div class="text-xs text-gray-500 mb-4 md:mb-0">
           © 2025 Where2Meow. 가냥이와 함께하는 여행의 모든 것.
         </div>
 

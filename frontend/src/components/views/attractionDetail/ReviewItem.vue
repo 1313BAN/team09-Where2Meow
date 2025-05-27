@@ -14,7 +14,7 @@
         <div class="flex items-center justify-between mb-2">
           <div class="flex items-center gap-3">
             <span class="font-medium text-gray-900">{{ review.userNickname || '익명' }}</span>
-            
+
             <!-- 평점 -->
             <div class="flex items-center gap-1">
               <div class="flex">
@@ -23,12 +23,14 @@
                   :key="star"
                   :class="[
                     'pi text-sm',
-                    star <= review.score ? 'pi-star-fill text-yellow-400' : 'pi-star text-gray-300',
+                    star <= (review.score || review.rating)
+                      ? 'pi-star-fill text-yellow-400'
+                      : 'pi-star text-gray-300',
                   ]"
                 >
                 </i>
               </div>
-              <span class="text-sm text-gray-500 ml-1">{{ review.score }}.0</span>
+              <span class="text-sm text-gray-500 ml-1">{{ review.score || review.rating }}.0</span>
             </div>
           </div>
 
@@ -36,14 +38,14 @@
           <div v-if="isMyReview" class="flex items-center gap-1">
             <button
               @click="handleEdit"
-              class="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+              class="cursor-pointer p-1 text-gray-400 hover:text-blue-500 transition-colors"
               title="수정"
             >
               <i class="pi pi-pencil"></i>
             </button>
             <button
               @click="handleDelete"
-              class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+              class="cursor-pointer p-1 text-gray-400 hover:text-red-500 transition-colors"
               title="삭제"
             >
               <i class="pi pi-trash"></i>
@@ -60,18 +62,15 @@
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3 text-sm text-gray-500">
             <span>{{ formatDate(review.createdAt) }}</span>
-            <span v-if="review.updatedAt !== review.createdAt" class="text-gray-400">
-              (수정됨)
-            </span>
           </div>
 
           <!-- 좋아요 버튼 -->
           <button
             @click="handleLike"
             class="flex items-center gap-1 text-sm transition-colors py-1 px-2 rounded hover:bg-gray-50"
-                        :class="review.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'"
+            :class="review.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'"
           >
-                        <i :class="['pi', review.isLiked ? 'pi-heart-fill' : 'pi-heart']"></i>
+            <i :class="['pi', review.isLiked ? 'pi-heart-fill' : 'pi-heart']"></i>
             <span>{{ review.likeCount || 0 }}</span>
           </button>
         </div>
@@ -124,7 +123,7 @@ const formatDate = (dateString) => {
     if (diffMins < 60) return `${diffMins}분 전`
     if (diffHours < 24) return `${diffHours}시간 전`
     if (diffDays < 7) return `${diffDays}일 전`
-    
+
     return date.toLocaleDateString('ko-KR', {
       month: 'short',
       day: 'numeric',

@@ -114,7 +114,7 @@
               ></i>
             </div>
             <span
-              class="text-xs text-center group-hover:text-gray-900 transition-colors"
+              class="text-xs text-center transition-colors"
               :class="
                 selectedCategory === category.id
                   ? 'text-[var(--secondary-color)] font-semibold'

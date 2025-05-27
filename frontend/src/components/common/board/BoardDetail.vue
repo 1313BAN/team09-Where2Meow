@@ -38,9 +38,7 @@
                 >
                   {{ board.categoryName || '일반' }}
                 </span>
-                <span v-if="board.updatedAt !== board.createdAt" class="text-sm text-gray-500"
-                  >(수정됨)</span
-                >
+
               </div>
               <button
                 @click="$router.go(-1)"
@@ -210,11 +208,7 @@
                             ? formatRelativeTime(comment.createdAt)
                             : '날짜 정보 없음'
                         }}</span>
-                        <span
-                          v-if="comment.updatedAt !== comment.createdAt"
-                          class="text-xs text-gray-400"
-                          >(수정됨)</span
-                        >
+
                       </div>
                       <p class="text-gray-800">{{ comment.content || '내용이 없습니다.' }}</p>
                       <div class="flex items-center gap-4 mt-2">
