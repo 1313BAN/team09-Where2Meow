@@ -221,7 +221,6 @@ const loadAttractions = async (page = 0) => {
 
     // searchAttractions 사용
     const response = await attractionAPI.attractionApi.searchAttractions(params)
-    console.log('API 응답 데이터:', response.data) // 디버그용
 
     if (response.data) {
       attractions.value = response.data.content || []
@@ -237,12 +236,6 @@ const loadAttractions = async (page = 0) => {
       }
       currentPage.value = page
     }
-    console.log('여행지 목록 로드 성공:', {
-      attractions: attractions.value.length,
-      currentPage: currentPage.value,
-      totalPages: totalPages.value,
-      totalElements: totalElements.value,
-    })
   } catch (error) {
     console.error('여행지 목록 로드 실패:', error)
     toast.error('여행지 목록을 불러오는데 실패했습니다')
@@ -278,7 +271,6 @@ const clearFilters = () => {
 
 // 이벤트 핸들러들
 const handleAttractionClick = (attraction) => {
-  console.log('여행지 클릭:', attraction)
   router.push({
     name: 'attractionDetail',
     params: { attractionId: attraction.attractionId },

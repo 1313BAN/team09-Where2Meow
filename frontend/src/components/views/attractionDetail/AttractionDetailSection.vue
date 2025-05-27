@@ -26,16 +26,22 @@
           <div class="space-y-4">
             <div class="relative overflow-hidden rounded-xl">
               <img
-                v-if="attraction.firstimage"
-                :src="attraction.firstimage"
-                :alt="attraction.title"
+                v-if="
+                  (attraction.image && attraction.image !== '/images/default-attraction.jpg') ||
+                  attraction.firstImage1
+                "
+                :src="
+                  attraction.firstImage1 ||
+                  (attraction.image !== '/images/default-attraction.jpg' ? attraction.image : null)
+                "
+                :alt="attraction.attractionName"
                 class="w-full h-96 object-cover"
                 @error="handleImageError"
               />
               <img
                 v-else
                 :src="defaultImage"
-                :alt="attraction.title"
+                :alt="attraction.attractionName"
                 class="w-full h-96 object-cover"
               />
 
@@ -44,16 +50,19 @@
                 <span
                   class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white/90 text-gray-800 backdrop-blur-sm"
                 >
-                  {{ getCategoryName(attraction.contenttypeid) }}
+                  {{ getCategoryName(attraction.categoryId || attraction.contenttypeid) }}
                 </span>
               </div>
             </div>
 
             <!-- 추가 이미지 (있는 경우) -->
-            <div v-if="attraction.firstimage2" class="grid grid-cols-2 gap-2">
+            <div
+              v-if="attraction.firstImage2 && attraction.firstImage2 !== attraction.firstImage1"
+              class="grid grid-cols-2 gap-2"
+            >
               <img
-                :src="attraction.firstimage2"
-                :alt="attraction.title"
+                :src="attraction.firstImage2"
+                :alt="attraction.attractionName"
                 class="w-full h-48 object-cover rounded-lg"
                 @error="handleImageError"
               />
@@ -64,11 +73,11 @@
           <div class="space-y-6">
             <!-- 제목 및 기본 정보 -->
             <div>
-              <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ attraction.title }}</h1>
+              <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ attraction.attractionName }}</h1>
               <div class="flex items-center gap-4 text-gray-600 mb-4">
                 <div class="flex items-center gap-1">
                   <i class="pi pi-map-marker"></i>
-                  <span>{{ attraction.addr1 }}</span>
+                  <span>{{ getAddressDisplay(attraction) }}</span>
                 </div>
                 <div v-if="attraction.tel" class="flex items-center gap-1">
                   <i class="pi pi-phone"></i>
@@ -229,7 +238,7 @@
     <ReviewModal
       v-if="showReviewModal"
       :attraction-id="attractionId"
-      :attraction-title="attraction?.title"
+      :attraction-title="attraction?.attractionName"
       @close="closeReviewModal"
       @review-created="handleReviewCreated"
     />
@@ -266,15 +275,14 @@ const categories = ref([])
 const defaultImage =
   'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&h=600&fit=crop&crop=center'
 
-// 임시 리뷰 통계 (추후 실제 데이터와 연동)
-const reviewStats = ref({
-  totalReviews: 23,
-  recommendationRate: 87,
-})
+// 리뷰 통계
+const reviewStats = computed(() => ({
+  totalReviews: attraction.value?.reviews?.length || 0, // reviews 배열의 길이 사용
+  recommendationRate: 87, // 추후 실제 데이터로 대체
+}))
 
 const averageRating = computed(() => {
-  // 임시 평점 (추후 실제 리뷰 데이터로 계산)
-  return 4.2
+  return attraction.value?.reviewAvgScore || 0
 })
 
 // 여행지 상세 정보 로드
@@ -284,19 +292,14 @@ const loadAttractionDetail = async () => {
   isLoading.value = true
 
   try {
-    attractionAPI.getAttractionDetail(
-      attractionId.value,
-      (response) => {
-        attraction.value = response.data
-        console.log('여행지 상세 정보:', response.data)
-      },
-      (error) => {
-        console.error('여행지 상세 정보 로드 실패:', error)
-        toast.error('여행지 정보를 불러오는데 실패했습니다')
-      },
-    )
+    // attractionApi 객체의 getAttractionDetail 메서드 사용 (Promise 반환)
+    const response = await attractionAPI.attractionApi.getAttractionDetail(attractionId.value)
+    attraction.value = response.data
+    console.log('여행지 상세 정보 로드 성공:', response.data)
   } catch (error) {
-    console.error('여행지 상세 정보 로드 중 오류:', error)
+    console.error('여행지 상세 정보 로드 실패:', error)
+    toast.error('여행지 정보를 불러오는데 실패했습니다')
+    attraction.value = null
   } finally {
     isLoading.value = false
   }
@@ -304,8 +307,19 @@ const loadAttractionDetail = async () => {
 
 // 유틸리티 함수들
 const getCategoryName = (categoryId) => {
-  const category = categories.value.find((cat) => cat.categoryId === categoryId)
-  return category ? category.categoryName : '기타'
+  // API 응답에서 categoryName이 직접 제공되므로 이를 사용
+  return attraction.value?.categoryName || '기타'
+}
+
+const getAddressDisplay = (attractionData) => {
+  if (attractionData.addr1 && attractionData.addr1.trim()) {
+    return attractionData.addr1
+  }
+  // addr1이 비어있으면 stateName과 cityName으로 구성
+  const parts = []
+  if (attractionData.stateName) parts.push(attractionData.stateName)
+  if (attractionData.cityName) parts.push(attractionData.cityName)
+  return parts.join(' ') || '주소 정보 없음'
 }
 
 const handleImageError = (event) => {
@@ -343,8 +357,8 @@ const shareAttraction = async () => {
   if (navigator.share) {
     try {
       await navigator.share({
-        title: attraction.value?.title,
-        text: `${attraction.value?.title} - Where2Meow에서 확인해보세요`,
+        title: attraction.value?.attractionName,
+        text: `${attraction.value?.attractionName} - Where2Meow에서 확인해보세요`,
         url: url,
       })
     } catch (error) {

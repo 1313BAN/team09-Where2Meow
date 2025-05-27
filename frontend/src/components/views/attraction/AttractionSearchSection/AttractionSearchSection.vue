@@ -217,7 +217,7 @@ const activeFilters = computed(() => {
   }
 
   if (searchForm.city) {
-    const city = citySuggestions.value.find((c) => c.cityId === searchForm.city)
+    const city = citySuggestions.value.find((c) => c.cityCode === searchForm.city)
     if (city) {
       filters.push({ key: 'city', label: `도시: ${city.cityName}` })
     }
