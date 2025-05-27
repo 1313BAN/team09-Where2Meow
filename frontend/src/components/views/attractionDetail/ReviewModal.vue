@@ -105,7 +105,7 @@ import reviewAPI from '@/api/review'
 import { toast } from 'vue-sonner'
 
 const authStore = useAuthStore()
-const { userId } = storeToRefs(authStore)
+const { userUuid } = storeToRefs(authStore)
 
 const props = defineProps({
   attractionId: {
@@ -182,9 +182,9 @@ const handleSubmit = async () => {
   try {
     const reviewData = {
       attractionId: props.attractionId,
-      rating: rating.value,
+      score: rating.value, // rating 대신 score 사용
       content: content.value.trim(),
-      uuid: userId.value // 실제로는 UUID를 사용해야 함
+      uuid: userUuid.value // userUuid 사용
     }
 
     reviewAPI.createReview(
@@ -192,9 +192,15 @@ const handleSubmit = async () => {
       (response) => {
         emit('review-created', response.data)
         toast.success('리뷰가 작성되었습니다')
+        emit('close') // 모달 닫기
       },
       (error) => {
         console.error('리뷰 작성 실패:', error)
+        console.error('전송한 데이터:', reviewData)
+        if (error.response) {
+          console.error('서버 응답:', error.response.data)
+          console.error('상태 코드:', error.response.status)
+        }
         toast.error('리뷰 작성에 실패했습니다')
       }
     )

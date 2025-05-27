@@ -33,12 +33,24 @@ const getReviewsByAttraction = (attractionId, uuid, page = 0, size = 10, success
 
 // 리뷰 생성
 const createReview = (reviewData, success, fail) => {
-  return reviewAPI.post('/api/review', reviewData).then(success).catch(fail)
+  console.log('리뷰 생성 API 호출:', reviewData)
+  return reviewAPI.post('/api/review', reviewData)
+    .then(success)
+    .catch((error) => {
+      console.error('리뷰 생성 API 에러:', error)
+      if (fail) fail(error)
+    })
 }
 
 // 리뷰 수정
 const updateReview = (reviewId, reviewData, success, fail) => {
-  return reviewAPI.put(`/api/review/${reviewId}`, reviewData).then(success).catch(fail)
+  console.log('리뷰 수정 API 호출:', { reviewId, reviewData })
+  return reviewAPI.put(`/api/review/${reviewId}`, reviewData)
+    .then(success)
+    .catch((error) => {
+      console.error('리뷰 수정 API 에러:', error)
+      if (fail) fail(error)
+    })
 }
 
 // 리뷰 삭제
@@ -56,12 +68,26 @@ const toggleReviewLike = (reviewId, uuid, success, fail) => {
   }).then(success).catch(fail)
 }
 
+// 리뷰 수정 (대안: 쿼리 파라미터로 UUID 전달)
+const updateReviewWithParams = (reviewId, reviewData, uuid, success, fail) => {
+  console.log('리뷰 수정 API 호출 (파라미터 방식):', { reviewId, reviewData, uuid })
+  return reviewAPI.put(`/api/review/${reviewId}`, reviewData, {
+    params: { uuid }
+  })
+    .then(success)
+    .catch((error) => {
+      console.error('리뷰 수정 API 에러:', error)
+      if (fail) fail(error)
+    })
+}
+
 export default {
   getUserReviews,
   getReviewDetail,
   getReviewsByAttraction,
   createReview,
   updateReview,
+  updateReviewWithParams, // 대안 함수 추가
   deleteReview,
   toggleReviewLike
 }
