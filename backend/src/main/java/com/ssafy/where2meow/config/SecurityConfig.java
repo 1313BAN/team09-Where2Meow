@@ -94,6 +94,7 @@ public class SecurityConfig {
             .requestMatchers("/api/ai/**").authenticated()
 
             // other
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")   // 관리자 권한 검증 추가
             .anyRequest().permitAll()
         )
         // Remember-Me 기능 활성화

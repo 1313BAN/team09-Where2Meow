@@ -5,8 +5,7 @@ const { VITE_API_BASE_URL } = import.meta.env
 // local vue api axios instance
 const localAxios = () => {
   const instance = axios.create({
-    // baseURL: VITE_API_BASE_URL,
-    baseURL: `${VITE_API_BASE_URL}`,
+    baseURL: VITE_API_BASE_URL,
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
     },

@@ -1,4 +1,101 @@
 import { localAxios } from '@/utils/http-commons'
+import { getFullImageUrl } from '@/utils/image-utils'
+
+const attractionApiClient = localAxios()
+
+// 요청 인터셉터 (인증 토큰 추가)
+attractionApiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// 응답 인터셉터 (에러 처리)
+attractionApiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      localStorage.removeItem('accessToken')
+      if (window.app && window.app.$router) {
+        window.app.$router.push('/login')
+      } else {
+        window.location.href = '/login'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
+// 이미지 URL이 상대 경로인 경우 전체 URL로 변환
+// 이미 utils/image-utils.js에 구현되어 있음
+
+export const attractionApi = {
+  /**
+   * 관광지 검색
+   * @param {Object} params - 검색 파라미터
+   * @param {number} params.countryId - 국가 ID
+   * @param {number} params.stateId - 시도 ID
+   * @param {number} params.cityId - 시군구 ID
+   * @param {number} params.categoryId - 카테고리 ID
+   * @param {string} params.keyword - 검색어
+   * @param {number} params.page - 페이지 번호 (0부터 시작)
+   * @param {number} params.size - 페이지 크기
+   * @returns {Promise} 검색 결과
+   */
+  searchAttractions(params = {}) {
+    const searchParams = new URLSearchParams()
+    
+    if (params.countryId) searchParams.append('countryId', params.countryId)
+    if (params.stateId) searchParams.append('stateId', params.stateId)
+    if (params.cityId) searchParams.append('cityId', params.cityId)
+    if (params.categoryId) searchParams.append('categoryId', params.categoryId)
+    if (params.keyword) searchParams.append('keyword', params.keyword)
+    if (params.page !== undefined) searchParams.append('page', params.page)
+    if (params.size) searchParams.append('size', params.size)
+    
+    return attractionApiClient.get(`/api/attraction?${searchParams.toString()}`)
+      .then(response => {
+        if (response.data && response.data.content) {
+          response.data.content = response.data.content.map(item => ({
+            ...item,
+            image: getFullImageUrl(item.image)
+          }));
+        }
+        return response;
+      });
+  },
+
+  /**
+   * 관광지 상세 정보 조회
+   * @param {number} attractionId - 관광지 ID
+   * @returns {Promise} 관광지 상세 정보
+   */
+  getAttractionDetail(attractionId) {
+    return attractionApiClient.get(`/api/attraction/detail/${attractionId}`)
+      .then(response => {
+        if (response.data) {
+          response.data.image = getFullImageUrl(response.data.image);
+        }
+        return response;
+      });
+  },
+
+  /**
+   * 모든 카테고리 목록 조회
+   */
+  getAllCategories() {
+    return attractionApiClient.get('/api/attraction/categories')
+  },
+  
+
+}
 
 const attractionAPI = localAxios()
 
@@ -39,4 +136,5 @@ const getAttractionDetail = (attractionId, success, fail) => {
 export default {
   getAttractionListPaging,
   getAttractionDetail,
+  attractionApi, // 추가된 attractionApi 객체
 }

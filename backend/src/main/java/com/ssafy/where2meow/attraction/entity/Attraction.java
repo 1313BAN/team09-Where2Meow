@@ -38,11 +38,11 @@ public class Attraction {
   @Column(name = "map_level")
   private Integer mapLevel;
 
-  @Column(name = "latitude", precision = 20, scale = 17)
-  private BigDecimal latitude;
+  @Column(name = "latitude", precision = 20)
+  private Double latitude;
 
-  @Column(name = "longitude", precision = 20, scale = 17)
-  private BigDecimal longitude;
+  @Column(name = "longitude", precision = 20)
+  private Double longitude;
 
   @Column(name = "tel", length = 20)
   private String tel;
