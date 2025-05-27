@@ -35,7 +35,7 @@
             <!-- 카테고리와 작성자 -->
             <div class="mb-2 flex items-center gap-2">
               <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary-10)] text-[var(--primary-color)]"
+                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--primary-10)] text-[var(--primary-dark)]"
               >
                 {{ post.categoryName || '일반' }}
               </span>
