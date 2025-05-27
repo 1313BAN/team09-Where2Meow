@@ -1,12 +1,7 @@
 <template>
-  <footer class="bg-[var(--dark-color)] text-white py-12 px-4 cat-pattern-bg relative overflow-hidden">
-    <!-- 고양이 실루엣 장식 -->
-    <div class="absolute bottom-0 right-0 opacity-10 pointer-events-none">
-      <svg width="200" height="120" viewBox="0 0 200 120" fill="white" xmlns="http://www.w3.org/2000/svg">
-        <path d="M190,60 C185,40 175,25 160,15 C140,0 115,0 95,15 C85,5 70,0 55,5 C30,12 15,35 15,60 C5,65 0,75 0,90 C0,110 15,120 30,120 C35,120 40,118 45,115 C55,120 70,120 80,115 C90,120 105,120 115,115 C125,120 140,120 150,115 C160,120 175,120 185,115 C195,110 200,100 200,90 C200,75 195,65 190,60 Z M40,80 C35,80 30,75 30,70 C30,65 35,60 40,60 C45,60 50,65 50,70 C50,75 45,80 40,80 Z M150,80 C145,80 140,75 140,70 C140,65 145,60 150,60 C155,60 160,65 160,70 C160,75 155,80 150,80 Z"></path>
-      </svg>
-    </div>
-
+  <footer
+    class="bg-[var(--dark-color)] text-white py-12 px-4 cat-pattern-bg relative overflow-hidden"
+  >
     <div class="container max-w-7xl mx-auto relative z-10">
       <!-- 메인 푸터 콘텐츠 -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
@@ -20,8 +15,8 @@
           </h3>
           <p class="text-sm text-gray-300 mb-4">© 2025 Where2Meow. All rights reserved.</p>
           <p class="text-sm text-gray-300 mb-6 leading-relaxed">
-            고양이와 함께하는 여행을 위한 정보 사이트로, 여행자의 리뷰와 의견을 바탕으로 반려동물 동반 가능한 호텔, 음식점을
-            추천해 드립니다.
+            가냥이와 함께 여행 계획을 짜는 사이트로, 여행자의 리뷰와 의견을 바탕으로 최적의 여행
+            계획을 만들어 드립니다.
           </p>
 
           <!-- 소셜 미디어 아이콘 -->
@@ -51,7 +46,7 @@
               v-for="service in serviceLinks"
               :key="service.name"
               :href="service.url"
-              class="block text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
+              class="text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
             >
               <i class="pi pi-angle-right text-[var(--primary-color)]"></i>
               {{ service.name }}
@@ -72,7 +67,7 @@
               v-for="link in generalLinks"
               :key="link.name"
               :href="link.url"
-              class="block text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
+              class="text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
             >
               <i class="pi pi-angle-right text-[var(--primary-color)]"></i>
               {{ link.name }}
@@ -93,7 +88,7 @@
               v-for="support in supportLinks"
               :key="support.name"
               :href="support.url"
-              class="block text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
+              class="text-sm text-gray-300 transition-colors paw-cursor flex items-center gap-2"
             >
               <i class="pi pi-angle-right text-[var(--primary-color)]"></i>
               {{ support.name }}
@@ -107,13 +102,13 @@
         class="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-600"
       >
         <div class="text-xs text-gray-400 mb-4 md:mb-0">
-          © 2025 Where2Meow. 고양이와 함께하는 여행의 모든 것.
+          © 2025 Where2Meow. 가냥이와 함께하는 여행의 모든 것.
         </div>
 
         <!-- 맨 위로 버튼 -->
         <button
           @click="scrollToTop"
-          class="w-12 h-12 bg-[var(--primary-color)] rounded-full flex items-center justify-center text-white paw-cursor transform transition-all shadow-lg"
+          class="w-12 h-12 bg-[var(--primary-color)] rounded-full flex items-center justify-center text-white transform transition-all shadow-lg cursor-pointer"
           aria-label="맨 위로"
         >
           <i class="pi pi-chevron-up"></i>
@@ -273,12 +268,14 @@ const scrollToTop = () => {
 }
 
 /* 맨 위로 버튼 호버 효과 */
-button[aria-label="맨 위로"] {
+button[aria-label='맨 위로'] {
   background-color: var(--primary-color) !important;
-  transition: transform var(--transition-normal), background-color var(--transition-normal);
+  transition:
+    transform var(--transition-normal),
+    background-color var(--transition-normal);
 }
 
-button[aria-label="맨 위로"]:hover {
+button[aria-label='맨 위로']:hover {
   transform: translateY(-3px);
   background-color: var(--secondary-color) !important;
 }
