@@ -10,14 +10,14 @@
           :class="[
             'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors cursor-pointer',
             activeCategory === category.id
-              ? 'bg-[var(--primary-10)] text-[var(--primary-color)] font-semibold'
+              ? 'bg-[var(--primary-10)] text-[var(--primary-dark)] font-semibold'
               : 'text-gray-700 hover:bg-gray-50',
           ]"
         >
           <i
             :class="[
               category.icon,
-              activeCategory === category.id ? 'text-[var(--primary-color)]' : 'text-gray-400',
+              activeCategory === category.id ? 'text-[var(--primary-dark)]' : 'text-gray-400',
             ]"
           ></i>
           <span>{{ category.name }}</span>

@@ -39,7 +39,6 @@
               >
                 {{ post.categoryName || '일반' }}
               </span>
-              <span class="text-sm text-gray-500"> by {{ post.authorName || '익명' }} </span>
             </div>
 
             <!-- 제목 -->
@@ -143,7 +142,7 @@ const loadBookmarkedPosts = async (page = 0, append = false) => {
 
     // API 응답 구조에 따른 안전한 데이터 추출
     const responseData = response?.boards || response?.content || response || []
-    
+
     if (!Array.isArray(responseData)) {
       console.error('북마크한 게시글 응답이 배열이 아닙니다:', response)
       if (!append) {
@@ -169,12 +168,12 @@ const loadBookmarkedPosts = async (page = 0, append = false) => {
     currentPage.value = page
   } catch (error) {
     console.error('북마크한 게시글 로드 실패:', error)
-    
+
     // 에러 시에도 빈 배열로 초기화
     if (!append) {
       bookmarkedPosts.value = []
     }
-    
+
     // 개발 환경에서 모킹 데이터 사용 (선택사항)
     if (process.env.NODE_ENV === 'development' && !append) {
       console.log('Using mock data for bookmarked posts...')
@@ -189,8 +188,8 @@ const loadBookmarkedPosts = async (page = 0, append = false) => {
           likeCount: 3,
           commentCount: 1,
           createdAt: new Date().toISOString(),
-          isRemoving: false
-        }
+          isRemoving: false,
+        },
       ]
       hasMore.value = false
     } else {
